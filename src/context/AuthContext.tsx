@@ -1,0 +1,68 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { authService } from '../services/authService';
+
+
+
+// Define User type based on your API response structure
+interface User {
+  userId: string;
+  userName: string;
+  email: string;
+  role?: string; // Add any additional properties if needed
+}
+
+interface AuthContextType {
+  user: User | null;
+  setUser: (user: User | null) => void;
+  loading: boolean;
+}
+
+// Create the context with a default value
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await authService.getCurrentUser();
+        setUser(response.data.currentUser);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        localStorage.removeItem("token"); // Remove invalid token
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, setUser, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Custom hook to use Auth context
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

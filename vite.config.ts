@@ -17,5 +17,8 @@ export default defineConfig({
   server: {
     open: true,
   },
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
 });
 

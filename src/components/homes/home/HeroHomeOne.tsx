@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import Count from "../../../common/Count";
-
+import { useAuth } from "../../../context/AuthContext";
  
 
 const HeroHomeOne = () => {
+    const { user } = useAuth();
   return (
     <>
         <section className="hero-section hero-1 fix">
@@ -23,7 +24,7 @@ const HeroHomeOne = () => {
                 <div className="row">
                     <div className="col-lg-12">
                         <div className="hero-content">
-                            <span className="wow fadeInUp">Welcome to Eduspace</span>
+                            <span className="wow fadeInUp">Welcome {user ? user.userName : "Guest"} to Eduspace</span>
                             <h1 className="wow fadeInUp" data-wow-delay=".3s">
                                 Interactive Learning
                                 Engaging Students in
