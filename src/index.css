@@ -11,4 +11,6 @@
 @import "../public/assets/css/jquery-simple-mobilemenu.css";
 @import "../public/assets/css/style.css";
 @import "../public/assets/css/responsive.css"; */
-
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
