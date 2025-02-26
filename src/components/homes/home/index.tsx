@@ -15,33 +15,28 @@ import TeamHomeOne from "./TeamHomeOne";
 import TestimonialHomeOne from "./TestimonialHomeOne";
 import TopCategoryHomeOne from "./TopCategoryHomeOne";
 
-
-
-
 const HomeOne = () => {
-	
-
-	return (
-		<> 
-		<Preloader />
-			<HeaderOne />
+  return (
+    <>
+      <Preloader />
+      <HeaderOne />
       <HeroHomeOne />
       <FeatureHomeOne />
       <TopCategoryHomeOne />
       <AboutHomeOne />
-			<PopularCoursesHomeOne />
-			<MarqueeOne />
-			<ChooseHomeOne />
-			<TeamHomeOne />
-			<NewsletterHomeOne />
-			<TestimonialHomeOne />
-			<BrandsHomeOne />
-			<BlogHomeOne />
-			<MarqueeOne /> 
-			<FooterOne />  
-			<ScrollTop />    
-		</>
-	);
+      <PopularCoursesHomeOne />
+      <MarqueeOne />
+      <ChooseHomeOne />
+      <TeamHomeOne />
+      <NewsletterHomeOne />
+      <TestimonialHomeOne />
+      <BrandsHomeOne />
+      <BlogHomeOne />
+      <MarqueeOne />
+      <FooterOne />
+      <ScrollTop />
+    </>
+  );
 };
 
 export default HomeOne;
