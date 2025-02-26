@@ -1,52 +1,55 @@
-import axios from "axios";
-
-const API_URL = "http://127.0.0.1:8030";
-
-const axiosInstance = axios.create({
-  baseURL: API_URL,
-  withCredentials: true, // Important: Ensures cookies are sent with requests
-});
+// services/authService.ts
+import axiosInstance from "./api";
 
 export const authService = {
   signup: async (email: string, password: string, userName: string) => {
-    const response = await axios.post(`${API_URL}/signup`, { email, password, userName });
-    return response;
+    return axiosInstance.post("/signup", { email, password, userName });
   },
 
-  signin: async (email: string, password: string) => {
-    const response = await axiosInstance.post("/signin", { email, password });
-    localStorage.setItem("token", response.data.jwt); 
+  signin: async (email: string, password: string, RememberMe: boolean) => {
+    const response = await axiosInstance.post("/signin", {
+      email,
+      password,
+      RememberMe,
+    });
+    localStorage.setItem("token", response.data.jwt);
     return response;
-
   },
 
   signout: async () => {
-    localStorage.removeItem("token"); 
-  },
-  verifyEmail: async (email: string, otp: string) => {
-    const response = await axiosInstance.post("/verify-email", { email, otp });
-    localStorage.setItem("token", response.data.jwt); 
+    if (!localStorage.getItem("token")) return;
+    const response = await axiosInstance.post("/signout");
+    localStorage.removeItem("token");
     return response;
+  },
 
+  verifyEmail: async (email: string) => {
+    return axiosInstance.post("/verify-email", { email });
+  },
+
+  verifyOtp: async (email: string, otp: string) => {
+    return axiosInstance.post("/verify-Otp", { email, otp });
   },
 
   requestResetPassword: async (email: string) => {
     return axiosInstance.post("/request-reset-password", { email });
   },
 
-  resetPassword: async (email: string, otp: string, newPassword: string) => {
-    return axiosInstance.post("/reset-password", { email, otp, newPassword });
+  resetPassword: async (email: string, newPassword: string) => {
+    return axiosInstance.put("/reset-password", { email, newPassword });
   },
-  resendEmail: async (email: string, userName: string) => {
-    return axiosInstance.post("/resendEmail", { email, userName});
+
+  resendEmail: async (email: string, Source: string) => {
+    return axiosInstance.post("/resendEmail", { email, Source });
   },
 
   getCurrentUser: async () => {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("No token found");
+    return axiosInstance.get("/current-user");
+  },
 
-    return axios.get(`${API_URL}/current-user`, {
-      headers: { Authorization: `Bearer ${token}` }, // Send JWT with request
-    });
+  updateUser: async (userName: string, profileImg: string) => {
+    const response = await axiosInstance.put("/update-user", { userName, profileImg });
+    localStorage.setItem("token", response.data.jwt);
+    return response;
   },
 };
