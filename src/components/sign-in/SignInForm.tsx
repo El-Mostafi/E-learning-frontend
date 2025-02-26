@@ -2,23 +2,38 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { authService } from "../../services/authService";
 import { Link } from "react-router-dom";
 import axios from "axios";
-interface FormData {
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+
+interface FormData extends ParentFormData {
+  RememberMe: boolean;
+}
+interface ParentFormData {
   email: string;
   password: string;
 }
-interface Errors extends FormData {
+interface Errors extends ParentFormData {
   apiErrors?: Array<{ message: string }>;
 }
 
 const SignInForm = () => {
+  const { setUser } = useAuth();
+    const Navigate = useNavigate();
+  
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
+    RememberMe: false, // Default to false
   });
+
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const email = useRef<HTMLInputElement>(null);
   const password = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Partial<Errors>>({});
-  const validateField = (name: string, value: string) => {
+
+  const getValidationError = (name: string, value: string): string => {
     let error = "";
 
     if (name === "email") {
@@ -34,14 +49,13 @@ const SignInForm = () => {
         error = "Password is required.";
       } else if (value.length < 8) {
         error = "Password must be at least 8 characters.";
-      } else if (!/[A-Z]/.test(value)) {
-        error = "Password must contain at least one uppercase letter.";
-      } else if (!/[a-z]/.test(value)) {
-        error = "Password must contain at least one lowercase letter.";
-      } else if (!/[0-9]/.test(value)) {
-        error = "Password must contain at least one number.";
       }
     }
+
+    return error;
+  };
+  const validateField = (name: string, value: string) => {
+    const error = getValidationError(name, value);
 
     setErrors((prevErrors) => ({
       ...prevErrors,
@@ -49,54 +63,81 @@ const SignInForm = () => {
     }));
   };
   useEffect(() => {
+    setUser(null);
     authService.signout();
+
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     });
 
     validateField(name, value);
   };
 
   const validate = useCallback((): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Partial<Errors> = {};
 
+    // Validate each field using current formData
     Object.entries(formData).forEach(([key, value]) => {
-      validateField(key, value);
-      if (errors[key as keyof FormData]) {
-        newErrors[key as keyof FormData] = errors[key as keyof FormData];
+      const error = getValidationError(key, value);
+      if (error) {
+        newErrors[key as keyof ParentFormData] = error;
       }
     });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData, errors]);
+  }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSigningIn(true);
     if (validate()) {
       console.log("Form submitted successfully!", formData);
       try {
         const response = await authService.signin(
           formData.email,
-          formData.password
+          formData.password,
+          formData.RememberMe
         );
         console.log(response.data);
         window.location.href = "/";
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          console.error("Signup failed:", error.response?.data);
+          console.error("Signin failed:", error.response?.data);
           setErrors({ ...errors, apiErrors: error.response?.data.errors });
         } else {
           console.error("Unexpected error:", error);
         }
+        window.scrollTo({ top: 300, behavior: "smooth" });
       }
     }
+    setIsSigningIn(false);
   };
+  useEffect(() => {
+    const handleResendEmail = async () => {
+      if(!errors.apiErrors) return
+      const emailError = errors.apiErrors.find(error => error.message === "Email is not confirmed");
+
+      if (emailError) {
+        console.log("Email is not confirmed");
+        try {
+          await authService.resendEmail(formData.email, "Verification");
+          Navigate("/verification", {
+            state: { email: formData.email },
+          });
+        } catch (error) {
+          console.error("Resend email failed:", error);
+        }
+      }
+    };
+
+    handleResendEmail();
+  }, [errors.apiErrors]);
   return (
     <>
       <section className="sign-in-section section-padding fix">
@@ -110,9 +151,9 @@ const SignInForm = () => {
                 {errors.apiErrors && errors.apiErrors.length > 0 && (
                   <div className="alert alert-danger" role="alert">
                     <strong>Error</strong>
-                    {errors.apiErrors.map((error, index) => (
-                      <div key={index}>⚠️ {error.message}</div>
-                    ))}
+                    {errors.apiErrors.map((error, index) => {
+                      return <div key={index}>⚠️ {error.message}</div>;
+                    })}
                   </div>
                 )}
                 <form onSubmit={handleSubmit} id="contact-form">
@@ -147,16 +188,24 @@ const SignInForm = () => {
                           Password <span className="text-danger">*</span>
                         </span>
                         <input
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           name="password"
                           value={formData.password}
                           onChange={handleChange}
                           placeholder="Password"
                           ref={password}
                         />
-                        <div className="icon">
-                          <i className="far fa-eye-slash"></i>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="icon"
+                        >
+                          {showPassword ? (
+                            <i className="far fa-eye-slash"></i>
+                          ) : (
+                            <i className="far fa-eye"></i>
+                          )}
+                        </button>
                         {errors.password && (
                           <p className="text-danger">{errors.password}</p>
                         )}
@@ -167,9 +216,11 @@ const SignInForm = () => {
                         <div className="form-check d-flex gap-2 from-customradio">
                           <input
                             className="form-check-input"
-                            type="radio"
-                            name="flexRadioDefault"
+                            type="checkbox"
+                            name="RememberMe"
                             id="flexRadioDefault1"
+                            checked={formData.RememberMe}
+                            onChange={handleChange}
                           />
                           <label
                             className="form-check-label"
@@ -178,12 +229,29 @@ const SignInForm = () => {
                             Remember Me
                           </label>
                         </div>
-                        <span>Forgot Password?</span>
+                        <Link to="/forgot-password">
+                          <span>Forgot Password ?</span>
+                        </Link>
                       </div>
                     </div>
                     <div className="col-lg-4 wow fadeInUp" data-wow-delay=".4s">
-                      <button type="submit" className="theme-btn">
-                        Sign In
+                      <button
+                        disabled={isSigningIn}
+                        type="submit"
+                        className="theme-btn"
+                      >
+                        {isSigningIn ? (
+                          <>
+                            Signing In{" "}
+                            <span
+                              className="spinner-border spinner-border-sm"
+                              role="status"
+                              aria-hidden="true"
+                            ></span>
+                          </>
+                        ) : (
+                          "Sign In"
+                        )}
                       </button>
                     </div>
                     <div className="col-lg-12 text-center mt-3">
