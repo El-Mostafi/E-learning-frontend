@@ -1,10 +1,10 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom"; 
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ProtectedRoutes from "./utils/ProtectedRoutes";
 import Wrapper from "./layouts/Wrapper";
-import { AuthProvider } from "./context/AuthContext"; 
+import { AuthProvider } from "./context/AuthContext";
 
 import HomeOne from "./components/homes/home";
-import HomeTwo from "./components/homes/home-2"; 
+import HomeTwo from "./components/homes/home-2";
 import HomeThree from "./components/homes/home-3";
 import HomeFour from "./components/homes/home-4";
 import HomeFive from "./components/homes/home-5";
@@ -37,19 +37,25 @@ import Register from "./components/register";
 import NotFound from "./components/Error";
 import Contact from "./components/contact";
 import Verification from "./components/verification-code";
+import ForgotPassword from "./components/forgot-password";
+import ResetPassword from "./components/reset-password";
+import Profile from "./components/profile";
 
 const router = createBrowserRouter([
-  { path: "/sign-in", element: <SignIn /> }, 
-  { path: "/register", element: <Register /> }, 
-  { path: "/verification", element: <Verification /> }, 
+  { path: "/", element: <HomeOne /> },
+  { path: "/sign-in", element: <SignIn /> },
+  { path: "/register", element: <Register /> },
+  { path: "/verification", element: <Verification /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", element: <ResetPassword /> },
+  { path: "/contact", element: <Contact /> },
+  { path: "/home-2", element: <HomeTwo /> },
   { path: "*", element: <NotFound /> },
 
   // Protected Routes
   {
     element: <ProtectedRoutes />, // Wrap all protected routes
     children: [
-      { path: "/", element: <HomeOne /> },
-      { path: "/home-2", element: <HomeTwo /> },
       { path: "/home-3", element: <HomeThree /> },
       { path: "/home-4", element: <HomeFour /> },
       { path: "/home-5", element: <HomeFive /> },
@@ -67,17 +73,17 @@ const router = createBrowserRouter([
       { path: "/shop-details", element: <ShopDetails /> },
       { path: "/shop-cart", element: <ShopCart /> },
       { path: "/checkout", element: <Checkout /> },
-      { path: "/about", element: <About /> }, 
-      { path: "/instructor", element: <Instructor /> }, 
-      { path: "/instructor-details", element: <InstructorDetails /> }, 
-      { path: "/program", element: <Program /> }, 
-      { path: "/program-details", element: <ProgramDetails /> }, 
-      { path: "/news", element: <News /> }, 
-      { path: "/news-details", element: <NewsDetails /> }, 
-      { path: "/gallery", element: <Gallery /> }, 
-      { path: "/pricing", element: <Pricing /> }, 
-      { path: "/faq", element: <Faq /> }, 
-      { path: "/contact", element: <Contact /> }, 
+      { path: "/about", element: <About /> },
+      { path: "/instructor", element: <Instructor /> },
+      { path: "/instructor-details", element: <InstructorDetails /> },
+      { path: "/program", element: <Program /> },
+      { path: "/program-details", element: <ProgramDetails /> },
+      { path: "/news", element: <News /> },
+      { path: "/news-details", element: <NewsDetails /> },
+      { path: "/gallery", element: <Gallery /> },
+      { path: "/pricing", element: <Pricing /> },
+      { path: "/faq", element: <Faq /> },
+      { path: "/profile", element: <Profile /> },
     ],
   },
 ]);
@@ -85,9 +91,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <AuthProvider>
-      <Wrapper> 
+      <Wrapper>
         <RouterProvider router={router} />
-      </Wrapper> 
+      </Wrapper>
     </AuthProvider>
   );
 }

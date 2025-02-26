@@ -1,14 +1,20 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { authService } from '../services/authService';
-
-
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { authService } from "../services/authService";
+import Preloader from "../common/Preloader";
 
 // Define User type based on your API response structure
 interface User {
   userId: string;
   userName: string;
   email: string;
-  role?: string; // Add any additional properties if needed
+  profileImg: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -17,7 +23,6 @@ interface AuthContextType {
   loading: boolean;
 }
 
-// Create the context with a default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -50,6 +55,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     fetchUser();
   }, []);
+
+  // Display Preloader while loading
+  if (loading) {
+    return <Preloader />;
+  }
 
   return (
     <AuthContext.Provider value={{ user, setUser, loading }}>
