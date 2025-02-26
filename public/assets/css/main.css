@@ -468,7 +468,21 @@ p {
   top: 15px;
   font-size: 18px;
 }
-
+.stripe-card-element {
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    background-color: white;
+  }
+  
+  .stripe-card-element.StripeElement--focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 1px #4f46e5;
+  }
+  
+  .stripe-card-element.StripeElement--invalid {
+    border-color: #ef4444;
+  }
 .search-close {
   position: absolute;
   right: 50px;
