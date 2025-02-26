@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { authService } from "../../services/authService";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
 import axios from "axios";
 interface FormData {
   firstName: string;
@@ -13,6 +15,8 @@ interface Errors extends FormData {
 }
 
 const RegisterForm: React.FC = () => {
+  const { setUser } = useAuth();
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -20,27 +24,38 @@ const RegisterForm: React.FC = () => {
     email: "",
     password: "",
   });
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const firstName = useRef<HTMLInputElement>(null);
   const lastName = useRef<HTMLInputElement>(null);
   const email = useRef<HTMLInputElement>(null);
   const password = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Partial<Errors>>({});
-  const validateField = (name: string, value: string) => {
+
+  const getValidationError = (name: string, value: string): string => {
     let error = "";
 
     if (name === "firstName") {
       if (!value.trim()) {
         error = "First Name is required.";
-      } else if (!/^[A-Za-z]+$/.test(value)) {
-        error = "First Name must contain only letters.";
+      } else if (value.length < 3) {
+        error = "First Name must be at least 3 characters.";
+      }else  if(value.length>20){
+        error = "First Name must be less than 20 characters.";
+      }else if (/[|]/.test(value)) {
+        error = "First Name must not contain the '|' character.";
       }
     }
 
     if (name === "lastName") {
       if (!value.trim()) {
         error = "Last Name is required.";
-      } else if (!/^[A-Za-z]+$/.test(value)) {
-        error = "Last Name must contain only letters.";
+      } else if (value.length < 3) {
+        error = "Last Name must be at least 3 characters.";
+      }else  if(value.length>20){
+        error = "Last Name must be less than 20 characters.";
+      }else if (/[|]/.test(value)) {
+        error = "Last Name must not contain the '|' character.";
       }
     }
 
@@ -63,9 +78,15 @@ const RegisterForm: React.FC = () => {
         error = "Password must contain at least one lowercase letter.";
       } else if (!/[0-9]/.test(value)) {
         error = "Password must contain at least one number.";
+      } else if (!/[!@#$%^&*(),.?":{}|<>/]/.test(value)) {
+        error = "Password must contain at least one special character.";
       }
     }
 
+    return error;
+  };
+  const validateField = (name: string, value: string) => {
+    const error = getValidationError(name, value);
     setErrors((prevErrors) => ({
       ...prevErrors,
       [name]: error,
@@ -73,6 +94,7 @@ const RegisterForm: React.FC = () => {
   };
 
   useEffect(() => {
+    setUser(null);
     authService.signout();
   }, []);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,28 +108,30 @@ const RegisterForm: React.FC = () => {
   };
 
   const validate = useCallback((): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Partial<Errors> = {};
 
+    // Validate each field using current formData
     Object.entries(formData).forEach(([key, value]) => {
-      validateField(key, value);
-      if (errors[key as keyof FormData]) {
-        newErrors[key as keyof FormData] = errors[key as keyof FormData];
+      const error = getValidationError(key, value);
+      if (error) {
+        newErrors[key as keyof FormData] = error;
       }
     });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData, errors]);
+  }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSigningUp(true);
     if (validate()) {
       console.log("Form submitted successfully!", formData);
       try {
         const response = await authService.signup(
           formData.email,
           formData.password,
-          `${formData.firstName} ${formData.lastName}`
+          `${formData.firstName}|${formData.lastName}`
         );
         console.log(response.data);
         navigate("/verification", { state: { email: formData.email } });
@@ -121,6 +145,7 @@ const RegisterForm: React.FC = () => {
         }
       }
     }
+    setIsSigningUp(false);
   };
 
   return (
@@ -202,24 +227,43 @@ const RegisterForm: React.FC = () => {
                         Password <span className="text-danger">*</span>
                       </span>
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="Password"
                         ref={password}
                       />
-                      <div className="icon">
-                        <i className="far fa-eye-slash"></i>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="icon"
+                      >
+                        {showPassword ? (
+                          <i className="far fa-eye-slash"></i>
+                        ) : (
+                          <i className="far fa-eye"></i>
+                        )}
+                      </button>
                       {errors.password && (
                         <p className="text-danger">{errors.password}</p>
                       )}
                     </div>
                   </div>
                   <div className="col-lg-4">
-                    <button type="submit" className="theme-btn">
-                      Sign Up
+                    <button disabled={isSigningUp} type="submit" className="theme-btn">
+                      {isSigningUp ? (
+                        <>
+                          Signing Up{" "}
+                          <span
+                            className="spinner-border spinner-border-sm"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                        </>
+                      ) : (
+                        "Sign Up"
+                      )}
                     </button>
                   </div>
                   <div className="col-lg-12 text-center mt-3">
