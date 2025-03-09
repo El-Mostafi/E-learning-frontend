@@ -14,7 +14,12 @@ interface User {
   userName: string;
   email: string;
   profileImg: string;
-  role?: string;
+  role: string;
+  educationLevel?: string;
+  fieldOfStudy?: string;
+  expertise?: string;
+  yearsOfExperience?: string;
+  biography?: string;
 }
 
 interface AuthContextType {

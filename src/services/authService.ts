@@ -2,9 +2,29 @@
 import axiosInstance from "./api";
 
 export const authService = {
-  signup: async (email: string, password: string, userName: string) => {
-    return axiosInstance.post("/signup", { email, password, userName });
-  },
+    signup: async (userData: {
+      email: string,
+      password: string,
+      userName: string,
+      role: "student" | "instructor",
+      educationLevel?: string,
+      fieldOfStudy?: string,
+      expertise?: string,
+      yearsOfExperience?: number,
+      biography?: string
+    }) => {
+      return axiosInstance.post("/signup", {
+        email: userData.email,
+        password: userData.password,
+        userName: userData.userName,
+        role: userData.role,
+        educationLevel: userData.educationLevel,
+        fieldOfStudy: userData.fieldOfStudy,
+        expertise: userData.expertise,
+        yearsOfExperience: userData.yearsOfExperience,
+        biography: userData.biography
+      });
+    },
 
   signin: async (email: string, password: string, RememberMe: boolean) => {
     const response = await axiosInstance.post("/signin", {
@@ -47,8 +67,16 @@ export const authService = {
     return axiosInstance.get("/current-user");
   },
 
-  updateUser: async (userName: string, profileImg: string) => {
-    const response = await axiosInstance.put("/update-user", { userName, profileImg });
+  updateUser: async (payload: {
+    userName?: string;
+    profileImg?: string;
+    educationLevel?: string;
+    fieldOfStudy?: string;
+    expertise?: string;
+    yearsOfExperience?: string;
+    biography?: string;
+  }) => {
+    const response = await axiosInstance.put("/update-user", payload);
     localStorage.setItem("token", response.data.jwt);
     return response;
   },
