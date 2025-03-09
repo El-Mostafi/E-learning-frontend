@@ -1,7 +1,7 @@
 import MarqueeOne from "../../../common/MarqueeOne";
 import Preloader from "../../../common/Preloader";
 import ScrollTop from "../../../common/ScrollTop";
-import FooterOne from "../../../layouts/footers/FooterOne";
+import FooterTwo from "../../../layouts/footers/FooterTwo";
 import HeaderOne from "../../../layouts/headers/HeaderOne";
 import AboutHomeOne from "./AboutHomeOne";
 import BlogHomeOne from "./BlogHomeOne";
@@ -14,8 +14,12 @@ import PopularCoursesHomeOne from "./PopularCoursesHomeOne";
 import TeamHomeOne from "./TeamHomeOne";
 import TestimonialHomeOne from "./TestimonialHomeOne";
 import TopCategoryHomeOne from "./TopCategoryHomeOne";
+import { useAuth } from "../../../context/AuthContext";
+import FooterOne from "../../../layouts/footers/FooterOne";
 
 const HomeOne = () => {
+  const { user } = useAuth();
+
   return (
     <>
       <Preloader />
@@ -33,7 +37,7 @@ const HomeOne = () => {
       <BrandsHomeOne />
       <BlogHomeOne />
       <MarqueeOne />
-      <FooterOne />
+      {user!==null ? <FooterOne /> : <FooterTwo />}
       <ScrollTop />
     </>
   );
