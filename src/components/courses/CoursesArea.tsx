@@ -3,7 +3,7 @@ import NiceSelect from "../../ui/NiceSelect";
 
  
 const CoursesArea = () => {
-  const selectHandler = (_e: any) => { };
+  const selectHandler = () => { };
 
   return (
     <>

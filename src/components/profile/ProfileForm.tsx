@@ -11,16 +11,18 @@ import {
   ChevronRight,
   Clock,
   Trophy,
-  Heart,
   CheckCircle,
   Github,
   Linkedin,
   Twitter,
   Globe,
   LogOut,
+  Users,
+  Star,
+  PlusCircle,
 } from "lucide-react";
 import Count from "../../common/Count";
-import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { ResponsiveContainer } from "recharts";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import ImageCropDialog from "./ImageCropDialog";
@@ -28,6 +30,9 @@ import { useAuth } from "../../context/AuthContext";
 import { authService } from "../../services/authService";
 import { cloudService } from "../../services/cloudService";
 import axios from "axios";
+import { Link } from "react-router-dom";
+import CourseTable from "./StudentsCourses";
+import CreateCours  from "./Create Cours/index";
 
 const options: ApexOptions = {
   chart: {
@@ -117,19 +122,105 @@ const options: ApexOptions = {
 
 const series = [
   {
-    name: "Study",
+    name: "Course Enrolled",
     data: [8, 15, 9, 20, 10, 33, 13, 22, 8, 17, 10, 15],
   },
   {
-    name: "Test",
+    name: "Course Completed",
     data: [8, 24, 18, 40, 18, 48, 22, 38, 18, 30, 20, 28],
   },
 ];
-const skillsData = [
-  { name: "Programming", value: 40 },
-  { name: "Design", value: 25 },
-  { name: "Data Science", value: 20 },
-  { name: "Soft Skills", value: 15 },
+const instructorOptions: ApexOptions = {
+  chart: {
+    type: "area",
+    width: "100%",
+    height: 300,
+    sparkline: {
+      enabled: false,
+    },
+    toolbar: {
+      show: false,
+    },
+  },
+  colors: ["#3D7FF9"],
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    curve: "smooth",
+    width: 1,
+    colors: ["#3D7FF9"],
+    lineCap: "round",
+  },
+  fill: {
+    type: "gradient",
+    gradient: {
+      shadeIntensity: 1,
+      opacityFrom: 0.9,
+      opacityTo: 0.2,
+      stops: [0, 100],
+    },
+  },
+  grid: {
+    show: true,
+    borderColor: "#E6E6E6",
+    strokeDashArray: 3,
+    xaxis: {
+      lines: { show: false },
+    },
+    yaxis: {
+      lines: { show: true },
+    },
+  },
+  markers: {
+    colors: ["#3D7FF9"],
+    strokeWidth: 3,
+    size: 0,
+    hover: {
+      size: 8,
+    },
+  },
+  xaxis: {
+    categories: [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ],
+    labels: {
+      style: { fontSize: "14px" },
+    },
+    tooltip: {
+      enabled: false,
+    },
+  },
+  yaxis: {
+    labels: {
+      formatter: (value: number) => `$${value}Hr`,
+      style: { fontSize: "14px" },
+    },
+  },
+  tooltip: {
+    x: { format: "dd/MM/yy HH:mm" },
+  },
+  legend: {
+    show: false,
+  },
+};
+
+const instructorSeries = [
+  {
+    name: "Student Number",
+    data: [8, 24, 18, 40, 18, 48, 22, 38, 18, 30, 20, 28],
+  },
 ];
 
 const COLORS = [
@@ -146,15 +237,34 @@ const DEFAULT_AVATAR =
 interface ParentFormData {
   firstName: string;
   lastName: string;
+  email: string;
+  role: "student" | "instructor";
+  profileImage: string;
   newPassword: string;
   confirmPassword: string;
+  // Student fields
+  educationLevel: string;
+  fieldOfStudy: string;
+  // Instructor fields
+  expertise: string;
+  yearsOfExperience: string;
+  biography: string;
+  // Common fields
+  socialLinks: {
+    github: string;
+    linkedin: string;
+    twitter: string;
+    portfolio: string;
+  };
 }
 interface Errors extends ParentFormData {
   apiErrors?: Array<{ message: string }>;
 }
 function ProfileForm() {
   const { user, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"profile" | "settings">("profile");
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "settings" | "CreateCours"
+  >("profile");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -170,34 +280,22 @@ function ProfileForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Partial<Errors>>({});
   // User profile state
-  const [profile, setProfile] = useState({
-    firstName: user?.userName?.split("|")[0] || "John",
-    lastName: user?.userName?.split("|")[1] || "Doe",
-    email: user?.email || "john.doe@example.com",
-    studentId: "STU123456",
-    department: "Computer Science",
-    year: "3rd Year",
+  const [profile, setProfile] = useState<ParentFormData>({
+    firstName: user?.userName?.split("|")[0] || "",
+    lastName: user?.userName?.split("|")[1] || "",
+    email: user?.email || "",
+    role: (user?.role ?? "student") as "student" | "instructor",
+    // role: "student",
     profileImage: user?.profileImg || DEFAULT_AVATAR,
     newPassword: "",
     confirmPassword: "",
-    totalHoursLearned: 156,
-    coursesCompleted: 12,
-    activeCourses: 3,
-    badges: [
-      { name: "Python Master", icon: "🐍" },
-      { name: "Data Wizard", icon: "📊" },
-      { name: "Quick Learner", icon: "⚡" },
-    ],
-    wishlist: [
-      { name: "Advanced Machine Learning", instructor: "Dr. Sarah Chen" },
-      { name: "Web Security Fundamentals", instructor: "Prof. James Wilson" },
-      { name: "Cloud Architecture", instructor: "Michael Cloud" },
-    ],
-    completedCourses: [
-      { name: "Introduction to Python", grade: "A", date: "2024-02-15" },
-      { name: "Data Structures", grade: "A-", date: "2024-01-20" },
-      { name: "Web Development Basics", grade: "B+", date: "2023-12-10" },
-    ],
+    // Student fields
+    educationLevel: user?.educationLevel || "",
+    fieldOfStudy: user?.fieldOfStudy || "",
+    // Instructor fields
+    expertise: user?.expertise || "",
+    yearsOfExperience: user?.yearsOfExperience || "0",
+    biography: user?.biography || "",
     socialLinks: {
       github: "github.com/johndoe",
       linkedin: "linkedin.com/in/johndoe",
@@ -205,6 +303,54 @@ function ProfileForm() {
       portfolio: "johndoe.dev",
     },
   });
+  const roleBasedStats =
+    profile.role === "student"
+      ? {
+          totalHoursLearned: 156,
+          coursesCompleted: 12,
+          activeCourses: 3,
+          badges: [
+            { name: "Python Master", icon: "🐍" },
+            { name: "Data Wizard", icon: "📊" },
+            { name: "Quick Learner", icon: "⚡" },
+          ],
+          wishlist: [
+            { name: "Advanced Machine Learning", instructor: "Dr. Sarah Chen" },
+            {
+              name: "Web Security Fundamentals",
+              instructor: "Prof. James Wilson",
+            },
+            { name: "Cloud Architecture", instructor: "Michael Cloud" },
+          ],
+          completedCourses: [
+            { name: "Introduction to Python", grade: "A", date: "2024-02-15" },
+            { name: "Data Structures", grade: "A-", date: "2024-01-20" },
+            { name: "Web Development Basics", grade: "B+", date: "2023-12-10" },
+          ],
+        }
+      : {
+          totalStudents: 245,
+          coursesCreated: 8,
+          averageRating: 4.8,
+          certifications: [
+            { name: "Certified Educator", icon: "🎓" },
+            { name: "Expert Instructor", icon: "🏆" },
+            { name: "Content Creator", icon: "✨" },
+          ],
+          popularCourses: [
+            { name: "Advanced JavaScript", students: 87, rating: 4.9 },
+            { name: "React Fundamentals", students: 65, rating: 4.7 },
+            { name: "Full Stack Development", students: 93, rating: 4.8 },
+          ],
+          upcomingCourses: [
+            { name: "TypeScript Masterclass", date: "2024-07-15" },
+            { name: "Node.js Advanced Patterns", date: "2024-08-10" },
+          ],
+        };
+  const fractionalPart =
+    (roleBasedStats.averageRating as number) -
+    Math.floor(roleBasedStats.averageRating as number);
+  const fractionalString = fractionalPart.toFixed(1).substring(1);
   const getValidationError = (name: string, value: string): string => {
     let error = "";
 
@@ -254,6 +400,34 @@ function ProfileForm() {
         error = "Passwords do not match.";
       }
     }
+    if (profile.role === "instructor") {
+      if (name === "expertise" && !value.trim()) {
+        error = "Expertise is required.";
+      }
+
+      if (name === "biography" && !value.trim()) {
+        error = "Biography is required.";
+      }
+
+      if (name === "yearsOfExperience") {
+        const stringValue = String(value).trim();
+
+        if (!stringValue) {
+          error = "Years of experience is required.";
+        } else if (isNaN(Number(stringValue)) || Number(stringValue) < 0) {
+          error = "Years of experience must be a positive number.";
+        }
+      }
+    }
+    if (profile.role === "student") {
+      if (name === "educationLevel" && !value.trim()) {
+        error = "Education level is required.";
+      }
+
+      if (name === "fieldOfStudy" && !value.trim()) {
+        error = "Field of study is required.";
+      }
+    }
 
     return error;
   };
@@ -265,7 +439,11 @@ function ProfileForm() {
       [name]: error,
     }));
   };
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setProfile((prev) => ({
       ...prev,
@@ -277,6 +455,7 @@ function ProfileForm() {
   const validate = useCallback((): boolean => {
     const newErrors: Partial<Errors> = {};
 
+    // Common validations
     const firstNameError = getValidationError("firstName", profile.firstName);
     if (firstNameError) {
       newErrors.firstName = firstNameError;
@@ -287,30 +466,67 @@ function ProfileForm() {
       newErrors.lastName = lastNameError;
     }
 
-    const newPasswordError = getValidationError(
-      "newPassword",
-      profile.newPassword
-    );
-    if (newPasswordError) {
-      newErrors.newPassword = newPasswordError;
+    // Password validations (only if changing password)
+    if (isChangingPassword) {
+      const newPasswordError = getValidationError(
+        "newPassword",
+        profile.newPassword
+      );
+      if (newPasswordError) {
+        newErrors.newPassword = newPasswordError;
+      }
+
+      const confirmPasswordError = getValidationError(
+        "confirmPassword",
+        profile.confirmPassword
+      );
+      if (confirmPasswordError) {
+        newErrors.confirmPassword = confirmPasswordError;
+      }
     }
 
-    const confirmPasswordError = getValidationError(
-      "confirmPassword",
-      profile.confirmPassword
-    );
-    if (confirmPasswordError) {
-      newErrors.confirmPassword = confirmPasswordError;
+    // Role-specific validations
+    if (profile.role === "instructor") {
+      const expertiseError = getValidationError("expertise", profile.expertise);
+      if (expertiseError) {
+        newErrors.expertise = expertiseError;
+      }
+
+      const yearsOfExperienceError = getValidationError(
+        "yearsOfExperience",
+        profile.yearsOfExperience
+      );
+      if (yearsOfExperienceError) {
+        newErrors.yearsOfExperience = yearsOfExperienceError;
+      }
+
+      const biographyError = getValidationError("biography", profile.biography);
+      if (biographyError) {
+        newErrors.biography = biographyError;
+      }
+    }
+
+    if (profile.role === "student") {
+      const educationLevelError = getValidationError(
+        "educationLevel",
+        profile.educationLevel
+      );
+      if (educationLevelError) {
+        newErrors.educationLevel = educationLevelError;
+      }
+
+      const fieldOfStudyError = getValidationError(
+        "fieldOfStudy",
+        profile.fieldOfStudy
+      );
+      if (fieldOfStudyError) {
+        newErrors.fieldOfStudy = fieldOfStudyError;
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [
-    profile.firstName,
-    profile.lastName,
-    profile.newPassword,
-    profile.confirmPassword,
-  ]);
+  }, [profile, isChangingPassword]);
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -318,7 +534,23 @@ function ProfileForm() {
     setIsSaving(true);
 
     try {
-      if (DEFAULT_AVATAR !== profile.profileImage) {
+      const updatePayload = {
+        userName: `${profile.firstName}|${profile.lastName}`,
+        profileImg: profile.profileImage,
+        ...(profile.role === "student" && {
+          educationLevel: profile.educationLevel,
+          fieldOfStudy: profile.fieldOfStudy,
+        }),
+        ...(profile.role === "instructor" && {
+          expertise: profile.expertise,
+          yearsOfExperience: profile.yearsOfExperience,
+          biography: profile.biography,
+        }),
+      };
+      if (
+        DEFAULT_AVATAR !== profile.profileImage &&
+        user!.profileImg !== profile.profileImage
+      ) {
         const { data: signatureData } = await cloudService.getSignature();
         if (!signatureData) return console.error("Signature is missing.");
 
@@ -337,22 +569,20 @@ function ProfileForm() {
           profileImage: uploadData.secure_url,
         }));
 
+        updatePayload.profileImg = uploadData.secure_url;
+
         const { data: updateData } = await authService.updateUser(
-          `${profile.firstName}|${profile.lastName}`,
-          uploadData.secure_url
+          updatePayload
         );
 
         console.log("User updated:", updateData);
       } else {
         setProfile((prev) => ({ ...prev, profileImage: DEFAULT_AVATAR }));
-        if (user!.profileImg === profile.profileImage) {
-          const { data: updateData } = await authService.updateUser(
-            `${profile.firstName}|${profile.lastName}`,
-            profile.profileImage
-          );
 
-          console.log("User updated:", updateData);
-        }
+        const { data: updateData } = await authService.updateUser(
+          updatePayload
+        );
+        console.log("User updated:", updateData);
       }
       const { data: userData } = await authService.getCurrentUser();
       setUser(userData.currentUser);
@@ -499,7 +729,10 @@ function ProfileForm() {
               <h2 className="text-xl font-bold text-gray-800">
                 {profile.firstName} {profile.lastName}
               </h2>
-              <p className="text-sm text-gray-600">{profile.studentId}</p>
+              <p className="text-sm text-gray-600">{profile.email}</p>
+              <div className="mt-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                {profile.role === "student" ? "Student" : "Instructor"}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -531,6 +764,22 @@ function ProfileForm() {
                 </div>
                 <ChevronRight className="w-4 h-4" />
               </button>
+              {profile.role === "instructor" && (
+                <button
+                  onClick={() => setActiveTab("CreateCours")}
+                  className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === "CreateCours"
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <PlusCircle className="w-5 h-5 mr-3" />
+                    <span>Create Cours</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
               <button
                 onClick={() => setShowProfileDisconnectConfirm(true)}
                 className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -546,31 +795,67 @@ function ProfileForm() {
                 Quick Stats
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Hours Learned</span>
-                  </div>
-                  <span className="font-semibold">
-                    {profile.totalHoursLearned}h
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-gray-600">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Completed</span>
-                  </div>
-                  <span className="font-semibold">
-                    {profile.coursesCompleted}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-gray-600">
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Active Courses</span>
-                  </div>
-                  <span className="font-semibold">{profile.activeCourses}</span>
-                </div>
+                {profile.role === "student" ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-gray-600">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Hours Learned</span>
+                      </div>
+                      <span className="font-semibold">
+                        {roleBasedStats.totalHoursLearned}h
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-gray-600">
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Completed</span>
+                      </div>
+                      <span className="font-semibold">
+                        {roleBasedStats.coursesCompleted}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-gray-600">
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Active Courses</span>
+                      </div>
+                      <span className="font-semibold">
+                        {roleBasedStats.activeCourses}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-gray-600">
+                        <Users className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Total Students</span>
+                      </div>
+                      <span className="font-semibold">
+                        {roleBasedStats.totalStudents}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-gray-600">
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Courses Created</span>
+                      </div>
+                      <span className="font-semibold">
+                        {roleBasedStats.coursesCreated}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-gray-600">
+                        <Star className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Average Rating</span>
+                      </div>
+                      <span className="font-semibold">
+                        {roleBasedStats.averageRating}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -626,230 +911,565 @@ function ProfileForm() {
               {activeTab === "profile" ? (
                 // Profile View with Learning Dashboard
                 <div className="space-y-8">
-                  {/* Learning Statistics */}
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                      Learning Dashboard
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl">
-                        <div className="flex items-center mb-2">
-                          <Clock className="w-5 h-5 text-blue-600 mr-2" />
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            Time Spent
-                          </h3>
-                        </div>
-                        <p className="text-3xl font-bold text-blue-600">
-                          <span
-                            className="odometer"
-                            data-count={profile.totalHoursLearned}
-                          >
-                            <Count
-                              number={profile.totalHoursLearned}
-                              text="h"
-                            />
-                          </span>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Total learning time
-                        </p>
-                      </div>
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl">
-                        <div className="flex items-center mb-2">
-                          <Trophy className="w-5 h-5 text-green-600 mr-2" />
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            Achievements
-                          </h3>
-                        </div>
-                        <p className="text-3xl font-bold text-green-600">
-                          <span
-                            className="odometer"
-                            data-count={profile.badges.length}
-                          >
-                            <Count number={profile.badges.length} text="" />
-                          </span>
-                        </p>
-                        <p className="text-sm text-gray-600">Badges earned</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl">
-                        <div className="flex items-center mb-2">
-                          <BookOpen className="w-5 h-5 text-purple-600 mr-2" />
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            Courses
-                          </h3>
-                        </div>
-                        <p className="text-3xl font-bold text-purple-600">
-                          <span
-                            className="odometer"
-                            data-count={profile.coursesCompleted}
-                          >
-                            <Count number={profile.coursesCompleted} text="" />
-                          </span>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Completed courses
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Learning Activity Chart */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          Weekly Learning Activity
-                        </h3>
-                        <div className="flex items-center">
-                          <div
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: COLORS[5] }}
-                          ></div>
-                          <span className="text-sm text-gray-600 mr-4">
-                            test
-                          </span>
-                          <div
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: COLORS[4] }}
-                          ></div>
-                          <span className="text-sm text-gray-600">Study</span>
-                        </div>
-                      </div>
-                      <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <Chart
-                            options={options}
-                            series={series}
-                            type="area"
-                            height={300}
-                          />
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    {/* Skills Distribution */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                        Skills Distribution
-                      </h3>
-
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={skillsData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {skillsData.map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
+                  {profile.role === "student" ? (
+                    <>
+                      {/* Learning Statistics */}
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                          Learning Dashboard
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl">
+                            <div className="flex items-center mb-2">
+                              <Clock className="w-5 h-5 text-blue-600 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Time Spent
+                              </h3>
+                            </div>
+                            <p className="text-3xl font-bold text-blue-600">
+                              <span
+                                className="odometer"
+                                data-count={roleBasedStats.totalHoursLearned}
+                              >
+                                <Count
+                                  number={
+                                    roleBasedStats.totalHoursLearned as number
+                                  }
+                                  text="h"
                                 />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="flex justify-center space-x-4 mt-4">
-                        {skillsData.map((skill, index) => (
-                          <div key={skill.name} className="flex items-center">
-                            <div
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: COLORS[index] }}
-                            ></div>
-                            <span className="text-sm text-gray-600">
-                              {skill.name}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badges Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                      Badges & Achievements
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {profile.badges.map((badge, index) => (
-                        <div
-                          key={index}
-                          className="bg-white p-4 rounded-xl shadow-sm text-center"
-                        >
-                          <div className="text-3xl mb-2">{badge.icon}</div>
-                          <h4 className="text-sm font-medium text-gray-800">
-                            {badge.name}
-                          </h4>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Course Sections */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Wishlist */}
-                    <div>
-                      <div className="flex items-center mb-4">
-                        <Heart className="w-5 h-5 text-red-500 mr-2" />
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          Course Wishlist
-                        </h3>
-                      </div>
-                      <div className="space-y-4">
-                        {profile.wishlist.map((course, index) => (
-                          <div
-                            key={index}
-                            className="bg-white p-4 rounded-xl shadow-sm"
-                          >
-                            <h4 className="font-medium text-gray-800">
-                              {course.name}
-                            </h4>
+                              </span>
+                            </p>
                             <p className="text-sm text-gray-600">
-                              by {course.instructor}
+                              Total learning time
                             </p>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Completed Courses */}
-                    <div>
-                      <div className="flex items-center mb-4">
-                        <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          Completed Courses
-                        </h3>
-                      </div>
-                      <div className="space-y-4">
-                        {profile.completedCourses.map((course, index) => (
-                          <div
-                            key={index}
-                            className="bg-white p-4 rounded-xl shadow-sm"
-                          >
-                            <h4 className="font-medium text-gray-800">
-                              {course.name}
-                            </h4>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">
-                                Grade: {course.grade}
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl">
+                            <div className="flex items-center mb-2">
+                              <Trophy className="w-5 h-5 text-green-600 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Achievements
+                              </h3>
+                            </div>
+                            <p className="text-3xl font-bold text-green-600">
+                              <span
+                                className="odometer"
+                                data-count={roleBasedStats.badges!.length}
+                              >
+                                <Count
+                                  number={roleBasedStats.badges!.length}
+                                  text=""
+                                />
                               </span>
-                              <span className="text-gray-600">
-                                {new Date(course.date).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Badges earned
+                            </p>
+                          </div>
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl">
+                            <div className="flex items-center mb-2">
+                              <BookOpen className="w-5 h-5 text-purple-600 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Courses
+                              </h3>
+                            </div>
+                            <p className="text-3xl font-bold text-purple-600">
+                              <span
+                                className="odometer"
+                                data-count={roleBasedStats.coursesCompleted}
+                              >
+                                <Count
+                                  number={
+                                    roleBasedStats.coursesCompleted as number
+                                  }
+                                  text=""
+                                />
+                              </span>
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Completed courses
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Learning Activity Chart */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">
+                              Weekly Learning Activity
+                            </h3>
+                            <div className="flex items-center">
+                              <div
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{ backgroundColor: COLORS[5] }}
+                              ></div>
+                              <span className="text-sm text-gray-600 mr-4">
+                                Course Completed
+                              </span>
+                              <div
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{ backgroundColor: COLORS[4] }}
+                              ></div>
+                              <span className="text-sm text-gray-600">
+                                Course Enrolled
                               </span>
                             </div>
                           </div>
-                        ))}
+                          <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <Chart
+                                options={options}
+                                series={series}
+                                type="area"
+                                height={300}
+                              />
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+
+                        {/* Course Table */}
+                        <CourseTable />
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Learning Statistics */}
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                          Instructor Dashboard
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl">
+                            <div className="flex items-center mb-2">
+                              <Users className="w-5 h-5 text-blue-600 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Students
+                              </h3>
+                            </div>
+                            <p className="text-3xl font-bold text-blue-600">
+                              <Count
+                                number={roleBasedStats.totalStudents as number}
+                                text=""
+                              />
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Total enrolled
+                            </p>
+                          </div>
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl">
+                            <div className="flex items-center mb-2">
+                              <BookOpen className="w-5 h-5 text-green-600 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Courses
+                              </h3>
+                            </div>
+                            <p className="text-3xl font-bold text-green-600">
+                              <Count
+                                number={roleBasedStats.coursesCreated as number}
+                                text=""
+                              />
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Created courses
+                            </p>
+                          </div>
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl">
+                            <div className="flex items-center mb-2">
+                              <Star className="w-5 h-5 text-purple-600 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Rating
+                              </h3>
+                            </div>
+                            <p className="text-3xl font-bold text-purple-600">
+                              <Count
+                                number={Math.floor(
+                                  roleBasedStats.averageRating as number
+                                )}
+                                text={fractionalString}
+                              />
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Average rating
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Learning Activity Chart */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">
+                              Number of Students Enrolled Over Time
+                            </h3>
+                            <div className="flex items-center">
+                              <div
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{ backgroundColor: COLORS[4] }}
+                              ></div>
+                              <span className="text-sm text-gray-600">
+                                Student Number
+                              </span>
+                            </div>
+                          </div>
+                          <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <Chart
+                                options={instructorOptions}
+                                series={instructorSeries}
+                                type="area"
+                                height={300}
+                              />
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Course Sections */}
+
+                      <div className="grid grid-cols-1 md:grid-cols gap-8">
+                        {/* Popular Courses */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+                          <div className="flex justify-between items-center ">
+                            <div className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                              <Trophy className="w-5 h-5 text-amber-500 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Popular Courses
+                              </h3>
+                            </div>
+                            <button className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                              View All
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="row">
+                              <div className="col-xl-4 col-lg-6 col-md-6">
+                                <div className="courses-card-main-items">
+                                  <div className="courses-card-items style-2">
+                                    <div className="courses-image">
+                                      <img
+                                        src="assets/img/courses/09.jpg"
+                                        alt="img"
+                                      />
+                                      <h3 className="courses-title">
+                                        Web Design
+                                      </h3>
+                                      <h4 className="topic-title">
+                                        Advance Web Design
+                                      </h4>
+                                      <div className="arrow-items">
+                                        <div className="GlidingArrow">
+                                          <img
+                                            src="assets/img/courses/a1.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay1">
+                                          <img
+                                            src="assets/img/courses/a2.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay2">
+                                          <img
+                                            src="assets/img/courses/a3.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay3">
+                                          <img
+                                            src="assets/img/courses/a4.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay4">
+                                          <img
+                                            src="assets/img/courses/a5.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay5">
+                                          <img
+                                            src="assets/img/courses/a6.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="courses-content">
+                                      <ul className="post-cat">
+                                        <li>
+                                          <Link to="/courses">Design</Link>
+                                        </li>
+                                        <li>
+                                          <i className="fas fa-star mr-2"></i>
+                                          <span className="fw-bold me-1">
+                                            4.5
+                                          </span>
+                                        </li>
+                                      </ul>
+                                      <h3>
+                                        <Link to="/courses-details">
+                                          Learn With Advance Web Design (UX/UI)
+                                          Course
+                                        </Link>
+                                      </h3>
+                                      <div className="my-6">
+                                        <div className="flex justify-between items-center mb-2">
+                                          <span className="text-sm text-gray-600">
+                                            Progress
+                                          </span>
+                                          <span className="text-sm font-medium text-gray-900">
+                                            65%
+                                          </span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                          <div
+                                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                            style={{ width: `65%` }}
+                                          />
+                                        </div>
+                                        <div className="mt-2 text-sm text-gray-600">
+                                          {12} of {24} lessons completed
+                                        </div>
+                                      </div>
+                                      <div className="client-items">
+                                        <div
+                                          className="client-img bg-cover"
+                                          style={{
+                                            background: `url(/assets/img/courses/client-1.png)`,
+                                          }}
+                                        ></div>
+                                        <p>Paul C. Deleon</p>
+                                      </div>
+                                      <ul className="post-class">
+                                        <li>
+                                          <i className="far fa-books"></i>
+                                          Lessons
+                                        </li>
+                                        <li>
+                                          <i className="far fa-user"></i>
+                                          80 Students
+                                        </li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="col-xl-4 col-lg-6 col-md-6">
+                                <div className="courses-card-main-items">
+                                  <div className="courses-card-items style-2">
+                                    <div className="courses-image">
+                                      <img
+                                        src="assets/img/courses/10.jpg"
+                                        alt="img"
+                                      />
+                                      <h3 className="courses-title">
+                                        Business Finance
+                                      </h3>
+                                      <h4 className="topic-title">
+                                        Finance and Business
+                                      </h4>
+                                      <div className="arrow-items">
+                                        <div className="GlidingArrow">
+                                          <img
+                                            src="assets/img/courses/a1.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay1">
+                                          <img
+                                            src="assets/img/courses/a2.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay2">
+                                          <img
+                                            src="assets/img/courses/a3.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay3">
+                                          <img
+                                            src="assets/img/courses/a4.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay4">
+                                          <img
+                                            src="assets/img/courses/a5.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay5">
+                                          <img
+                                            src="assets/img/courses/a6.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="courses-content">
+                                      <ul className="post-cat">
+                                        <li>
+                                          <Link to="/courses">Business</Link>
+                                        </li>
+                                        <li>
+                                          <i className="fas fa-star mr-2"></i>
+                                          <span className="fw-bold me-1">
+                                            4.5
+                                          </span>
+                                        </li>
+                                      </ul>
+                                      <h3>
+                                        <Link to="/courses-details">
+                                          Finance Management Building Wealth
+                                        </Link>
+                                      </h3>
+                                      <div className="client-items">
+                                        <div
+                                          className="client-img bg-cover"
+                                          style={{
+                                            background: `url(/assets/img/courses/client-1.png)`,
+                                          }}
+                                        ></div>
+                                        <p>Paul C. Deleon</p>
+                                      </div>
+                                      <ul className="post-class">
+                                        <li>
+                                          <i className="far fa-books"></i>
+                                          Lessons
+                                        </li>
+                                        <li>
+                                          <i className="far fa-user"></i>
+                                          80 Students
+                                        </li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="col-xl-4 col-lg-6 col-md-6">
+                                <div className="courses-card-main-items">
+                                  <div className="courses-card-items style-2">
+                                    <div className="courses-image">
+                                      <img
+                                        src="assets/img/courses/11.jpg"
+                                        alt="img"
+                                      />
+                                      <h3 className="courses-title">
+                                        Programming
+                                      </h3>
+                                      <h4 className="topic-title">
+                                        Advance Machine <br /> Learning
+                                      </h4>
+                                      <div className="arrow-items">
+                                        <div className="GlidingArrow">
+                                          <img
+                                            src="assets/img/courses/a1.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay1">
+                                          <img
+                                            src="assets/img/courses/a2.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay2">
+                                          <img
+                                            src="assets/img/courses/a3.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay3">
+                                          <img
+                                            src="assets/img/courses/a4.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay4">
+                                          <img
+                                            src="assets/img/courses/a5.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                        <div className="GlidingArrow delay5">
+                                          <img
+                                            src="assets/img/courses/a6.png"
+                                            alt="img"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="courses-content">
+                                      <ul className="post-cat">
+                                        <li>
+                                          <Link to="/courses">Programming</Link>
+                                        </li>
+                                        <li>
+                                          <i className="fas fa-star mr-2"></i>
+                                          <span className="fw-bold me-1">
+                                            4.5
+                                          </span>
+                                        </li>
+                                      </ul>
+                                      <h3>
+                                        <Link to="/courses-details">
+                                          Introduction to Data Science and
+                                          Machine Learning
+                                        </Link>
+                                      </h3>
+                                      <div className="client-items">
+                                        <div
+                                          className="client-img bg-cover"
+                                          style={{
+                                            background: `url(/assets/img/courses/client-1.png)`,
+                                          }}
+                                        ></div>
+                                        <p>Paul C. Deleon</p>
+                                      </div>
+                                      <ul className="post-class">
+                                        <li>
+                                          <i className="far fa-books"></i>
+                                          Lessons
+                                        </li>
+                                        <li>
+                                          <i className="far fa-user"></i>
+                                          80 Students
+                                        </li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {/* {roleBasedStats.popularCourses!.map(
+                              (course, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-white p-4 rounded-xl shadow-sm"
+                                >
+                                  <h4 className="font-medium text-gray-800">
+                                    {course.name}
+                                  </h4>
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">
+                                      {course.students} students
+                                    </span>
+                                    <span className="text-gray-600 flex items-center">
+                                      <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                                      {course.rating}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            )} */}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-              ) : (
+              ) : activeTab === "settings" ? (
                 // Settings View
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">
@@ -925,48 +1545,147 @@ function ProfileForm() {
                           </div>
                           <div>
                             <label
-                              htmlFor="department"
+                              htmlFor="role"
                               className="block text-sm font-medium text-gray-700 mb-1"
                             >
-                              Department
+                              Role
                             </label>
                             <input
-                              id="department"
+                              id="role"
                               type="text"
-                              value={profile.department}
-                              onChange={(e) =>
-                                setProfile((prev) => ({
-                                  ...prev,
-                                  department: e.target.value,
-                                }))
+                              value={
+                                profile.role === "student"
+                                  ? "Student"
+                                  : "Instructor"
                               }
-                              className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                              disabled
+                              className="w-full text-black px-4 py-2 border-2 border-gray-200 bg-gray-50 rounded-lg"
                             />
                           </div>
-                          <div>
-                            <label
-                              htmlFor="year"
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              Year
-                            </label>
-                            <select
-                              id="year"
-                              value={profile.year}
-                              onChange={(e) =>
-                                setProfile((prev) => ({
-                                  ...prev,
-                                  year: e.target.value,
-                                }))
-                              }
-                              className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
-                            >
-                              <option>1st Year</option>
-                              <option>2nd Year</option>
-                              <option>3rd Year</option>
-                              <option>4th Year</option>
-                            </select>
-                          </div>
+                          {profile.role === "student" ? (
+                            <>
+                              <div>
+                                <label
+                                  htmlFor="educationLevel"
+                                  className="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                  Education Level
+                                </label>
+                                <select
+                                  id="educationLevel"
+                                  name="educationLevel"
+                                  value={profile.educationLevel}
+                                  onChange={handleChange}
+                                  className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                >
+                                  <option value="High School">
+                                    High School
+                                  </option>
+                                  <option value="Undergraduate">
+                                    Undergraduate
+                                  </option>
+                                  <option value="Graduate">Graduate</option>
+                                  <option value="Postgraduate">
+                                    Postgraduate
+                                  </option>
+                                  <option value="Other">Other</option>
+                                </select>
+                                {errors.educationLevel && (
+                                  <p className="text-red-600 text-sm mt-1">
+                                    {errors.educationLevel}
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <label
+                                  htmlFor="fieldOfStudy"
+                                  className="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                  Field of Study
+                                </label>
+                                <input
+                                  id="fieldOfStudy"
+                                  type="text"
+                                  name="fieldOfStudy"
+                                  value={profile.fieldOfStudy}
+                                  onChange={handleChange}
+                                  className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                />
+                                {errors.fieldOfStudy && (
+                                  <p className="text-red-600 text-sm mt-1">
+                                    {errors.fieldOfStudy}
+                                  </p>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div>
+                                <label
+                                  htmlFor="expertise"
+                                  className="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                  Area of Expertise
+                                </label>
+                                <input
+                                  id="expertise"
+                                  type="text"
+                                  name="expertise"
+                                  value={profile.expertise}
+                                  onChange={handleChange}
+                                  className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                />
+                                {errors.expertise && (
+                                  <p className="text-red-600 text-sm mt-1">
+                                    {errors.expertise}
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <label
+                                  htmlFor="yearsOfExperience"
+                                  className="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                  Years of Experience
+                                </label>
+                                <input
+                                  id="yearsOfExperience"
+                                  type="number"
+                                  name="yearsOfExperience"
+                                  value={profile.yearsOfExperience}
+                                  onChange={handleChange}
+                                  min="0"
+                                  className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                />
+                                {errors.yearsOfExperience && (
+                                  <p className="text-red-600 text-sm mt-1">
+                                    {errors.yearsOfExperience}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="md:col-span-2">
+                                <label
+                                  htmlFor="biography"
+                                  className="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                  Biography
+                                </label>
+                                <textarea
+                                  id="biography"
+                                  name="biography"
+                                  value={profile.biography}
+                                  onChange={handleChange}
+                                  rows={4}
+                                  className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                ></textarea>
+                                {errors.biography && (
+                                  <p className="text-red-600 text-sm mt-1">
+                                    {errors.biography}
+                                  </p>
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
 
                         {/* Social Links */}
@@ -1209,6 +1928,9 @@ function ProfileForm() {
                     </form>
                   )}
                 </div>
+              ) : (
+                profile.role==="instructor" ? <CreateCours/>:""
+                // <CreateCours/>
               )}
             </div>
           </div>
