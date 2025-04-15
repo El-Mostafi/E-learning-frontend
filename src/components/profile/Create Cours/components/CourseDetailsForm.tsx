@@ -28,8 +28,9 @@ const CATEGORIES = [
   "Music",
   "Health & Fitness",
   "Personal Development",
-  "Other",
 ];
+
+const LANGUAGES = ["Arabic","English", "Spanish", "French", "German", "Italian"];
 
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
@@ -49,10 +50,29 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
     onUpdate: ({ editor }) => {
       dispatch({
         type: "SET_COURSE_DETAILS",
-        payload: { description: editor.getHTML() },
+        payload: { description: editor.getHTML().toString() },
       });
     },
   });
+  const validateImageAspectRatio = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = document.createElement("img");
+
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        const aspectRatio = img.naturalWidth / img.naturalHeight;
+        const targetRatio = 400 / 230; // ≈ 1.739
+        const isValid = Math.abs(aspectRatio - targetRatio) < 0.1;
+        resolve(isValid);
+      };
+
+      img.onerror = () => {
+        resolve(false);
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -60,7 +80,16 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
       "image/png": [],
     },
     maxSize: 5 * 1024 * 1024, // 5MB
-    onDrop: (acceptedFiles, fileRejections) => {
+    onDrop: async (acceptedFiles, fileRejections) => {
+      const isValid = await validateImageAspectRatio(acceptedFiles[0]);
+
+      if (!isValid) {
+        setErrors({
+          ...errors,
+          thumbnail: "Please upload an image with a 4:3 aspect ratio.",
+        });
+        return;
+      }
       if (fileRejections.length > 0) {
         setErrors({
           ...errors,
@@ -113,6 +142,16 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
       setErrors({ ...errors, category: "" });
     }
   };
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    dispatch({
+      type: "SET_COURSE_DETAILS",
+      payload: { language: e.target.value },
+    });
+
+    if (errors.language) {
+      setErrors({ ...errors, language: "" });
+    }
+  };
 
   const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch({
@@ -138,6 +177,10 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
 
     if (!courseDetails.category) {
       newErrors.category = "Category is required";
+    }
+
+    if (!courseDetails.language) {
+      newErrors.language = "Language is required";
     }
 
     if (!courseDetails.level) {
@@ -231,35 +274,65 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
           <p className="mt-1 text-sm text-red-600">{errors.thumbnail}</p>
         )}
       </div>
-
-      <div className="mb-6">
-        <label
-          htmlFor="title"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
-          Course Title <span className="text-red-500">*</span>
-        </label>
-        <div className="relative">
-          <input
-            type="text"
-            id="title"
-            value={courseDetails.title}
-            onChange={handleTitleChange}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label
+            htmlFor="title"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Course Title <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              id="title"
+              value={courseDetails.title}
+              onChange={handleTitleChange}
+              className={`w-full px-4 py-2 border text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
               ${
                 errors.title
                   ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                   : "border-gray-300"
               }`}
-            placeholder="Enter a descriptive title for your course"
-          />
-          <div className="absolute right-3 top-2 text-xs text-gray-500">
-            {courseDetails.title.length}/100
+              placeholder="Enter course title"
+            />
+            <div className="absolute right-3 top-2 text-xs text-gray-500">
+              {courseDetails.title.length}/100
+            </div>
           </div>
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+          )}
         </div>
-        {errors.title && (
-          <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-        )}
+        <div>
+          <label
+            htmlFor="language"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Language <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="language"
+            value={courseDetails.language}
+            onChange={handleLanguageChange}
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
+              ${
+                errors.category
+                  ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                  : "border-gray-300"
+              }`}
+          >
+            <option value="">Select a language</option>
+            {LANGUAGES.map((language) => (
+              <option key={language} value={language}>
+                {language}
+              </option>
+            ))}
+          </select>
+          {errors.language && (
+            <p className="mt-1 text-sm text-red-600">{errors.language}</p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

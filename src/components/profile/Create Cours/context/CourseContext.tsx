@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { CourseState } from '../types';
+import { CourseState, VideoFile } from '../types';
 
 type CourseAction =
   | { type: 'SET_COURSE_DETAILS'; payload: Partial<CourseState['courseDetails']> }
@@ -8,10 +8,9 @@ type CourseAction =
   | { type: 'UPDATE_SECTION'; payload: { id: string; updates: Partial<CourseState['sections'][0]> } }
   | { type: 'REMOVE_SECTION'; payload: string }
   | { type: 'REORDER_SECTIONS'; payload: CourseState['sections'] }
-  | { type: 'SET_VIDEOS'; payload: CourseState['videos'] }
-  | { type: 'ADD_VIDEO'; payload: CourseState['videos'][0] }
-  | { type: 'UPDATE_VIDEO'; payload: { id: string; updates: Partial<CourseState['videos'][0]> } }
-  | { type: 'REMOVE_VIDEO'; payload: string }
+  | { type: 'ADD_VIDEO_TO_SECTION'; payload: { sectionId: string; video: VideoFile } }
+  | { type: 'UPDATE_VIDEO_IN_SECTION'; payload: { sectionId: string; videoId: string; updates: Partial<VideoFile> } }
+  | { type: 'REMOVE_VIDEO_FROM_SECTION'; payload: { sectionId: string; videoId: string } }
   | { type: 'SET_QUIZ_QUESTIONS'; payload: CourseState['quizQuestions'] }
   | { type: 'ADD_QUIZ_QUESTION'; payload: CourseState['quizQuestions'][0] }
   | { type: 'UPDATE_QUIZ_QUESTION'; payload: { id: string; updates: Partial<CourseState['quizQuestions'][0]> } }
@@ -29,10 +28,10 @@ const initialState: CourseState = {
     thumbnailPreview: '',
     category: '',
     level: '',
+    language: '',
     description: '',
   },
   sections: [],
-  videos: [],
   quizQuestions: [],
   currentStep: 0,
   isPublished: false,
@@ -61,7 +60,7 @@ const courseReducer = (state: CourseState, action: CourseAction): CourseState =>
     case 'ADD_SECTION':
       return {
         ...state,
-        sections: [...state.sections, action.payload],
+        sections: [...state.sections, { ...action.payload, videos: [] }],
       };
     case 'UPDATE_SECTION':
       return {
@@ -82,29 +81,44 @@ const courseReducer = (state: CourseState, action: CourseAction): CourseState =>
         ...state,
         sections: action.payload,
       };
-    case 'SET_VIDEOS':
+    case 'ADD_VIDEO_TO_SECTION':
       return {
         ...state,
-        videos: action.payload,
-      };
-    case 'ADD_VIDEO':
-      return {
-        ...state,
-        videos: [...state.videos, action.payload],
-      };
-    case 'UPDATE_VIDEO':
-      return {
-        ...state,
-        videos: state.videos.map((video) =>
-          video.id === action.payload.id
-            ? { ...video, ...action.payload.updates }
-            : video
+        sections: state.sections.map((section) =>
+          section.id === action.payload.sectionId
+            ? { ...section, videos: [...section.videos, action.payload.video] }
+            : section
         ),
       };
-    case 'REMOVE_VIDEO':
+    case 'UPDATE_VIDEO_IN_SECTION':
       return {
         ...state,
-        videos: state.videos.filter((video) => video.id !== action.payload),
+        sections: state.sections.map((section) =>
+          section.id === action.payload.sectionId
+            ? {
+                ...section,
+                videos: section.videos.map((video) =>
+                  video.id === action.payload.videoId
+                    ? { ...video, ...action.payload.updates }
+                    : video
+                ),
+              }
+            : section
+        ),
+      };
+    case 'REMOVE_VIDEO_FROM_SECTION':
+      return {
+        ...state,
+        sections: state.sections.map((section) =>
+          section.id === action.payload.sectionId
+            ? {
+                ...section,
+                videos: section.videos.filter(
+                  (video) => video.id !== action.payload.videoId
+                ),
+              }
+            : section
+        ),
       };
     case 'SET_QUIZ_QUESTIONS':
       return {
@@ -128,7 +142,9 @@ const courseReducer = (state: CourseState, action: CourseAction): CourseState =>
     case 'REMOVE_QUIZ_QUESTION':
       return {
         ...state,
-        quizQuestions: state.quizQuestions.filter((question) => question.id !== action.payload),
+        quizQuestions: state.quizQuestions.filter(
+          (question) => question.id !== action.payload
+        ),
       };
     case 'REORDER_QUIZ_QUESTIONS':
       return {

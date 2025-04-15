@@ -2,8 +2,23 @@ export interface CourseDetails {
   title: string;
   thumbnail: File | null;
   thumbnailPreview: string;
+  secureUrl?: string;
   category: string;
   level: string;
+  language: string;
+  description: string;
+}
+
+export interface VideoFile {
+  id: string;
+  publicId: string;
+  file: File;
+  secureUrl: string;
+  progress: number;
+  preview: string;
+  error?: string;
+  duration: number;
+  title: string;
   description: string;
 }
 
@@ -11,15 +26,7 @@ export interface Section {
   id: string;
   title: string;
   description: string;
-}
-
-export interface VideoFile {
-  id: string;
-  file: File;
-  progress: number;
-  preview: string;
-  error?: string;
-  duration?: number;
+  videos: VideoFile[];
 }
 
 export interface QuizQuestion {
@@ -31,13 +38,12 @@ export interface QuizQuestion {
     C: string;
     D: string;
   };
-  correctAnswer: 'A' | 'B' | 'C' | 'D' | '';
+  correctAnswer: 'A' | 'B' | 'C' | 'D' ;
 }
 
 export interface CourseState {
   courseDetails: CourseDetails;
   sections: Section[];
-  videos: VideoFile[];
   quizQuestions: QuizQuestion[];
   currentStep: number;
   isPublished: boolean;
