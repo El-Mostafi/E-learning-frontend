@@ -4,7 +4,6 @@ import Wrapper from "./layouts/Wrapper";
 import { AuthProvider } from "./context/AuthContext";
 
 import HomeOne from "./components/homes/home";
-import HomeTwo from "./components/homes/home-2";
 import HomeThree from "./components/homes/home-3";
 import HomeFour from "./components/homes/home-4";
 import HomeFive from "./components/homes/home-5";
@@ -40,6 +39,7 @@ import Verification from "./components/verification-code";
 import ForgotPassword from "./components/forgot-password";
 import ResetPassword from "./components/reset-password";
 import Profile from "./components/profile";
+import MyCourses from "./components/my-cours";
 
 const router = createBrowserRouter([
   { path: "/", element: <HomeOne /> },
@@ -49,7 +49,8 @@ const router = createBrowserRouter([
   { path: "/forgot-password", element: <ForgotPassword /> },
   { path: "/reset-password", element: <ResetPassword /> },
   { path: "/contact", element: <Contact /> },
-  { path: "/home-2", element: <HomeTwo /> },
+  { path: "/instructor", element: <Instructor /> },
+  { path: "/instructor-details/:id", element: <InstructorDetails /> },
   { path: "*", element: <NotFound /> },
 
   // Protected Routes
@@ -74,8 +75,6 @@ const router = createBrowserRouter([
       { path: "/shop-cart", element: <ShopCart /> },
       { path: "/checkout", element: <Checkout /> },
       { path: "/about", element: <About /> },
-      { path: "/instructor", element: <Instructor /> },
-      { path: "/instructor-details", element: <InstructorDetails /> },
       { path: "/program", element: <Program /> },
       { path: "/program-details", element: <ProgramDetails /> },
       { path: "/news", element: <News /> },
@@ -84,6 +83,7 @@ const router = createBrowserRouter([
       { path: "/pricing", element: <Pricing /> },
       { path: "/faq", element: <Faq /> },
       { path: "/profile", element: <Profile /> },
+      { path: "/my-courses", element: <MyCourses /> },
     ],
   },
 ]);
