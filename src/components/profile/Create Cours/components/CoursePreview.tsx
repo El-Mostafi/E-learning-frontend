@@ -1,90 +1,227 @@
-import React, { useState } from 'react';
-import { useCourse } from '../context/CourseContext';
-import Button from './common/Button';
-import { CheckCircle, AlertCircle, Edit, Book, Video, HelpCircle, DollarSign, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useCourse } from "../context/CourseContext";
+import Button from "./common/Button";
+import {
+  CheckCircle,
+  AlertCircle,
+  Edit,
+  Book,
+  HelpCircle,
+  DollarSign,
+  Eye,
+} from "lucide-react";
+import { cloudService } from "../../../../services/cloudService";
+import { coursService } from "../../../../services/coursService";
+import axios from "axios";
 
 const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { state, dispatch } = useCourse();
-  const { courseDetails, sections, videos, quizQuestions, pricing, visibility } = state;
-  
+  const { courseDetails, sections, quizQuestions, pricing, visibility } = state;
+
   const [errors, setErrors] = useState<string[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  
+
   const validateCourse = () => {
     const newErrors: string[] = [];
-    
-    if (!courseDetails.title || !courseDetails.thumbnail || !courseDetails.category || 
-        !courseDetails.level || !courseDetails.description) {
-      newErrors.push('Course details are incomplete');
+
+    if (
+      !courseDetails.title ||
+      !courseDetails.thumbnail ||
+      !courseDetails.category ||
+      !courseDetails.level ||
+      !courseDetails.description
+    ) {
+      newErrors.push("Course details are incomplete");
     }
-    
+
     if (sections.length === 0) {
-      newErrors.push('Your course needs at least one section');
+      newErrors.push("Your course needs at least one section");
     }
-    
-    if (videos.length === 0) {
-      newErrors.push('Your course needs at least one video');
-    }
-    
+
     if (quizQuestions.length === 0) {
-      newErrors.push('Your course needs at least one quiz question');
+      newErrors.push("Your course needs at least one quiz question");
     }
-    
+
     if (!pricing.isFree && (!pricing.price || pricing.price <= 0)) {
-      newErrors.push('Please set a valid price for your course');
+      newErrors.push("Please set a valid price for your course");
     }
-    
+
     setErrors(newErrors);
     return newErrors.length === 0;
   };
-  
+
   const handlePublish = () => {
     if (validateCourse()) {
+      window.scrollTo({ top: 400, behavior: "smooth" });
       setShowConfirmation(true);
     }
   };
-  
-  const confirmPublish = () => {
-    dispatch({ type: 'PUBLISH_COURSE' });
+
+  useEffect(() => {
+    console.log(state);
+  }, []);
+
+  const confirmPublish = async () => {
+    dispatch({ type: "PUBLISH_COURSE" });
     // Here you would typically send the course data to your backend
-    alert('Course published successfully!');
+
+    try {
+      if (!state.courseDetails.thumbnail) {
+        setErrors([...errors, "Thumbnail is required"]);
+        setShowConfirmation(false);
+        window.scrollTo({ top: 400, behavior: "smooth" });
+        return;
+      }
+      let securUrl: string = "";
+      if (!state.courseDetails.secureUrl) {
+        const { data: signatureData } = await cloudService.getSignatureImage();
+        if (!signatureData) {
+          setErrors([...errors, "An error occurred"]);
+          setShowConfirmation(false);
+          window.scrollTo({ top: 400, behavior: "smooth" });
+          return;
+        }
+
+        const { data: uploadData } = await cloudService.uploadFile(
+          state.courseDetails.thumbnail!,
+          signatureData,
+          "images_preset"
+        );
+        securUrl = uploadData.secure_url;
+        console.log("Uploaded asset:", uploadData);
+        if (!uploadData.secure_url) {
+          setErrors([...errors, "test"]);
+          setShowConfirmation(false);
+          window.scrollTo({ top: 400, behavior: "smooth" });
+          return;
+        }
+        dispatch({
+          type: "SET_COURSE_DETAILS",
+          payload: { secureUrl: uploadData.secure_url },
+        });
+      }
+
+      const response = await coursService.createCours({
+        ...state,
+        courseDetails: {
+          ...state.courseDetails,
+          secureUrl: securUrl == "" ? state.courseDetails.secureUrl : securUrl,
+        },
+      });
+      console.log("Course created:", response.data);
+      if (response.data.success == true) {
+        console.log("course created successfully");
+
+        let index = 1;
+        const publicIds: string[] = [];
+
+        for (const section of state.sections) {
+          const sectionPayload = {
+            title: section.title,
+            description: section.description,
+            isPreview: false,
+            orderIndex: index++,
+          };
+
+          const SectionResponse = await coursService.createSection(
+            response.data.courseId,
+            sectionPayload
+          );
+          console.log("section created:", SectionResponse.data);
+
+          if (SectionResponse.data.success == true) {
+            console.log("section created successfully");
+
+            for (const video of section.videos) {
+              const videoPayload = {
+                title: video.title,
+                description: video.description,
+                videoUrl: video.secureUrl,
+                isPreview: false,
+                duration: video.duration,
+                publicId: video.publicId,
+              };
+
+              publicIds.push(video.publicId);
+
+              const VideoResponse = await coursService.createVideo(
+                response.data.courseId,
+                SectionResponse.data.sectionId,
+                videoPayload
+              );
+
+              console.log("video created:", VideoResponse.data);
+
+              if (VideoResponse.data.success == true) {
+                console.log("video created successfully");
+              }
+            }
+          }
+        }
+        console.log(publicIds);
+        const publishResponse = await coursService.publishCours(
+          response.data.courseId,
+          publicIds
+        );
+        console.log("Course published:", publishResponse.data);
+        if (publishResponse.data.success == true) {
+          console.log("Course published successfully");
+          window.location.href = "/my-courses";
+        }
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setErrors([
+          ...errors,
+          error.response?.data.errors || "An error occurred",
+        ]);
+      } else {
+        console.error("Unexpected error:", error);
+        setErrors([...errors, "An error occurred"]);
+      }
+      setShowConfirmation(false);
+      window.scrollTo({ top: 400, behavior: "smooth" });
+    }
+
+    // alert('Course published successfully!');
   };
-  
+
   const handlePricingChange = (isFree: boolean) => {
     dispatch({
-      type: 'SET_PRICING',
+      type: "SET_PRICING",
       payload: { isFree },
     });
   };
-  
+
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const price = parseFloat(e.target.value);
     if (!isNaN(price)) {
       dispatch({
-        type: 'SET_PRICING',
+        type: "SET_PRICING",
         payload: { price },
       });
     }
   };
-  
-  const handleVisibilityChange = (value: 'public' | 'private' | 'unlisted') => {
+
+  const handleVisibilityChange = (value: "public" | "private" | "unlisted") => {
     dispatch({
-      type: 'SET_VISIBILITY',
+      type: "SET_VISIBILITY",
       payload: value,
     });
   };
-  
+
   const goToStep = (step: number) => {
     dispatch({
-      type: 'SET_CURRENT_STEP',
+      type: "SET_CURRENT_STEP",
       payload: step,
     });
   };
-  
+
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6">Course Preview & Publish</h2>
-      
+
       {errors.length > 0 && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <h3 className="text-red-700 font-medium mb-2 flex items-center">
@@ -93,12 +230,14 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </h3>
           <ul className="list-disc pl-5 space-y-1">
             {errors.map((error, index) => (
-              <li key={index} className="text-red-600 text-sm">{error}</li>
+              <li key={index} className="text-red-600 text-sm">
+                {error}
+              </li>
             ))}
           </ul>
         </div>
       )}
-      
+
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium">Course Summary</h3>
@@ -111,14 +250,14 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             Edit Details
           </button>
         </div>
-        
+
         <div className="bg-gray-50 rounded-lg overflow-hidden border">
           <div className="md:flex">
             <div className="md:w-1/3">
               {courseDetails.thumbnailPreview ? (
-                <img 
-                  src={courseDetails.thumbnailPreview} 
-                  alt="Course thumbnail" 
+                <img
+                  src={courseDetails.thumbnailPreview}
+                  alt="Course thumbnail"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -128,7 +267,9 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
             </div>
             <div className="p-4 md:w-2/3">
-              <h4 className="font-bold text-xl mb-2">{courseDetails.title || 'Untitled Course'}</h4>
+              <h4 className="font-bold text-xl mb-2">
+                {courseDetails.title || "Untitled Course"}
+              </h4>
               <div className="flex flex-wrap gap-2 mb-3">
                 {courseDetails.category && (
                   <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
@@ -141,13 +282,16 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   </span>
                 )}
               </div>
-              <div className="text-sm text-gray-600" dangerouslySetInnerHTML={{ __html: courseDetails.description }}></div>
+              <div
+                className="text-sm text-gray-600"
+                dangerouslySetInnerHTML={{ __html: courseDetails.description }}
+              ></div>
             </div>
           </div>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
           <div className="flex items-center text-blue-700 mb-2">
             <Book className="w-5 h-5 mr-2" />
@@ -163,8 +307,8 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             Edit
           </button>
         </div>
-        
-        <div className="bg-purple-50 border border-purple-100 rounded-lg p-4">
+
+        {/* <div className="bg-purple-50 border border-purple-100 rounded-lg p-4">
           <div className="flex items-center text-purple-700 mb-2">
             <Video className="w-5 h-5 mr-2" />
             <h3 className="font-medium">Videos</h3>
@@ -178,8 +322,8 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <Edit className="w-4 h-4 mr-1" />
             Edit
           </button>
-        </div>
-        
+        </div> */}
+
         <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
           <div className="flex items-center text-amber-700 mb-2">
             <HelpCircle className="w-5 h-5 mr-2" />
@@ -188,7 +332,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <p className="text-2xl font-bold">{quizQuestions.length}</p>
           <button
             type="button"
-            onClick={() => goToStep(3)}
+            onClick={() => goToStep(2)}
             className="mt-2 text-amber-600 hover:text-amber-800 text-sm flex items-center"
           >
             <Edit className="w-4 h-4 mr-1" />
@@ -196,10 +340,10 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </button>
         </div>
       </div>
-      
+
       <div className="mb-6">
         <h3 className="text-lg font-medium mb-4">Course Settings</h3>
-        
+
         <div className="space-y-4">
           <div className="border rounded-lg overflow-hidden">
             <div className="bg-gray-50 p-3 border-b">
@@ -231,7 +375,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <span className="ml-2">Paid</span>
                 </label>
               </div>
-              
+
               {!pricing.isFree && (
                 <div className="flex items-center">
                   <span className="text-gray-500 mr-2">$</span>
@@ -239,9 +383,9 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     type="number"
                     min="0.99"
                     step="0.01"
-                    value={pricing.price || ''}
+                    value={pricing.price || ""}
                     onChange={handlePriceChange}
-                    className="w-24 px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-24 px-3 py-2 border text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Price"
                   />
                   <span className="text-gray-500 ml-2">USD</span>
@@ -249,7 +393,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
             </div>
           </div>
-          
+
           <div className="border rounded-lg overflow-hidden">
             <div className="bg-gray-50 p-3 border-b">
               <h4 className="font-medium flex items-center">
@@ -264,43 +408,49 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     type="radio"
                     name="visibility"
                     value="public"
-                    checked={visibility === 'public'}
-                    onChange={() => handleVisibilityChange('public')}
+                    checked={visibility === "public"}
+                    onChange={() => handleVisibilityChange("public")}
                     className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
                   <div className="ml-2">
                     <span className="font-medium block">Public</span>
-                    <span className="text-sm text-gray-500">Anyone can find and access your course</span>
+                    <span className="text-sm text-gray-500">
+                      Anyone can find and access your course
+                    </span>
                   </div>
                 </label>
-                
+
                 <label className="flex items-start">
                   <input
                     type="radio"
                     name="visibility"
                     value="unlisted"
-                    checked={visibility === 'unlisted'}
-                    onChange={() => handleVisibilityChange('unlisted')}
+                    checked={visibility === "unlisted"}
+                    onChange={() => handleVisibilityChange("unlisted")}
                     className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
                   <div className="ml-2">
                     <span className="font-medium block">Unlisted</span>
-                    <span className="text-sm text-gray-500">Only people with the link can access your course</span>
+                    <span className="text-sm text-gray-500">
+                      Only people with the link can access your course
+                    </span>
                   </div>
                 </label>
-                
+
                 <label className="flex items-start">
                   <input
                     type="radio"
                     name="visibility"
                     value="private"
-                    checked={visibility === 'private'}
-                    onChange={() => handleVisibilityChange('private')}
+                    checked={visibility === "private"}
+                    onChange={() => handleVisibilityChange("private")}
                     className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
                   <div className="ml-2">
                     <span className="font-medium block">Private</span>
-                    <span className="text-sm text-gray-500">Only you can access your course</span>
+                    <span className="text-sm text-gray-500">
+                      Only you can access your course
+                    </span>
                   </div>
                 </label>
               </div>
@@ -308,29 +458,25 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-between">
-        <Button 
-          onClick={onBack} 
-          variant="outline"
-        >
+        <Button onClick={onBack} variant="outline">
           Back
         </Button>
-        <Button onClick={handlePublish}>
-          Publish Course
-        </Button>
+        <Button onClick={handlePublish}>Publish Course</Button>
       </div>
-      
+
       {showConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold mb-4">Confirm Publication</h3>
             <p className="mb-6 text-gray-600">
-              Are you sure you want to publish this course? Once published, it will be available according to your visibility settings.
+              Are you sure you want to publish this course? Once published, it
+              will be available according to your visibility settings.
             </p>
             <div className="flex justify-end space-x-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowConfirmation(false)}
               >
                 Cancel

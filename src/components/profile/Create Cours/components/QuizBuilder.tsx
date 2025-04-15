@@ -26,7 +26,7 @@ const QuizBuilder: React.FC<{ onContinue: () => void; onBack: () => void }> = ({
         C: '',
         D: '',
       },
-      correctAnswer: '' as 'A' | 'B' | 'C' | 'D' | '',
+      correctAnswer: '' as 'A' | 'B' | 'C' | 'D' ,
     };
     
     dispatch({
@@ -61,7 +61,7 @@ const QuizBuilder: React.FC<{ onContinue: () => void; onBack: () => void }> = ({
           id,
           updates: { 
             options: { 
-              ...quizQuestions.find(q => q.id === id)?.options,
+              ...quizQuestions.find(q => q.id === id)!.options,
               [option]: value 
             } 
           },
@@ -373,7 +373,7 @@ const QuizBuilder: React.FC<{ onContinue: () => void; onBack: () => void }> = ({
                                 id={`question-${question.id}`}
                                 value={question.question}
                                 onChange={(e) => updateQuestion(question.id, 'question', e.target.value)}
-                                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
+                                className={`w-full px-3 py-2 border text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
                                   ${errors[`${question.id}-question`] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}`}
                                 placeholder="Enter your question"
                               />
@@ -405,7 +405,7 @@ const QuizBuilder: React.FC<{ onContinue: () => void; onBack: () => void }> = ({
                                       type="text"
                                       value={question.options[option as 'A' | 'B' | 'C' | 'D']}
                                       onChange={(e) => updateQuestion(question.id, option, e.target.value)}
-                                      className={`flex-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
+                                      className={`flex-1 px-3 py-2 border text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
                                         ${errors[`${question.id}-${option}`] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}`}
                                       placeholder={`Option ${option}`}
                                     />
