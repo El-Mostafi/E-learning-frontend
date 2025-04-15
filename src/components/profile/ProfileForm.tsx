@@ -551,7 +551,7 @@ function ProfileForm() {
         DEFAULT_AVATAR !== profile.profileImage &&
         user!.profileImg !== profile.profileImage
       ) {
-        const { data: signatureData } = await cloudService.getSignature();
+        const { data: signatureData } = await cloudService.getSignatureImage();
         if (!signatureData) return console.error("Signature is missing.");
 
         if (!croppedImage) return console.error("Image is missing.");
@@ -1134,10 +1134,10 @@ function ProfileForm() {
                                 Popular Courses
                               </h3>
                             </div>
-                            <button className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                            <Link to="/my-courses" className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
                               View All
                               <ChevronRight className="w-4 h-4" />
-                            </button>
+                            </Link>
                           </div>
                           <div className="space-y-4">
                             <div className="row">
@@ -1212,25 +1212,6 @@ function ProfileForm() {
                                           Course
                                         </Link>
                                       </h3>
-                                      <div className="my-6">
-                                        <div className="flex justify-between items-center mb-2">
-                                          <span className="text-sm text-gray-600">
-                                            Progress
-                                          </span>
-                                          <span className="text-sm font-medium text-gray-900">
-                                            65%
-                                          </span>
-                                        </div>
-                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                          <div
-                                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `65%` }}
-                                          />
-                                        </div>
-                                        <div className="mt-2 text-sm text-gray-600">
-                                          {12} of {24} lessons completed
-                                        </div>
-                                      </div>
                                       <div className="client-items">
                                         <div
                                           className="client-img bg-cover"
