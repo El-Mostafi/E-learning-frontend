@@ -80,7 +80,7 @@ export default function Preloader() {
               }}
             >
               <div className="edu-preloader-icon">
-                <img src="assets/img/preloader.gif" alt="" />
+                <img src="/assets/img/preloader.gif" alt="" />
               </div>
             </div>
 
