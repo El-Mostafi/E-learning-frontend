@@ -70,6 +70,7 @@ export const authService = {
   updateUser: async (payload: {
     userName?: string;
     profileImg?: string;
+    publicId?: string;
     educationLevel?: string;
     fieldOfStudy?: string;
     expertise?: string;
