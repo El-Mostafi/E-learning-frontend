@@ -2,6 +2,7 @@ export interface CourseDetails {
   title: string;
   thumbnail: File | null;
   thumbnailPreview: string;
+  imgPublicId?: string;
   secureUrl?: string;
   category: string;
   level: string;

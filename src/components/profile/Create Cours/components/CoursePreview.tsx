@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useCourse } from "../context/CourseContext";
 import Button from "./common/Button";
 import {
@@ -57,13 +57,9 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  useEffect(() => {
-    console.log(state);
-  }, []);
+ 
 
   const confirmPublish = async () => {
-    dispatch({ type: "PUBLISH_COURSE" });
-    // Here you would typically send the course data to your backend
 
     try {
       if (!state.courseDetails.thumbnail) {
@@ -73,6 +69,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return;
       }
       let securUrl: string = "";
+      let publicId: string = ""; 
       if (!state.courseDetails.secureUrl) {
         const { data: signatureData } = await cloudService.getSignatureImage();
         if (!signatureData) {
@@ -88,6 +85,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           "images_preset"
         );
         securUrl = uploadData.secure_url;
+        publicId = uploadData.public_id;
         console.log("Uploaded asset:", uploadData);
         if (!uploadData.secure_url) {
           setErrors([...errors, "test"]);
@@ -97,15 +95,16 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
         dispatch({
           type: "SET_COURSE_DETAILS",
-          payload: { secureUrl: uploadData.secure_url },
+          payload: { secureUrl: uploadData.secure_url, imgPublicId: uploadData.public_id },
         });
       }
-
+      console.log(state);
       const response = await coursService.createCours({
         ...state,
         courseDetails: {
           ...state.courseDetails,
           secureUrl: securUrl == "" ? state.courseDetails.secureUrl : securUrl,
+          imgPublicId: publicId == "" ? state.courseDetails.imgPublicId : publicId
         },
       });
       console.log("Course created:", response.data);
@@ -164,21 +163,20 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           publicIds
         );
         console.log("Course published:", publishResponse.data);
-        if (publishResponse.data.success == true) {
-          console.log("Course published successfully");
+        
           window.location.href = "/my-courses";
-        }
       }
+      dispatch({ type: "PUBLISH_COURSE" });
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("API Error:", error.response?.data);
         setErrors([
           ...errors,
-          error.response?.data.errors || "An error occurred",
+          "An error occurred Try again later",
         ]);
       } else {
         console.error("Unexpected error:", error);
-        setErrors([...errors, "An error occurred"]);
+        setErrors([...errors, "An error occurred Try again later"]);
       }
       setShowConfirmation(false);
       window.scrollTo({ top: 400, behavior: "smooth" });

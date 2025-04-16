@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 const CATEGORIES = [
+  "Web Development",
   "Programming",
   "Design",
   "Business",
