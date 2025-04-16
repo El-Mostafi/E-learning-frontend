@@ -537,6 +537,7 @@ function ProfileForm() {
       const updatePayload = {
         userName: `${profile.firstName}|${profile.lastName}`,
         profileImg: profile.profileImage,
+        publicId:"",
         ...(profile.role === "student" && {
           educationLevel: profile.educationLevel,
           fieldOfStudy: profile.fieldOfStudy,
@@ -570,14 +571,15 @@ function ProfileForm() {
         }));
 
         updatePayload.profileImg = uploadData.secure_url;
-
+        updatePayload.publicId = uploadData.public_id;
+        
         const { data: updateData } = await authService.updateUser(
           updatePayload
         );
 
         console.log("User updated:", updateData);
       } else {
-        setProfile((prev) => ({ ...prev, profileImage: DEFAULT_AVATAR }));
+        // setProfile((prev) => ({ ...prev, profileImage: DEFAULT_AVATAR }));
 
         const { data: updateData } = await authService.updateUser(
           updatePayload
