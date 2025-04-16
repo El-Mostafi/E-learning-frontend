@@ -4,6 +4,7 @@ interface CreateCoursePayload {
   title: string;
   description: string;
   thumbnailPreview: string;
+  imgPublicId: string;
   level: string;
   language: string;
   pricing: {
@@ -39,12 +40,34 @@ interface CreateVideoPayload {
   publicId: string;
   isPreview: boolean;
 }
+export interface courseInstructor {
+  id: string;
+  title: string;
+  thumbnailPreview: string;
+  category: string;
+  level: string;
+  reviews: number;
+  students: number;
+  instructorName: string;
+  instructorImg: string;
+  createdAt: Date;
+}
+export interface courseDataGenerale extends courseInstructor {
+  description: string;
+  price: number;
+  duration: number;
+  InstructorId: string;
+}
 export const coursService = {
   createCours: async (courseState: CourseState) => {
     const payload: CreateCoursePayload = {
       title: courseState.courseDetails.title,
-      description: courseState.courseDetails.description.replace(/<p>|<\/p>/g, ''),
+      description: courseState.courseDetails.description.replace(
+        /<p>|<\/p>/g,
+        ""
+      ),
       thumbnailPreview: courseState.courseDetails.secureUrl!,
+      imgPublicId: courseState.courseDetails.imgPublicId!,
       level: courseState.courseDetails.level,
       language: courseState.courseDetails.language,
       pricing: {
@@ -80,7 +103,7 @@ export const coursService = {
   },
   createVideo: async (
     courseId: string,
-    sectionId:string,
+    sectionId: string,
     VideoData: CreateVideoPayload
   ) => {
     const response = await axiosInstance.post(
@@ -94,6 +117,22 @@ export const coursService = {
       `/courses/${courseId}/publish`,
       publicIds
     );
+    return response;
+  },
+  getInstructorCourses: async () => {
+    const response = await axiosInstance.get<courseInstructor[]>(
+      "/courses/instructor/my-courses"
+    );
+    return response.data;
+  },
+  getGeneralDataCourses: async () => {
+    const response = await axiosInstance.get<courseDataGenerale[]>(
+      "/courses"
+    );
+    return response.data;
+  },
+  deleteCours: async (courseId: string) => {
+    const response = await axiosInstance.delete(`/courses/delete/${courseId}`);
     return response;
   },
 };
