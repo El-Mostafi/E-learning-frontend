@@ -2,7 +2,7 @@
 import { useState, useCallback, useRef, FC } from "react";
 import { useClickAway } from "react-use";
 
-interface Option {
+export interface Option {
   value: string;
   text: string;
 }

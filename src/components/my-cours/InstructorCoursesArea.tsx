@@ -1,455 +1,360 @@
+import  { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
-import NiceSelect from "../../ui/NiceSelect";
+import NiceSelect, { Option } from "../../ui/NiceSelect";
+import { coursService, courseInstructor } from "../../services/coursService";
+import { Star, AlertCircle } from "lucide-react";
 
- 
-const InstructorCoursesArea = () => {
-  const selectHandler = () => { };
+function InstructorCoursesArea() {
+  const [courses, setCourses] = useState<courseInstructor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<courseInstructor | null>(null);
+  const [sortBy, setSortBy] = useState("01");
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 9;
+
+  useEffect(() => {
+    const fetchInstructorCours = async () => {
+      try {
+        coursService.getInstructorCourses().then((response) => {
+          setCourses(response);
+        });
+      } catch (err) {
+        setError("Failed to load courses. Please try again later.");
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInstructorCours();
+  }, []);
+
+  const indexOfLastCourse = currentPage * coursesPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+  const currentCourses = courses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const totalPages = Math.ceil(courses.length / coursesPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleDelete = (course: courseInstructor) => {
+    setCourseToDelete(course);
+    setShowDeleteModal(true);
+  };
+  
+
+  const confirmDelete = async () => {
+    if (!courseToDelete) return;
+    
+    try {
+      const response = await coursService.deleteCours(courseToDelete.id);
+      console.log(response.data);
+      setCourses(courses.filter(course => course.id !== courseToDelete.id));
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+    } catch (err) {
+      setError("Failed to delete course. Please try again later.");
+      console.log(err);
+    }
+  };
+
+  const selectHandler = (item: Option,value: string) => {
+    setSortBy(value);
+    const sortedCourses = [...courses];
+    console.log(item, sortBy);
+    switch (value) {
+      case "02": 
+        sortedCourses.sort((a, b) => b.students - a.students);
+        break;
+      case "03": 
+        sortedCourses.sort((a, b) => b.reviews - a.reviews);
+        break;
+      case "04": 
+        sortedCourses.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        break;
+      default: 
+        sortedCourses.sort((a, b) => 
+          a.id.localeCompare(b.id)
+        );
+    }
+
+    setCourses(sortedCourses);
+    setCurrentPage(1);
+  };
+
+  if (loading) {
+    return (
+      <div className="container text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container text-center py-5">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <>
-       <section className="popular-courses-section fix section-padding">
-            <div className="container">
-                <div className="coureses-notices-wrapper">
-                    <div className="courses-showing">
-                        <h5>Showing <span>1-9</span> Of <span>62</span> Results</h5>
-                    </div>
-                    <div className="form-clt"> 
-                        <NiceSelect
-                          className="category"
-                          options={[
-                            { value: "01", text: "Sort by : Default" },
-                            { value: "02", text: "Sort by popularity" },
-                            { value: "03", text: "Sort by average rating" },
-                            { value: "04", text: "Sort by latest" }, 
-                          ]}
-                          defaultCurrent={0}
-                          onChange={selectHandler}
-                          name=""
-                          placeholder="" />
-                     </div>
-                </div>
-                <div className="row">
-                    <div className="col-xl-4 col-lg-6 col-md-6">
-                        <div className="courses-card-main-items">
-                            <div className="courses-card-items style-2">
-                                <div className="courses-image">
-                                    <img src="assets/img/courses/09.jpg" alt="img" />
-                                    <h3 className="courses-title">Web Design</h3>
-                                    <h4 className="topic-title">Advance Web Design</h4>
-                                    <div className="arrow-items">
-                                        <div className="GlidingArrow">
-                                            <img src="assets/img/courses/a1.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay1">
-                                            <img src="assets/img/courses/a2.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay2">
-                                            <img src="assets/img/courses/a3.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay3">
-                                            <img src="assets/img/courses/a4.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay4">
-                                            <img src="assets/img/courses/a5.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay5">
-                                            <img src="assets/img/courses/a6.png" alt="img" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="courses-content">
-                                    <ul className="post-cat">
-                                        <li>
-                                            <Link to="/courses">Design</Link>
-                                        </li>
-                                        <li>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                        </li>
-                                    </ul>
-                                    <h3>
-                                        <Link to="/courses-details">
-                                            Learn With Advance Web
-                                            Design (UX/UI) Course
-                                        </Link>
-                                    </h3>
-                                    <div className="client-items">
-                                        <div className="client-img bg-cover" style={{background: `url(/assets/img/courses/client-1.png)`}}></div>
-                                        <p>Paul C. Deleon</p>
-                                    </div>
-                                    <ul className="post-class">
-                                        <li>
-                                            <i className="far fa-books"></i>
-                                            Lessons
-                                        </li>
-                                        <li>
-                                            <i className="far fa-user"></i>
-                                            80 Students
-                                        </li>
-                                        <li>
-                                            <Link to="/courses-details" className="theme-btn">Edite</Link>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-xl-4 col-lg-6 col-md-6">
-                        <div className="courses-card-main-items">
-                            <div className="courses-card-items style-2">
-                                <div className="courses-image">
-                                    <img src="assets/img/courses/10.jpg" alt="img" />
-                                    <h3 className="courses-title">Business Finance</h3>
-                                    <h4 className="topic-title">Finance and Business</h4>
-                                    <div className="arrow-items">
-                                        <div className="GlidingArrow">
-                                            <img src="assets/img/courses/a1.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay1">
-                                            <img src="assets/img/courses/a2.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay2">
-                                            <img src="assets/img/courses/a3.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay3">
-                                            <img src="assets/img/courses/a4.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay4">
-                                            <img src="assets/img/courses/a5.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay5">
-                                            <img src="assets/img/courses/a6.png" alt="img" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="courses-content">
-                                    <ul className="post-cat">
-                                        <li>
-                                            <Link to="/courses">Business</Link>
-                                        </li>
-                                        <li>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                        </li>
-                                    </ul>
-                                    <h3>
-                                        <Link to="/courses-details">
-                                            Finance Management Building
-                                            Wealth Security Business
-                                        </Link>
-                                    </h3>
-                                    <div className="client-items">
-                                        <div className="client-img bg-cover" style={{background: `url(/assets/img/courses/client-1.png)`}}></div>
-                                        <p>Paul C. Deleon</p>
-                                    </div>
-                                    <ul className="post-class">
-                                        <li>
-                                            <i className="far fa-books"></i>
-                                            Lessons
-                                        </li>
-                                        <li>
-                                            <i className="far fa-user"></i>
-                                            80 Students
-                                        </li>
-                                        <li>
-                                            <Link to="/courses-details" className="theme-btn">Edite</Link>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-xl-4 col-lg-6 col-md-6">
-                        <div className="courses-card-main-items">
-                            <div className="courses-card-items style-2">
-                                <div className="courses-image">
-                                    <img src="assets/img/courses/11.jpg" alt="img" />
-                                    <h3 className="courses-title">Programming</h3>
-                                    <h4 className="topic-title">Advance Machine <br /> Learning</h4>
-                                    <div className="arrow-items">
-                                        <div className="GlidingArrow">
-                                            <img src="assets/img/courses/a1.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay1">
-                                            <img src="assets/img/courses/a2.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay2">
-                                            <img src="assets/img/courses/a3.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay3">
-                                            <img src="assets/img/courses/a4.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay4">
-                                            <img src="assets/img/courses/a5.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay5">
-                                            <img src="assets/img/courses/a6.png" alt="img" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="courses-content">
-                                    <ul className="post-cat">
-                                        <li>
-                                            <Link to="/courses">Programming</Link>
-                                        </li>
-                                        <li>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                        </li>
-                                    </ul>
-                                    <h3>
-                                        <Link to="/courses-details">
-                                            Introduction to Data Science and Machine Learning
-                                        </Link>
-                                    </h3>
-                                    <div className="client-items">
-                                        <div className="client-img bg-cover" style={{background: `url(/assets/img/courses/client-1.png)`}}></div>
-                                        <p>Paul C. Deleon</p>
-                                    </div>
-                                    <ul className="post-class">
-                                        <li>
-                                            <i className="far fa-books"></i>
-                                            Lessons
-                                        </li>
-                                        <li>
-                                            <i className="far fa-user"></i>
-                                            80 Students
-                                        </li>
-                                        <li>
-                                            <Link to="/courses-details" className="theme-btn">Edite</Link>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-xl-4 col-lg-6 col-md-6">
-                        <div className="courses-card-main-items">
-                            <div className="courses-card-items style-2">
-                                <div className="courses-image">
-                                    <img src="assets/img/courses/12.jpg" alt="img" />
-                                    <h3 className="courses-title">Digital Marketing</h3>
-                                    <h4 className="topic-title">Advance Digital <br /> Marketing</h4>
-                                    <div className="arrow-items">
-                                        <div className="GlidingArrow">
-                                            <img src="assets/img/courses/a1.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay1">
-                                            <img src="assets/img/courses/a2.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay2">
-                                            <img src="assets/img/courses/a3.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay3">
-                                            <img src="assets/img/courses/a4.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay4">
-                                            <img src="assets/img/courses/a5.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay5">
-                                            <img src="assets/img/courses/a6.png" alt="img" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="courses-content">
-                                    <ul className="post-cat">
-                                        <li>
-                                            <Link to="/courses">Marketing</Link>
-                                        </li>
-                                        <li>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                        </li>
-                                    </ul>
-                                    <h3>
-                                        <Link to="/courses-details">
-                                            Digital Marketing for Business
-                                            Grow and Success Sales
-                                        </Link>
-                                    </h3>
-                                    <div className="client-items">
-                                        <div className="client-img bg-cover" style={{background: `url(/assets/img/courses/client-1.png)`}}></div>
-                                        <p>Paul C. Deleon</p>
-                                    </div>
-                                    <ul className="post-class">
-                                        <li>
-                                            <i className="far fa-books"></i>
-                                            Lessons
-                                        </li>
-                                        <li>
-                                            <i className="far fa-user"></i>
-                                            80 Students
-                                        </li>
-                                        <li>
-                                            <Link to="/courses-details" className="theme-btn">Edite</Link>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-xl-4 col-lg-6 col-md-6">
-                        <div className="courses-card-main-items">
-                            <div className="courses-card-items style-2">
-                                <div className="courses-image">
-                                    <img src="assets/img/courses/13.jpg" alt="img" />
-                                    <h3 className="courses-title">Graphic Design</h3>
-                                    <h4 className="topic-title">Graphic Design <br /> Masterclass</h4>
-                                    <div className="arrow-items">
-                                        <div className="GlidingArrow">
-                                            <img src="assets/img/courses/a1.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay1">
-                                            <img src="assets/img/courses/a2.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay2">
-                                            <img src="assets/img/courses/a3.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay3">
-                                            <img src="assets/img/courses/a4.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay4">
-                                            <img src="assets/img/courses/a5.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay5">
-                                            <img src="assets/img/courses/a6.png" alt="img" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="courses-content">
-                                    <ul className="post-cat">
-                                        <li>
-                                            <Link to="/courses">Graphics</Link>
-                                        </li>
-                                        <li>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                        </li>
-                                    </ul>
-                                    <h3>
-                                        <Link to="/courses-details">
-                                            Complete to Advance Graphic
-                                            Design Masterclass
-                                        </Link>
-                                    </h3>
-                                    <div className="client-items">
-                                        <div className="client-img bg-cover" style={{background: `url(/assets/img/courses/client-1.png)`}}></div>
-                                        <p>Paul C. Deleon</p>
-                                    </div>
-                                    <ul className="post-class">
-                                        <li>
-                                            <i className="far fa-books"></i>
-                                            Lessons
-                                        </li>
-                                        <li>
-                                            <i className="far fa-user"></i>
-                                            80 Students
-                                        </li>
-                                        <li>
-                                            <Link to="/courses-details" className="theme-btn">Edite</Link>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-xl-4 col-lg-6 col-md-6">
-                        <div className="courses-card-main-items">
-                            <div className="courses-card-items style-2">
-                                <div className="courses-image">
-                                    <img src="assets/img/courses/14.jpg" alt="img" />
-                                    <h3 className="courses-title">Leadership</h3>
-                                    <h4 className="topic-title">Communication Skills</h4>
-                                    <div className="arrow-items">
-                                        <div className="GlidingArrow">
-                                            <img src="assets/img/courses/a1.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay1">
-                                            <img src="assets/img/courses/a2.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay2">
-                                            <img src="assets/img/courses/a3.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay3">
-                                            <img src="assets/img/courses/a4.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay4">
-                                            <img src="assets/img/courses/a5.png" alt="img" />
-                                        </div>
-                                        <div className="GlidingArrow delay5">
-                                            <img src="assets/img/courses/a6.png" alt="img" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="courses-content">
-                                    <ul className="post-cat">
-                                        <li>
-                                            <Link to="/courses">Leadership</Link>
-                                        </li>
-                                        <li>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                            <i className="fas fa-star"></i>
-                                        </li>
-                                    </ul>
-                                    <h3>
-                                        <Link to="/courses-details">
-                                            Effective Communication and
-                                            Leadership Skills
-                                        </Link>
-                                    </h3>
-                                    <div className="client-items">
-                                        <div className="client-img bg-cover" style={{background: `url(/assets/img/courses/client-1.png)`}}></div>
-                                        <p>Paul C. Deleon</p>
-                                    </div>
-                                    <ul className="post-class">
-                                        <li>
-                                            <i className="far fa-books"></i>
-                                            Lessons
-                                        </li>
-                                        <li>
-                                            <i className="far fa-user"></i>
-                                            80 Students
-                                        </li>
-                                        <li>
-                                            <Link to="/courses-details" className="theme-btn">Edite</Link>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="page-nav-wrap pt-5 text-center">
-                    <ul>
-                        <li><a className="page-numbers" href="#">1</a></li>
-                        <li><a className="page-numbers" href="#">2</a></li>
-                        <li><a className="page-numbers" href="#">3</a></li>
-                        <li><a className="page-numbers" href="#">4</a></li>
-                        <li><a className="page-numbers" href="#"><i className="far fa-arrow-right"></i></a></li>
-                    </ul>
-                </div>
+      <style>
+        {`
+          .icon-items {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .icon-items i {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: #C3F499;
+            font-size: 14px;
+          }
+          .icon-items i img {
+            border-radius: 50%;
+          }
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+          }
+          .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            width: 90%;
+          }
+        `}
+      </style>
+
+      <section className="popular-courses-section fix section-padding">
+        <div className="container">
+          <div className="coureses-notices-wrapper">
+            <div className="courses-showing">
+              <h5>
+                Showing <span>{indexOfFirstCourse + 1}-{Math.min(indexOfLastCourse, courses.length)}</span> Of <span>{courses.length}</span> Results
+              </h5>
             </div>
-        </section>
+            <div className="form-clt">
+              <NiceSelect
+                className="category"
+                options={[
+                  { value: "01", text: "Sort by : Default" },
+                  { value: "02", text: "Sort by popularity" },
+                  { value: "03", text: "Sort by average rating" },
+                  { value: "04", text: "Sort by latest" },
+                ]}
+                defaultCurrent={0}
+                onChange={selectHandler}
+                name=""
+                placeholder=""
+              />
+            </div>
+          </div>
+          <div className="row">
+            {currentCourses.map((cours, index) => (
+              <div
+                key={cours.id}
+                className="col-xl-4 col-lg-6 col-md-6"
+                data-wow-delay={`${0.2 + (index % 4) * 0.2}s`}
+              >
+                <div className="courses-card-main-items">
+                  <div className="courses-card-items style-2">
+                    <div className="courses-image">
+                      <img
+                        src={cours.thumbnailPreview || "assets/img/courses/09.jpg"}
+                        alt="img"
+                      />
+                      <h3 className="courses-title">{cours.title}</h3>
+                      <h4 className="topic-title">{cours.level}</h4>
+                      <div className="arrow-items">
+                        <div className="GlidingArrow">
+                          <img src="assets/img/courses/a1.png" alt="img" />
+                        </div>
+                        <div className="GlidingArrow delay1">
+                          <img src="assets/img/courses/a2.png" alt="img" />
+                        </div>
+                        <div className="GlidingArrow delay2">
+                          <img src="assets/img/courses/a3.png" alt="img" />
+                        </div>
+                        <div className="GlidingArrow delay3">
+                          <img src="assets/img/courses/a4.png" alt="img" />
+                        </div>
+                        <div className="GlidingArrow delay4">
+                          <img src="assets/img/courses/a5.png" alt="img" />
+                        </div>
+                        <div className="GlidingArrow delay5">
+                          <img src="assets/img/courses/a6.png" alt="img" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="courses-content">
+                      <ul className="post-cat">
+                        <li>
+                          <Link to="/courses">{cours.category}</Link>
+                        </li>
+                        <li className="flex items-center">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < cours.reviews
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </li>
+                      </ul>
+                      <h3>
+                        <Link to="/courses-details">{cours.title}</Link>
+                      </h3>
+                      <div className="client-items">
+                        <div className="icon-items">
+                          <i>
+                            <img
+                              src={cours.instructorImg || "assets/img/courses/c1.jpg"}
+                              alt="img"
+                            />
+                          </i>
+                        </div>
+                        <p>
+                          <Link to="/instructor-details">
+                            {cours.instructorName.replace("|", " ")}
+                          </Link>
+                        </p>
+                      </div>
+                      <ul className="post-class">
+                        <li>
+                          <i className="far fa-books"></i>
+                          Lessons
+                        </li>
+                        <li>
+                          <i className="far fa-user"></i>
+                          {cours.students} Students
+                        </li>
+                        <li>
+                          <Link to="/courses-details" className="theme-btn">
+                            Edit
+                          </Link>
+                        </li>
+                        <li>
+                          <button 
+                            onClick={() => handleDelete(cours)} 
+                            className="theme-btn red-btn"
+                          >
+                            Delete
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="page-nav-wrap pt-5 text-center">
+            <ul>
+              {currentPage > 1 && (
+                <li>
+                  <a 
+                    title='Previous'
+                    className="page-numbers" 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(currentPage - 1);
+                    }}
+                  >
+                    <i className="far fa-arrow-left"></i>
+                  </a>
+                </li>
+              )}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <li key={pageNum}>
+                  <a
+                    className={`page-numbers ${pageNum === currentPage ? 'current' : ''}`}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(pageNum);
+                    }}
+                  >
+                    {pageNum}
+                  </a>
+                </li>
+              ))}
+              {currentPage < totalPages && (
+                <li>
+                  <a 
+                    title='Next'
+                    className="page-numbers" 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(currentPage + 1);
+                    }}
+                  >
+                    <i className="far fa-arrow-right"></i>
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="flex items-center gap-4 mb-6">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+              <h2 className="text-xl font-semibold">Confirm Deletion</h2>
+            </div>
+            <p className="mb-6">
+              Are you sure you want to delete the course "{courseToDelete?.title}"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
-};
+}
 
 export default InstructorCoursesArea;
