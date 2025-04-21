@@ -1,5 +1,6 @@
 import axiosInstance from "./api";
 import { CourseState } from "../components/profile/Create Cours/types";
+import { Coupon } from '../components/profile/Create Cours/types/index';
 interface CreateCoursePayload {
   title: string;
   description: string;
@@ -15,7 +16,26 @@ interface CreateCoursePayload {
   category: {
     name: string;
   };
-  quizQuestions: {
+  coupons?: Coupon[]
+  
+}
+export interface SectionData {
+  id: string;
+  title: string;
+  orderIndex: number;
+  isPreview: boolean;
+  lectures: LectureData[];
+}
+interface LectureData {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  videoUrl: string;
+  publicId: string;
+  isPreview: boolean;
+}
+interface CreateQuizPayload {
     question: string;
     options: {
       A: string;
@@ -24,7 +44,6 @@ interface CreateCoursePayload {
       D: string;
     };
     correctAnswer: "A" | "B" | "C" | "D";
-  }[];
 }
 interface CreateSectionPayload {
   title: string;
@@ -58,6 +77,14 @@ export interface courseDataGenerale extends courseInstructor {
   duration: number;
   InstructorId: string;
 }
+export interface courseDataDetails extends courseDataGenerale {
+  reviewsLenght: number;
+  ratingsCount: number[];
+  sections: SectionData[];
+  instructorExpertise: string;
+  instructorBaiography: string;
+
+}
 export const coursService = {
   createCours: async (courseState: CourseState) => {
     const payload: CreateCoursePayload = {
@@ -78,11 +105,7 @@ export const coursService = {
       category: {
         name: courseState.courseDetails.category,
       },
-      quizQuestions: courseState.quizQuestions.map((q) => ({
-        question: q.question,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-      })),
+      coupons: courseState.coupons
     };
 
     const response = await axiosInstance.post(
@@ -112,6 +135,16 @@ export const coursService = {
     );
     return response;
   },
+  createQuiz: async (
+    courseId: string,
+    QuizData: CreateQuizPayload,
+  ) => {
+    const response = await axiosInstance.post(
+      `/courses/${courseId}/exams/create-exam`,
+      QuizData
+    );
+    return response;
+  },
   publishCours: async (courseId: string, publicIds: string[]) => {
     const response = await axiosInstance.put(
       `/courses/${courseId}/publish`,
@@ -134,5 +167,11 @@ export const coursService = {
   deleteCours: async (courseId: string) => {
     const response = await axiosInstance.delete(`/courses/delete/${courseId}`);
     return response;
+  },
+  getCourseDetails: async (courseId: string) => {
+    const response = await axiosInstance.get<courseDataDetails>(
+      `/courses/${courseId}`
+    );
+    return response.data;
   },
 };

@@ -1,10 +1,26 @@
 import { Link } from "react-router-dom";
-
+import { courseDataDetails } from "../../services/coursService";
  
 
-const BreadcrumbCoursesDetails = () => {
+const BreadcrumbCoursesDetails = ({ data }: { data: courseDataDetails }) => {
+    if (!data) {
+        return (
+          <div className="container text-center py-5">
+            <div className="alert alert-danger">Course not found</div>
+          </div>
+        );
+      }
   return (
     <>
+    <style>
+        {`        
+          .client-image-items img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+          }
+        `}
+      </style>
        <section className="breadcrumb-wrapper style-2">
         <div className="shape-1">
             <img src="assets/img/breadcrumb/shape-1.png" alt="img" />
@@ -26,37 +42,37 @@ const BreadcrumbCoursesDetails = () => {
                     <li className="style-2"> Course Details</li>
                 </ul>
                 <div className="breadcrumb-content">
-                    <h1>Advance UX/UI Design Using Figma</h1>
+                    <h1>{data.level} {data.title}</h1>
                     <div className="courses-breadcrumb-items">
                         <div className="client-image-items">
-                            <img src="assets/img/courses/client-3.png" alt="img" />
+                            <img src={data.instructorImg} alt="img" />
                             <div className="client-content">
                                 <span>Instructor</span>
-                                <h5>Patrick C. Amore</h5>
+                                <h5>{data.instructorName.replace("|", " ")}</h5>
                             </div>
                         </div>
                         <div className="client-image-items">
                             <div className="client-content">
                                 <span>Instructor</span>
-                                <h5>Web Design</h5>
+                                <h5>{data.instructorExpertise}</h5>
                             </div>
                         </div>
                         <div className="client-image-items">
                             <div className="client-content">
                                 <span>Price</span>
-                                <h5>$100.00</h5>
+                                <h5>${data.price}</h5>
                             </div>
                         </div>
                         <div className="client-image-items">
                             <div className="client-content">
                                 <span>Reviews</span>
                                 <div className="star">
+                                    <i className="fas fa-star style-2"></i>
                                     <i className="fas fa-star"></i>
                                     <i className="fas fa-star"></i>
                                     <i className="fas fa-star"></i>
                                     <i className="fas fa-star"></i>
-                                    <i className="fas fa-star"></i>
-                                    <b>(15)</b>
+                                    <b>({data.reviewsLenght})</b>
                                 </div>
                             </div>
                         </div>

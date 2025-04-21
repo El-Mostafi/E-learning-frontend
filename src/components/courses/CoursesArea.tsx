@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import NiceSelect, { Option } from "../../ui/NiceSelect";
 import { coursService, courseDataGenerale } from "../../services/coursService";
 import { Star } from "lucide-react";
 
 const CoursesArea = () => {
   const [courses, setCourses] = useState<courseDataGenerale[]>([]);
-
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sortBy, setSortBy] = useState("01");
@@ -29,8 +29,6 @@ const CoursesArea = () => {
 
     fetchCourses();
   }, []);
-
-  
 
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
@@ -204,7 +202,15 @@ const CoursesArea = () => {
                         </li>
                       </ul>
                       <h3>
-                        <Link to="/courses-details">
+                        <Link
+                          to="/courses-details"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate("/courses-details", {
+                              state: { courseId: course.id },
+                            });
+                          }}
+                        >
                           Learn With {course.level} {course.title} Course
                         </Link>
                       </h3>
@@ -238,7 +244,15 @@ const CoursesArea = () => {
                           {course.students} Students
                         </li>
                         <li>
-                          <Link to="/courses-details" className="theme-btn">
+                          <Link
+                            to="/courses-details"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate("/courses-details", {
+                                state: { courseId: course.id },
+                              });
+                            }}
+                          >
                             Enroll Now
                           </Link>
                         </li>

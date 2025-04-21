@@ -23,7 +23,7 @@ const SignInForm = () => {
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
-    RememberMe: false, // Default to false
+    RememberMe: false, 
   });
 
   const [isSigningIn, setIsSigningIn] = useState(false);

@@ -42,6 +42,13 @@ export interface QuizQuestion {
   correctAnswer: 'A' | 'B' | 'C' | 'D' ;
 }
 
+export interface Coupon {
+  code: string;
+  discountPercentage: number;
+  maxUses: number;
+  expiryDate: Date;
+}
+
 export interface CourseState {
   courseDetails: CourseDetails;
   sections: Section[];
@@ -52,5 +59,5 @@ export interface CourseState {
     price: number;
     isFree: boolean;
   };
-  visibility: 'public' | 'private' | 'unlisted';
+  coupons: Coupon[];
 }

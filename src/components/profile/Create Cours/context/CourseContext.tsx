@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { CourseState, VideoFile } from '../types';
+import { CourseState, VideoFile, Coupon } from '../types';
 
 type CourseAction =
   | { type: 'SET_COURSE_DETAILS'; payload: Partial<CourseState['courseDetails']> }
@@ -18,7 +18,8 @@ type CourseAction =
   | { type: 'REORDER_QUIZ_QUESTIONS'; payload: CourseState['quizQuestions'] }
   | { type: 'SET_CURRENT_STEP'; payload: number }
   | { type: 'SET_PRICING'; payload: Partial<CourseState['pricing']> }
-  | { type: 'SET_VISIBILITY'; payload: CourseState['visibility'] }
+  | { type: 'ADD_COUPON'; payload: Coupon }
+  | { type: 'REMOVE_COUPON'; payload: string }
   | { type: 'PUBLISH_COURSE' };
 
 const initialState: CourseState = {
@@ -39,7 +40,7 @@ const initialState: CourseState = {
     price: 0,
     isFree: true,
   },
-  visibility: 'private',
+  coupons: [],
 };
 
 const courseReducer = (state: CourseState, action: CourseAction): CourseState => {
@@ -164,11 +165,16 @@ const courseReducer = (state: CourseState, action: CourseAction): CourseState =>
           ...action.payload,
         },
       };
-    case 'SET_VISIBILITY':
-      return {
-        ...state,
-        visibility: action.payload,
-      };
+      case 'ADD_COUPON':
+        return {
+          ...state,
+          coupons: [...state.coupons, action.payload],
+        };
+      case 'REMOVE_COUPON':
+        return {
+          ...state,
+          coupons: state.coupons.filter(coupon => coupon.code !== action.payload),
+        };
     case 'PUBLISH_COURSE':
       return {
         ...state,
