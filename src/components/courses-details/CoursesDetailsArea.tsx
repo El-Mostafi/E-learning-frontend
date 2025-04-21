@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import VideoPopup from "../../modals/VideoPopup";
 import { coursService, courseDataDetails } from "../../services/coursService";
 import { useLocation } from "react-router-dom";
+import { Accordion } from "react-bootstrap";
 
 const CoursesDetailsArea = ({
   setBreadcrumbData,
@@ -253,73 +254,63 @@ const CoursesDetailsArea = ({
                         <div className="course-curriculum-items">
                           <h3>Course Curriculum</h3>
                           <div className="courses-faq-items">
-                            <div className="accordion" id="accordionExample">
-                              {course.sections?.map((section, index) => (
-                                <div
-                                  className="accordion-item"
-                                  key={section.id}
+                            <Accordion defaultActiveKey="0">
+                              {course.sections.map((section, sectionIndex) => (
+                                <Accordion.Item
+                                  key={`section-${sectionIndex}`}
+                                  eventKey={String(sectionIndex)}
                                 >
-                                  <h2
-                                    className="accordion-header"
-                                    id={`heading${index}`}
+                                  <Accordion.Header>
+                                    {section.title}
+                                  </Accordion.Header>
+                                  <Accordion.Body
+                                    style={{
+                                      display: "block",
+                                      visibility: "visible",
+                                    }}
                                   >
-                                    <button
-                                      className={`accordion-button ${
-                                        index === 0 ? "" : "collapsed"
-                                      }`}
-                                      type="button"
-                                      data-bs-toggle="collapse"
-                                      data-bs-target={`#collapse${index}`}
-                                      aria-expanded={
-                                        index === 0 ? "true" : "false"
-                                      }
-                                      aria-controls={`collapse${index}`}
-                                    >
-                                      {section.title}
-                                    </button>
-                                  </h2>
-                                  <div
-                                    id={`collapse${index}`}
-                                    className={`accordion-collapse collapse ${
-                                      index === 0 ? "show" : ""
-                                    }`}
-                                    aria-labelledby={`heading${index}`}
-                                    data-bs-parent="#accordionExample"
-                                  >
-                                    <div className="accordion-body">
-                                      <ul>
-                                        {section.lectures?.map((lecture, i) => (
-                                          <li key={lecture.id}>
-                                            <span>
-                                              <i className="fas fa-file-alt"></i>
-                                              Lesson {i + 1}: {lecture.title}
-                                            </span>
-                                            <span>
-                                              <i
-                                                className={
-                                                  lecture.isPreview
-                                                    ? "far fa-play-circle"
-                                                    : "far fa-lock"
-                                                }
-                                              ></i>
-                                              (
-                                              {Math.floor(
-                                                lecture.duration / 60
-                                              )}
-                                              :
-                                              {Math.round(lecture.duration % 60)
-                                                .toString()
-                                                .padStart(2, "0")}{" "}
-                                              min)
-                                            </span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  </div>
-                                </div>
+                                    <ul>
+                                      {section.lectures &&
+                                      section.lectures.length > 0 ? (
+                                        section.lectures.map(
+                                          (lecture, lectureIndex) => {
+                                            return (
+                                              <li
+                                                key={`lecture-${sectionIndex}-${lectureIndex}`}
+                                              >
+                                                <span>
+                                                  {lecture.title ||
+                                                    "Untitled Lecture"}
+                                                </span>
+                                                <span>
+                                                  {lecture.duration
+                                                    ? `${Math.floor(
+                                                        lecture.duration / 60
+                                                      )}:${
+                                                        lecture.duration % 60 <
+                                                        10
+                                                          ? "0"
+                                                          : ""
+                                                      }${
+                                                        lecture.duration % 60
+                                                      } m`
+                                                    : "Duration not available"}
+                                                </span>
+                                              </li>
+                                            );
+                                          }
+                                        )
+                                      ) : (
+                                        <li>
+                                          No lectures available for this
+                                          section.
+                                        </li>
+                                      )}
+                                    </ul>
+                                  </Accordion.Body>
+                                </Accordion.Item>
                               ))}
-                            </div>
+                            </Accordion>
                           </div>
                         </div>
                       </div>
