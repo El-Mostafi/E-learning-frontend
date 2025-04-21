@@ -8,7 +8,8 @@ import {
   Book,
   HelpCircle,
   DollarSign,
-  Eye,
+  Ticket,
+  RefreshCw,
 } from "lucide-react";
 import { cloudService } from "../../../../services/cloudService";
 import { coursService } from "../../../../services/coursService";
@@ -16,10 +17,26 @@ import axios from "axios";
 
 const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { state, dispatch } = useCourse();
-  const { courseDetails, sections, quizQuestions, pricing, visibility } = state;
+  const { courseDetails, sections, quizQuestions, pricing, coupons } = state;
 
   const [errors, setErrors] = useState<string[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [newCoupon, setNewCoupon] = useState({
+    code: "",
+    discountPercentage: 0,
+    maxUses: 0,
+    expiryDate: new Date(),
+  });
+
+  const generateCouponCode = () => {
+    const prefix = "COURSE";
+    const randomChars = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    const code = `${prefix}${randomChars}`;
+    setNewCoupon((prev) => ({ ...prev, code }));
+  };
 
   const validateCourse = () => {
     const newErrors: string[] = [];
@@ -57,10 +74,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
- 
-
   const confirmPublish = async () => {
-
     try {
       if (!state.courseDetails.thumbnail) {
         setErrors([...errors, "Thumbnail is required"]);
@@ -69,7 +83,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return;
       }
       let securUrl: string = "";
-      let publicId: string = ""; 
+      let publicId: string = "";
       if (!state.courseDetails.secureUrl) {
         const { data: signatureData } = await cloudService.getSignatureImage();
         if (!signatureData) {
@@ -95,7 +109,10 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
         dispatch({
           type: "SET_COURSE_DETAILS",
-          payload: { secureUrl: uploadData.secure_url, imgPublicId: uploadData.public_id },
+          payload: {
+            secureUrl: uploadData.secure_url,
+            imgPublicId: uploadData.public_id,
+          },
         });
       }
       console.log(state);
@@ -104,7 +121,8 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         courseDetails: {
           ...state.courseDetails,
           secureUrl: securUrl == "" ? state.courseDetails.secureUrl : securUrl,
-          imgPublicId: publicId == "" ? state.courseDetails.imgPublicId : publicId
+          imgPublicId:
+            publicId == "" ? state.courseDetails.imgPublicId : publicId,
         },
       });
       console.log("Course created:", response.data);
@@ -157,23 +175,33 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             }
           }
         }
+
+        for (const question of state.quizQuestions) {
+          const QuizPaylod = {
+            question: question.question,
+            options: question.options,
+            correctAnswer: question.correctAnswer,
+          };
+          const QuizResponse = await coursService.createQuiz(
+            response.data.courseId,
+            QuizPaylod
+          );
+          console.log("quiz created:", QuizResponse.data);
+        }
         console.log(publicIds);
         const publishResponse = await coursService.publishCours(
           response.data.courseId,
           publicIds
         );
         console.log("Course published:", publishResponse.data);
-        
-          window.location.href = "/my-courses";
+
+        window.location.href = "/my-courses";
       }
       dispatch({ type: "PUBLISH_COURSE" });
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("API Error:", error.response?.data);
-        setErrors([
-          ...errors,
-          "An error occurred Try again later",
-        ]);
+        setErrors([...errors, "An error occurred Try again later"]);
       } else {
         console.error("Unexpected error:", error);
         setErrors([...errors, "An error occurred Try again later"]);
@@ -202,10 +230,29 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  const handleVisibilityChange = (value: "public" | "private" | "unlisted") => {
+  const handleAddCoupon = () => {
+    if (
+      newCoupon.code &&
+      newCoupon.discountPercentage > 0 &&
+      newCoupon.discountPercentage <= 100
+    ) {
+      dispatch({
+        type: "ADD_COUPON",
+        payload: newCoupon,
+      });
+      setNewCoupon({
+        code: "",
+        discountPercentage: 0,
+        maxUses: 0,
+        expiryDate: new Date(),
+      });
+    }
+  };
+
+  const handleRemoveCoupon = (code: string) => {
     dispatch({
-      type: "SET_VISIBILITY",
-      payload: value,
+      type: "REMOVE_COUPON",
+      payload: code,
     });
   };
 
@@ -306,22 +353,6 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </button>
         </div>
 
-        {/* <div className="bg-purple-50 border border-purple-100 rounded-lg p-4">
-          <div className="flex items-center text-purple-700 mb-2">
-            <Video className="w-5 h-5 mr-2" />
-            <h3 className="font-medium">Videos</h3>
-          </div>
-          <p className="text-2xl font-bold">{videos.length}</p>
-          <button
-            type="button"
-            onClick={() => goToStep(2)}
-            className="mt-2 text-purple-600 hover:text-purple-800 text-sm flex items-center"
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </button>
-        </div> */}
-
         <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
           <div className="flex items-center text-amber-700 mb-2">
             <HelpCircle className="w-5 h-5 mr-2" />
@@ -392,68 +423,130 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-gray-50 p-3 border-b">
-              <h4 className="font-medium flex items-center">
-                <Eye className="w-5 h-5 mr-1 text-gray-600" />
-                Visibility
-              </h4>
-            </div>
-            <div className="p-4">
-              <div className="space-y-3">
-                <label className="flex items-start">
-                  <input
-                    type="radio"
-                    name="visibility"
-                    value="public"
-                    checked={visibility === "public"}
-                    onChange={() => handleVisibilityChange("public")}
-                    className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <div className="ml-2">
-                    <span className="font-medium block">Public</span>
-                    <span className="text-sm text-gray-500">
-                      Anyone can find and access your course
-                    </span>
+          {!pricing.isFree && (
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-gray-50 p-3 border-b">
+                <h4 className="font-medium flex items-center">
+                  <Ticket className="w-5 h-5 mr-1 text-gray-600" />
+                  Discount Coupons
+                </h4>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={newCoupon.code}
+                      onChange={(e) =>
+                        setNewCoupon({
+                          ...newCoupon,
+                          code: e.target.value.toUpperCase(),
+                        })
+                      }
+                      placeholder="Coupon code"
+                      className="w-full px-3 py-2 pr-10 text-black border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={generateCouponCode}
+                      className="absolute right-2 top-1/2  -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      title="Generate code"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
                   </div>
-                </label>
+                  <input
+                    type="number"
+                    value={newCoupon.discountPercentage || ""}
+                    onChange={(e) =>
+                      setNewCoupon({
+                        ...newCoupon,
+                        discountPercentage: parseInt(e.target.value),
+                      })
+                    }
+                    placeholder="Discount %"
+                    min="1"
+                    max="100"
+                    className="px-3 py-2 text-black border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input
+                    type="number"
+                    value={newCoupon.maxUses || ""}
+                    onChange={(e) =>
+                      setNewCoupon({
+                        ...newCoupon,
+                        maxUses: parseInt(e.target.value),
+                      })
+                    }
+                    placeholder="Max uses (optional)"
+                    min="0"
+                    className="px-3 py-2 text-black border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input
+                    type="date"
+                    value={newCoupon.expiryDate.toISOString().slice(0, 10)}
+                    onChange={(e) =>
+                      setNewCoupon({
+                        ...newCoupon,
+                        expiryDate: new Date(e.target.value),
+                      })
+                    }
+                    placeholder="Expiry date (optional)"
+                    className="px-3 py-2 text-black border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
 
-                <label className="flex items-start">
-                  <input
-                    type="radio"
-                    name="visibility"
-                    value="unlisted"
-                    checked={visibility === "unlisted"}
-                    onChange={() => handleVisibilityChange("unlisted")}
-                    className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <div className="ml-2">
-                    <span className="font-medium block">Unlisted</span>
-                    <span className="text-sm text-gray-500">
-                      Only people with the link can access your course
-                    </span>
-                  </div>
-                </label>
+                <Button
+                  onClick={handleAddCoupon}
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                >
+                  Add Coupon
+                </Button>
 
-                <label className="flex items-start">
-                  <input
-                    type="radio"
-                    name="visibility"
-                    value="private"
-                    checked={visibility === "private"}
-                    onChange={() => handleVisibilityChange("private")}
-                    className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <div className="ml-2">
-                    <span className="font-medium block">Private</span>
-                    <span className="text-sm text-gray-500">
-                      Only you can access your course
-                    </span>
+                {coupons.length > 0 && (
+                  <div className="mt-4 border-t pt-4">
+                    <h5 className="font-medium mb-2">Active Coupons</h5>
+                    <div className="space-y-2">
+                      {coupons.map((coupon) => (
+                        <div
+                          key={coupon.code}
+                          className="flex items-center justify-between bg-gray-50 p-2 rounded"
+                        >
+                          <div>
+                            <span className="font-medium">{coupon.code}</span>
+                            <span className="text-sm text-gray-600 ml-2">
+                              {coupon.discountPercentage}% off
+                            </span>
+                            {coupon.maxUses > 0 && (
+                              <span className="text-sm text-gray-600 ml-2">
+                                ({coupon.maxUses} uses)
+                              </span>
+                            )}
+                            {coupon.expiryDate && (
+                              <span className="text-sm text-gray-600 ml-2">
+                                Expires:{" "}
+                                {new Date(
+                                  coupon.expiryDate
+                                ).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleRemoveCoupon(coupon.code)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </label>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

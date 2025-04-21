@@ -33,7 +33,6 @@ const VerificationCodeForm = () => {
       setCode(newCode);
       setIsError(false);
 
-      // Move to next input if value is entered
       if (value !== "" && index < 5) {
         inputRefs.current[index + 1]?.focus();
       }

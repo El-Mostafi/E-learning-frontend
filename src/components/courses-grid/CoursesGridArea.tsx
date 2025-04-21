@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import NiceSelect, { Option } from "../../ui/NiceSelect";
 import { coursService, courseDataGenerale } from "../../services/coursService";
 import { Star } from "lucide-react";
 
 function CoursesGridArea() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<courseDataGenerale[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<courseDataGenerale[]>(
     []
@@ -184,7 +185,7 @@ function CoursesGridArea() {
 
   const selectHandler = (item: Option, value: string) => {
     setSortBy(value);
-    console.log(item,sortBy);
+    console.log(item, sortBy);
     const sortedCourses = [...filteredCourses];
 
     switch (value) {
@@ -552,7 +553,15 @@ function CoursesGridArea() {
                             </li>
                           </ul>
                           <h5>
-                            <Link to="/courses-details">
+                            <Link
+                              to="/courses-details"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/courses-details", {
+                                  state: { courseId: course.id },
+                                });
+                              }}
+                            >
                               Learn With {course.level} {course.title} Course
                             </Link>
                           </h5>
@@ -569,7 +578,9 @@ function CoursesGridArea() {
                               </i>
                             </div>
                             <p>
-                              <Link to="/instructor-details">
+                              <Link
+                                to={`/instructor-details/${course.InstructorId}`}
+                              >
                                 {course.instructorName.replace("|", " ")}
                               </Link>
                             </p>
@@ -606,7 +617,15 @@ function CoursesGridArea() {
                             </li>
                           </ul>
                           <h5>
-                            <Link to="/courses-details">
+                            <Link
+                              to="/courses-details"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/courses-details", {
+                                  state: { courseId: course.id },
+                                });
+                              }}
+                            >
                               Learn With {course.level} {course.title} Course
                             </Link>
                           </h5>
@@ -646,6 +665,12 @@ function CoursesGridArea() {
                           <Link
                             to="/courses-details"
                             className="theme-btn yellow-btn"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate("/courses-details", {
+                                state: { courseId: course.id },
+                              });
+                            }}
                           >
                             Enroll Now
                           </Link>

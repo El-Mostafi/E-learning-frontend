@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import NiceSelect, { Option } from "../../ui/NiceSelect";
 import { coursService, courseDataGenerale } from "../../services/coursService";
 import { Star } from "lucide-react";
 
 function CoursesListArea() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<courseDataGenerale[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<courseDataGenerale[]>(
     []
@@ -13,7 +14,6 @@ function CoursesListArea() {
   const [error, setError] = useState("");
   const [sortBy, setSortBy] = useState("01");
 
-  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<string[]>([]);
@@ -21,9 +21,8 @@ function CoursesListArea() {
   const [selectedInstructor, setSelectedInstructor] = useState<string[]>([]);
   const [selectedRating, setSelectedRating] = useState<number[]>([]);
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const coursesPerPage = 9;
+  const coursesPerPage = 5;
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -145,7 +144,6 @@ function CoursesListArea() {
     setFilteredCourses(courses);
     setCurrentPage(1);
   };
-  
 
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
@@ -513,7 +511,15 @@ function CoursesListArea() {
                           </li>
                         </ul>
                         <h3>
-                          <Link to="/courses-details">
+                          <Link
+                            to="/courses-details"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate("/courses-details", {
+                                state: { courseId: course.id },
+                              });
+                            }}
+                          >
                             {course.title}
                           </Link>
                         </h3>

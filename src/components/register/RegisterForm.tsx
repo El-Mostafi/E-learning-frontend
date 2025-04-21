@@ -52,17 +52,14 @@ const RegisterForm: React.FC = () => {
     
     let score = 0;
     
-    // Length check
     if (password.length >= 8) score += 1;
     if (password.length >= 12) score += 1;
     
-    // Character variety checks
     if (/[A-Z]/.test(password)) score += 1;
     if (/[a-z]/.test(password)) score += 1;
     if (/[0-9]/.test(password)) score += 1;
     if (/[!@#$%^&*(),.?":{}|<>/]/.test(password)) score += 1;
     
-    // Determine strength based on score
     if (score <= 2) return "weak";
     if (score <= 4) return "medium";
     if (score <= 5) return "strong";
@@ -186,7 +183,6 @@ const RegisterForm: React.FC = () => {
     setFormData({
       ...formData,
       role,
-      // Reset role-specific fields when changing roles
       educationLevel: role === "student" ? formData.educationLevel : undefined,
       fieldOfStudy: role === "student" ? formData.fieldOfStudy : undefined,
       expertise: role === "instructor" ? formData.expertise : undefined,
@@ -225,7 +221,6 @@ const RegisterForm: React.FC = () => {
   const validate = useCallback((): boolean => {
     const newErrors: Partial<Errors> = {};
 
-    // Validate each field using current formData
     Object.entries(formData).forEach(([key, value]) => {
       const error = getValidationError(key, value);
       if (error ) {
@@ -413,7 +408,6 @@ const RegisterForm: React.FC = () => {
                         ></div>
                       </div>
                       
-                      {/* Password Requirements */}
                       <div className="mt-2 grid grid-cols-2 gap-1 text-xs">
                         <div className={`flex items-center `}>
                           <span className={`mr-1 ${formData.password.length >= 8 ? "text-success" : "text-gray-500"}`}>{formData.password.length >= 8 ? "✓" : "○"}</span>
