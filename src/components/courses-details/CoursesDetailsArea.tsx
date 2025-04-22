@@ -402,6 +402,30 @@ const CoursesDetailsArea = ({
                                 })}
                               </div>
                             </div>
+                            {course.feedbacks?.map((review, index) => (
+                              <div
+                                className="instructors-box-items"
+                                key={index}
+                              >
+                                <div className="thumb">
+                                  <img
+                                    src={
+                                      review.userImg ||
+                                      "assets/img/courses/instructors-3.png"
+                                    }
+                                    alt={review.userName}
+                                  />
+                                </div>
+                                <div className="content">
+                                  <h4>{review.userName}</h4>
+                                  {/* <span>{review.fieldOfStudy}</span> */}
+                                  <div className="star">
+                                    {renderStars(review.rating)}
+                                  </div>
+                                  <p>"{review.comment}"</p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -440,7 +464,7 @@ const CoursesDetailsArea = ({
                       </div>
                     </div>
                     <div className="courses-content">
-                      <h3>${course.price?.toFixed(2) || "156.00"}</h3>
+                      <h3>${course.price?.toFixed(2) || "XXXX"}</h3>
                       <p>{course.description?.substring(0, 80)}...</p>
                       <div className="courses-btn">
                         <a href="#" className="theme-btn">

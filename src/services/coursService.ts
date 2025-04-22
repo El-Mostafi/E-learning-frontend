@@ -1,6 +1,6 @@
 import axiosInstance from "./api";
 import { CourseState } from "../components/profile/Create Cours/types";
-import { Coupon } from '../components/profile/Create Cours/types/index';
+import { Coupon } from "../components/profile/Create Cours/types/index";
 interface CreateCoursePayload {
   title: string;
   description: string;
@@ -16,8 +16,7 @@ interface CreateCoursePayload {
   category: {
     name: string;
   };
-  coupons?: Coupon[]
-  
+  coupons?: Coupon[];
 }
 export interface SectionData {
   id: string;
@@ -36,14 +35,14 @@ interface LectureData {
   isPreview: boolean;
 }
 interface CreateQuizPayload {
-    question: string;
-    options: {
-      A: string;
-      B: string;
-      C: string;
-      D: string;
-    };
-    correctAnswer: "A" | "B" | "C" | "D";
+  question: string;
+  options: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+  correctAnswer: "A" | "B" | "C" | "D";
 }
 interface CreateSectionPayload {
   title: string;
@@ -83,8 +82,17 @@ export interface courseDataDetails extends courseDataGenerale {
   sections: SectionData[];
   instructorExpertise: string;
   instructorBaiography: string;
-
+  feedbacks: Review[];
 }
+
+export interface Review {
+  rating: number;
+  comment: string;
+  userName: string;
+  userImg: string;
+  createdAt: Date;
+}
+
 export const coursService = {
   createCours: async (courseState: CourseState) => {
     const payload: CreateCoursePayload = {
@@ -105,7 +113,7 @@ export const coursService = {
       category: {
         name: courseState.courseDetails.category,
       },
-      coupons: courseState.coupons
+      coupons: courseState.coupons,
     };
 
     const response = await axiosInstance.post(
@@ -135,10 +143,7 @@ export const coursService = {
     );
     return response;
   },
-  createQuiz: async (
-    courseId: string,
-    QuizData: CreateQuizPayload,
-  ) => {
+  createQuiz: async (courseId: string, QuizData: CreateQuizPayload) => {
     const response = await axiosInstance.post(
       `/courses/${courseId}/exams/create-exam`,
       QuizData
@@ -159,9 +164,7 @@ export const coursService = {
     return response.data;
   },
   getGeneralDataCourses: async () => {
-    const response = await axiosInstance.get<courseDataGenerale[]>(
-      "/courses"
-    );
+    const response = await axiosInstance.get<courseDataGenerale[]>("/courses");
     return response.data;
   },
   deleteCours: async (courseId: string) => {
