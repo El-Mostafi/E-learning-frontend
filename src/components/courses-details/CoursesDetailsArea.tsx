@@ -269,43 +269,34 @@ const CoursesDetailsArea = ({
                                       visibility: "visible",
                                     }}
                                   >
+                                    
                                     <ul>
-                                      {section.lectures &&
-                                      section.lectures.length > 0 ? (
-                                        section.lectures.map(
-                                          (lecture, lectureIndex) => {
-                                            return (
-                                              <li
-                                                key={`lecture-${sectionIndex}-${lectureIndex}`}
-                                              >
-                                                <span>
-                                                  {lecture.title ||
-                                                    "Untitled Lecture"}
-                                                </span>
-                                                <span>
-                                                  {lecture.duration
-                                                    ? `${Math.floor(
-                                                        lecture.duration / 60
-                                                      )}:${
-                                                        lecture.duration % 60 <
-                                                        10
-                                                          ? "0"
-                                                          : ""
-                                                      }${
-                                                        lecture.duration % 60
-                                                      } m`
-                                                    : "Duration not available"}
-                                                </span>
-                                              </li>
-                                            );
-                                          }
-                                        )
-                                      ) : (
-                                        <li>
-                                          No lectures available for this
-                                          section.
-                                        </li>
-                                      )}
+                                    {section.lectures?.map((lecture, i) => (
+                                          <li key={lecture.id}>
+                                            <span>
+                                              <i className="fas fa-file-alt"></i>
+                                              Lesson {i + 1}: {lecture.title}
+                                            </span>
+                                            <span>
+                                              <i
+                                                className={
+                                                  lecture.isPreview
+                                                    ? "far fa-play-circle"
+                                                    : "far fa-lock"
+                                                }
+                                              ></i>
+                                              (
+                                              {Math.floor(
+                                                lecture.duration / 60
+                                              )}
+                                              :
+                                              {Math.round(lecture.duration % 60)
+                                                .toString()
+                                                .padStart(2, "0")}{" "}
+                                              min)
+                                            </span>
+                                          </li>
+                                        ))}
                                     </ul>
                                   </Accordion.Body>
                                 </Accordion.Item>
