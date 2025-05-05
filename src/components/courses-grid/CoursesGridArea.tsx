@@ -285,6 +285,16 @@ function CoursesGridArea() {
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
           }
+            .course-title {
+              display: -webkit-box;
+              -webkit-line-clamp: 2;       
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              line-height: 1.4em;
+              max-height: 2.8em;           
+              cursor: pointer;
+            }
           
         `}
       </style>
@@ -535,7 +545,7 @@ function CoursesGridArea() {
                           </div>
                         </div>
                         <div className="courses-content">
-                          <ul className="post-cat">
+                          <ul className="post-cat gap-4">
                             <li>
                               <Link to="/courses">{course.category}</Link>
                             </li>
@@ -562,7 +572,9 @@ function CoursesGridArea() {
                                 });
                               }}
                             >
-                              Learn With {course.level} {course.title} Course
+                              <div className="course-title">
+                                Learn With {course.level} {course.title} Course
+                              </div>
                             </Link>
                           </h5>
                           <div className="client-items">
@@ -599,7 +611,7 @@ function CoursesGridArea() {
                       </div>
                       <div className="courses-card-items-hover">
                         <div className="courses-content">
-                          <ul className="post-cat">
+                          <ul className="post-cat gap-4">
                             <li>
                               <Link to="/courses">{course.category}</Link>
                             </li>
@@ -626,7 +638,9 @@ function CoursesGridArea() {
                                 });
                               }}
                             >
-                              Learn With {course.level} {course.title} Course
+                              <div className="course-title">
+                                Learn With {course.level} {course.title} Course
+                              </div>
                             </Link>
                           </h5>
                           <h4>${course.price}</h4>

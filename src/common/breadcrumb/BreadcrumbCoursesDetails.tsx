@@ -1,18 +1,17 @@
 import { Link } from "react-router-dom";
 import { courseDataDetails } from "../../services/coursService";
- 
 
 const BreadcrumbCoursesDetails = ({ data }: { data: courseDataDetails }) => {
-    if (!data) {
-        return (
-          <div className="container text-center py-5">
-            <div className="alert alert-danger">Course not found</div>
-          </div>
-        );
-      }
+  if (!data) {
+    return (
+      <div className="container text-center py-5">
+        <div className="alert alert-danger">Course not found</div>
+      </div>
+    );
+  }
   return (
     <>
-    <style>
+      <style>
         {`        
           .client-image-items img {
             width: 50px;
@@ -21,66 +20,70 @@ const BreadcrumbCoursesDetails = ({ data }: { data: courseDataDetails }) => {
           }
         `}
       </style>
-       <section className="breadcrumb-wrapper style-2">
+      <section className="breadcrumb-wrapper style-2">
         <div className="shape-1">
-            <img src="assets/img/breadcrumb/shape-1.png" alt="img" />
+          <img src="assets/img/breadcrumb/shape-1.png" alt="img" />
         </div>
         <div className="shape-2">
-            <img src="assets/img/breadcrumb/shape-2.png" alt="img" />
+          <img src="assets/img/breadcrumb/shape-2.png" alt="img" />
         </div>
         <div className="dot-shape">
-            <img src="assets/img/breadcrumb/dot-shape.png" alt="img" />
+          <img src="assets/img/breadcrumb/dot-shape.png" alt="img" />
         </div>
         <div className="vector-shape">
-            <img src="assets/img/breadcrumb/Vector.png" alt="img" />
+          <img src="assets/img/breadcrumb/Vector.png" alt="img" />
         </div>
         <div className="container">
-            <div className="page-heading">
-                <ul className="breadcrumb-items">
-                    <li><Link to="/">Home</Link></li>
-                    <li><Link to="/courses-grid">Courses</Link></li>
-                    <li className="style-2"> Course Details</li>
-                </ul>
-                <div className="breadcrumb-content">
-                    <h1>{data.level} {data.title}</h1>
-                    <div className="courses-breadcrumb-items">
-                        <div className="client-image-items">
-                            <img src={data.instructorImg} alt="img" />
-                            <div className="client-content">
-                                <span>Instructor</span>
-                                <h5>{data.instructorName.replace("|", " ")}</h5>
-                            </div>
-                        </div>
-                        <div className="client-image-items">
-                            <div className="client-content">
-                                <span>Instructor</span>
-                                <h5>{data.instructorExpertise}</h5>
-                            </div>
-                        </div>
-                        <div className="client-image-items">
-                            <div className="client-content">
-                                <span>Price</span>
-                                <h5>${data.price}</h5>
-                            </div>
-                        </div>
-                        <div className="client-image-items">
-                            <div className="client-content">
-                                <span>Reviews</span>
-                                <div className="star">
-                                    <i className="fas fa-star style-2"></i>
-                                    <i className="fas fa-star"></i>
-                                    <i className="fas fa-star"></i>
-                                    <i className="fas fa-star"></i>
-                                    <i className="fas fa-star"></i>
-                                    <b>({data.reviewsLenght})</b>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+          <div className="page-heading">
+            <ul className="breadcrumb-items">
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+              <li>
+                <Link to="/courses-grid">Courses</Link>
+              </li>
+              <li className="style-2"> Course Details</li>
+            </ul>
+            <div className="breadcrumb-content">
+              <h1>
+                {data.level} {data.title}
+              </h1>
+              <div className="courses-breadcrumb-items">
+                <div className="client-image-items">
+                  <img src={data.instructorImg} alt="img" />
+                  <div className="client-content">
+                    <span>Instructor</span>
+                    <h5>{data.instructorName.replace("|", " ")}</h5>
+                  </div>
                 </div>
+                <div className="client-image-items">
+                  <div className="client-content">
+                    <span>Instructor</span>
+                    <h5>{data.instructorExpertise}</h5>
+                  </div>
+                </div>
+                <div className="client-image-items">
+                  <div className="client-content">
+                    <span>Price</span>
+                    <h5>${data.price}</h5>
+                  </div>
+                </div>
+                <div className="client-image-items">
+                  <div className="client-content">
+                    <span>Reviews</span>
+                    <div className="star">
+                      {[...Array(data.reviewsLenght)].map(() => (
+                        <i className="fas fa-star"></i>
+                      ))}
+                      <b>({data.reviewsLenght})</b>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
-        </section>
+      </section>
     </>
   );
 };

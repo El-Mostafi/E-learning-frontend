@@ -1,175 +1,80 @@
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { coursService } from "../../../services/coursService";
 import { courseDataGenerale } from "../../../services/coursService";
 
 const styles = `
-  .courses-card-main-items {
-    position: relative;
-    overflow: hidden;
-    min-height: 450px;
-    transition: all 0.4s ease;
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  }
-
-  .courses-card-items {
-    position: relative;
-    z-index: 1;
-    transition: all 0.3s ease;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .courses-image {
-    height: 200px;
-    overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .courses-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .courses-card-items-hover {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.4s ease-in-out;
-    background: #fff;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    z-index: 2;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .courses-card-main-items:hover .courses-card-items-hover {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .courses-card-main-items:hover .courses-card-items {
-    opacity: 0;
-  }
-
-  .courses-title {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: 15px 0 10px;
-    padding: 0 15px;
-    min-height: 3.6em;
-    line-height: 1.3;
-    font-size: 1.2rem;
-  }
-
-  .topic-title {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: 0 15px 10px;
-    min-height: 3em;
-    color: #666;
-    font-size: 0.9rem;
-  }
-
-  .courses-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 0 15px 15px;
-  }
-
-  .theme-btn.yellow-btn {
-    display: inline-block;
-    padding: 12px 30px;
-    background: #f9b234;
-    color: #fff !important;
-    border-radius: 5px;
-    margin-top: auto;
-    align-self: flex-start;
-    text-decoration: none;
-    transition: background 0.3s ease;
-  }
-
-  .theme-btn.yellow-btn:hover {
-    background: #e89e20;
-  }
-
-  .client-items {
-    margin-top: auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-  }
-
-  .client-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-  }
-
-  .post-class {
-    display: flex;
-    justify-content: space-between;
-    margin: 15px 0 0;
-    padding: 0;
-    list-style: none;
-    font-size: 0.85rem;
-    color: #666;
-  }
-
-  .post-cat {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 0 0 10px;
-    padding: 0;
-    list-style: none;
-  }
-
-  .arrow-items {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    display: flex;
-    gap: 5px;
-  }
-
-  .GlidingArrow {
-    transition: transform 0.3s ease;
-  }
+  
+          .icon-items {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .icon-items i {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            background-color:rgb(255, 255, 255);
+            font-size: 20px;
+          }
+          .icon-items, .client-img i img {
+            border-radius: 50%;
+          }
+         
+          
+          
+          
+          .courses-card-main-items {
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+          }
+          
+          .courses-card-items {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          }
+          .course-title {
+              display: -webkit-box;
+              -webkit-line-clamp: 2;       
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              line-height: 1.4em;
+              max-height: 2.8em;           
+              cursor: pointer;
+          }
+          .post-cat{
+            height: 44px;
+          }
 `;
 
-const formatDuration = (totalSeconds: number): string => {
+const formatDuration = (totalSeconds: number) => {
   const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-    2,
-    "0"
-  )}:${String(seconds).padStart(2, "0")}`;
+  const remainingAfterHours = totalSeconds % 3600;
+  const minutes = Math.floor(remainingAfterHours / 60);
+  const seconds = Math.round(remainingAfterHours % 60);
+
+  if (hours > 0) {
+    const parts = [];
+    parts.push(`${hours}h`);
+    if (minutes > 0) {
+      parts.push(`${minutes}min`);
+    }
+    return parts.join(" ");
+  } else {
+    const parts = [];
+    if (minutes > 0) {
+      parts.push(`${minutes}min`);
+    }
+    if (seconds > 0 || totalSeconds === 0) {
+      parts.push(`${seconds}s`);
+    }
+    return parts.join(" ");
+  }
 };
 
 const PopularCoursesHomeOne = () => {
@@ -177,6 +82,7 @@ const PopularCoursesHomeOne = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
   const categories = Array.from(
     new Set(courses.map((course) => course.category))
   );
@@ -260,70 +166,94 @@ const PopularCoursesHomeOne = () => {
           <div className="tab-content">
             <div id="All" className="tab-pane fade show active">
               <div className="row">
-                {filteredCourses.map((course, index) => (
-                  <div
-                    className="col-xxl-3 col-xl-4 col-lg-4 col-md-6 wow fadeInUp"
-                    data-wow-delay={`${0.2 * (index + 1)}s`}
-                    key={course.id}
-                  >
+                {filteredCourses.map((course) => (
+                  <div key={course.id} className="col-xl-3 col-lg-6 col-md-6">
                     <div className="courses-card-main-items">
-                      <div className="courses-card-items">
+                      <div className="courses-card-items ">
                         <div className="courses-image">
                           <img
+                            className="pb-3"
                             src={
                               course.thumbnailPreview ||
-                              "assets/img/courses/default.jpg"
+                              "assets/img/courses/01.jpg"
                             }
-                            alt={course.title}
+                            alt="course thumbnail"
                           />
+                          {/* <h3 className="courses-title">{course.title}</h3> */}
+                          <h4 className="topic-title">{course.level}</h4>
                           <div className="arrow-items">
-                            {[1, 2, 3, 4, 5, 6].map((delay) => (
-                              <div
-                                key={delay}
-                                className={`GlidingArrow ${
-                                  delay > 1 ? `delay${delay - 1}` : ""
-                                }`}
-                              >
-                                <img
-                                  src={`assets/img/courses/a${delay}.png`}
-                                  alt="arrow"
-                                />
-                              </div>
-                            ))}
+                            <div className="GlidingArrow">
+                              <img src="assets/img/courses/a1.png" alt="img" />
+                            </div>
+                            <div className="GlidingArrow delay1">
+                              <img src="assets/img/courses/a2.png" alt="img" />
+                            </div>
+                            <div className="GlidingArrow delay2">
+                              <img src="assets/img/courses/a3.png" alt="img" />
+                            </div>
+                            <div className="GlidingArrow delay3">
+                              <img src="assets/img/courses/a4.png" alt="img" />
+                            </div>
+                            <div className="GlidingArrow delay4">
+                              <img src="assets/img/courses/a5.png" alt="img" />
+                            </div>
+                            <div className="GlidingArrow delay5">
+                              <img src="assets/img/courses/a6.png" alt="img" />
+                            </div>
                           </div>
                         </div>
-                        <h3 className="courses-title">{course.title}</h3>
-                        <h4 className="topic-title">
-                          {course.description.length > 50
-                            ? `${course.description.substring(0, 50)}...`
-                            : course.description}
-                        </h4>
                         <div className="courses-content">
-                          <ul className="post-cat">
+                          <ul className="post-cat gap-4">
                             <li>
                               <Link to="/courses">{course.category}</Link>
                             </li>
                             <li className="flex items-center">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < course.reviews
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </li>
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < course.reviews
+                                      ? "text-yellow-400 fill-current"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </li>
                           </ul>
-                          <div className="client-items">
-                            <div
-                              className="client-img bg-cover"
-                              style={{
-                                background: `url(${course.instructorImg})`,
+                          <h5>
+                            <Link
+                              to="/courses-details"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/courses-details", {
+                                  state: { courseId: course.id },
+                                });
                               }}
-                            ></div>
-                            <p>{course.instructorName}</p>
+                            >
+                              <div className="course-title">
+                                Learn With {course.level} {course.title} Course
+                              </div>
+                            </Link>
+                          </h5>
+                          <div className="client-items">
+                            <div className="icon-items">
+                              <i>
+                                <img
+                                  src={
+                                    course.instructorImg ||
+                                    "assets/img/courses/c1.jpg"
+                                  }
+                                  alt="img"
+                                />
+                              </i>
+                            </div>
+                            <p>
+                              <Link
+                                to={`/instructor-details/${course.InstructorId}`}
+                              >
+                                {course.instructorName.replace("|", " ")}
+                              </Link>
+                            </p>
                           </div>
                           <ul className="post-class">
                             <li>
@@ -339,33 +269,60 @@ const PopularCoursesHomeOne = () => {
                       </div>
                       <div className="courses-card-items-hover">
                         <div className="courses-content">
-                          <ul className="post-cat">
+                          <ul className="post-cat gap-4">
                             <li>
                               <Link to="/courses">{course.category}</Link>
                             </li>
-                            <li>
-                              {Array.from({ length: course.reviews }).map(
-                                (_, i) => (
-                                  <i key={i} className="fas fa-star"></i>
-                                )
-                              )}
+                            <li className="flex items-center">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < course.reviews
+                                      ? "text-yellow-400 fill-current"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
                             </li>
                           </ul>
                           <h5>
-                            <Link to={`/courses-details/${course.id}`}>
-                              Learn With {course.title}
+                            <Link
+                              to="/courses-details"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/courses-details", {
+                                  state: { courseId: course.id },
+                                });
+                              }}
+                            >
+                              <div className="course-title">
+                                Learn With {course.level} {course.title} Course
+                              </div>
                             </Link>
                           </h5>
                           <h4>${course.price}</h4>
-                          <span>{course.description}</span>
+                          <span>
+                            Education is only empowers people to pursue career
+                          </span>
                           <div className="client-items">
-                            <div
-                              className="client-img bg-cover"
-                              style={{
-                                background: `url(${course.instructorImg})`,
-                              }}
-                            ></div>
-                            <p>{course.instructorName}</p>
+                            <div className="client-img bg-cover">
+                              <i>
+                                <img
+                                  src={
+                                    course.instructorImg ||
+                                    "assets/img/courses/c1.jpg"
+                                  }
+                                  alt="img"
+                                />
+                              </i>
+                            </div>
+                            <Link
+                              to={"/instructor-details/" + course.InstructorId}
+                              className={"text-white"}
+                            >
+                              {course.instructorName.replace("|", " ")}
+                            </Link>
                           </div>
                           <ul className="post-class">
                             <li>
@@ -378,8 +335,14 @@ const PopularCoursesHomeOne = () => {
                             </li>
                           </ul>
                           <Link
-                            to={`/courses-details/${course.id}`}
+                            to="/courses-details"
                             className="theme-btn yellow-btn"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate("/courses-details", {
+                                state: { courseId: course.id },
+                              });
+                            }}
                           >
                             Enroll Now
                           </Link>
