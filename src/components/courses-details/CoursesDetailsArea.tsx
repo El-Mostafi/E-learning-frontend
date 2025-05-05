@@ -1,20 +1,19 @@
 import { useState, useEffect } from "react";
-import VideoPopup from "../../modals/VideoPopup";
 import { coursService, courseDataDetails } from "../../services/coursService";
 import { useLocation } from "react-router-dom";
 import { Accordion } from "react-bootstrap";
-
+import VideoPlayer from './VideoPlayer/VideoPlayer';
 const CoursesDetailsArea = ({
   setBreadcrumbData,
 }: {
   setBreadcrumbData: (data: courseDataDetails) => void;
 }) => {
   const [course, setCourse] = useState<courseDataDetails>();
-  const [isVideoOpen, setIsVideoOpen] = useState(false);
-  const [currentVideoId, setCurrentVideoId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const location = useLocation();
+  const [currentLectureId, setCurrentLectureId] = useState<string>('');
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
 
   const courseId = location.state?.courseId;
 
@@ -41,10 +40,6 @@ const CoursesDetailsArea = ({
     fetchCourse();
   }, [courseId, setBreadcrumbData]);
 
-  const handleVideoOpen = (videoId: string) => {
-    setCurrentVideoId(videoId);
-    setIsVideoOpen(true);
-  };
   const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -88,6 +83,19 @@ const CoursesDetailsArea = ({
       return parts.join(" ");
     }
   };
+  const markLectureComplete = (lectureId: string) => {
+    //use api for update the isPreview of lecture
+    console.log(lectureId);
+  };
+  const isLectureLocked = (lectureId: string) => {
+    //use api for get lecture isPreview
+    console.log(lectureId);
+    return false;
+  };
+  const setCurrentLecture = (lectureId: string, videoUrl: string) => {
+    setCurrentLectureId(lectureId);
+    setCurrentVideoUrl(videoUrl);
+  };
 
   if (loading) {
     return (
@@ -117,13 +125,6 @@ const CoursesDetailsArea = ({
 
   return (
     <>
-      {/* video modal start */}
-      <VideoPopup
-        isVideoOpen={isVideoOpen}
-        setIsVideoOpen={setIsVideoOpen}
-        videoId={currentVideoId || "Ml4XCF-JS0k"}
-      />
-      {/* video modal end */}
       <section className="courses-details-section section-padding pt-0">
         <div className="container">
           <div className="courses-details-wrapper">
@@ -131,25 +132,15 @@ const CoursesDetailsArea = ({
               <div className="col-lg-8">
                 <div className="courses-details-items">
                   <div className="courses-image">
-                    <img
-                      src={
-                        course.thumbnailPreview ||
-                        "assets/img/courses/details-1.jpg"
-                      }
-                      alt={course.title}
-                    />
-                    <a
-                      onClick={() =>
-                        handleVideoOpen(
-                          course.sections?.[0]?.lectures?.[0]?.publicId ||
-                            "Ml4XCF-JS0k"
-                        )
-                      }
-                      style={{ cursor: "pointer" }}
-                      className="video-btn ripple video-popup"
-                    >
-                      <i className="fas fa-play"></i>
-                    </a>
+                  <VideoPlayer
+              src={currentVideoUrl || course.sections[0].lectures[0].videoUrl}
+              poster={course.thumbnailPreview}
+              title={course.title}
+              duration={course.duration}
+              isLocked={isLectureLocked(currentLectureId)}
+              onComplete={() => markLectureComplete(currentLectureId)}
+            />
+                    
                   </div>
                   <div className="courses-details-content">
                     <ul className="nav">
@@ -269,34 +260,30 @@ const CoursesDetailsArea = ({
                                       visibility: "visible",
                                     }}
                                   >
-                                    
                                     <ul>
-                                    {section.lectures?.map((lecture, i) => (
-                                          <li key={lecture.id}>
-                                            <span>
-                                              <i className="fas fa-file-alt"></i>
-                                              Lesson {i + 1}: {lecture.title}
-                                            </span>
-                                            <span>
-                                              <i
-                                                className={
-                                                  lecture.isPreview
-                                                    ? "far fa-play-circle"
-                                                    : "far fa-lock"
-                                                }
-                                              ></i>
-                                              (
-                                              {Math.floor(
-                                                lecture.duration / 60
-                                              )}
-                                              :
-                                              {Math.round(lecture.duration % 60)
-                                                .toString()
-                                                .padStart(2, "0")}{" "}
-                                              min)
-                                            </span>
-                                          </li>
-                                        ))}
+                                      {section.lectures?.map((lecture, i) => (
+                                        <li className="cursor-pointer" onClick={() => setCurrentLecture(lecture.id,lecture.videoUrl)} key={lecture.id}>
+                                          <span>
+                                            <i className="fas fa-file-alt"></i>
+                                            Lesson {i + 1}: {lecture.title}
+                                          </span>
+                                          <span>
+                                            <i
+                                              className={
+                                                lecture.isPreview
+                                                  ? "far fa-play-circle"
+                                                  : "far fa-lock"
+                                              }
+                                            ></i>
+                                            ({Math.floor(lecture.duration / 60)}
+                                            :
+                                            {Math.round(lecture.duration % 60)
+                                              .toString()
+                                              .padStart(2, "0")}{" "}
+                                            min)
+                                          </span>
+                                        </li>
+                                      ))}
                                     </ul>
                                   </Accordion.Body>
                                 </Accordion.Item>
