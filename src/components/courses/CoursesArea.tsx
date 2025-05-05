@@ -246,6 +246,7 @@ const CoursesArea = () => {
                         <li>
                           <Link
                             to="/courses-details"
+                            className="theme-btn"
                             onClick={(e) => {
                               e.preventDefault();
                               navigate("/courses-details", {
