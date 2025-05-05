@@ -40,6 +40,7 @@ import ForgotPassword from "./components/forgot-password";
 import ResetPassword from "./components/reset-password";
 import Profile from "./components/profile";
 import MyCourses from "./components/my-cours";
+import HomeTwo from "./components/homes/home-2";
 
 const router = createBrowserRouter([
   { path: "/", element: <HomeOne /> },
@@ -52,14 +53,15 @@ const router = createBrowserRouter([
   { path: "/instructor", element: <Instructor /> },
   { path: "/instructor-details/:id", element: <InstructorDetails /> },
   { path: "*", element: <NotFound /> },
+  { path: "/home-2", element: <HomeTwo /> },
+  { path: "/home-3", element: <HomeThree /> },
+  { path: "/home-4", element: <HomeFour /> },
+  { path: "/home-5", element: <HomeFive /> },
 
   // Protected Routes
   {
     element: <ProtectedRoutes />, // Wrap all protected routes
     children: [
-      { path: "/home-3", element: <HomeThree /> },
-      { path: "/home-4", element: <HomeFour /> },
-      { path: "/home-5", element: <HomeFive /> },
       { path: "/courses", element: <Courses /> },
       { path: "/courses-grid", element: <CoursesGrid /> },
       { path: "/courses-list", element: <CoursesList /> },

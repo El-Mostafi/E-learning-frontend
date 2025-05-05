@@ -13429,7 +13429,7 @@ p {
 
 .courses-card-main-items .courses-card-items-hover {
   margin-top: 30px;
-  padding: 30px;
+  padding: 20px;
   background-color: var(--theme-blue);
   border-radius: 7px;
   border: 1px solid var(--theme-blue);
@@ -15408,7 +15408,11 @@ p {
   height: 100%;
   border-radius: 10px;
 }
-
+.courses-details-wrapper .courses-details-items .courses-image video {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
 .courses-details-wrapper .courses-details-items .courses-image .video-btn {
   width: 80px;
   height: 80px;
