@@ -26,15 +26,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   title = "Video Lesson",
   duration = 0,
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [videoDuration, setVideoDuration] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
+  const [volume, setVolume] = useState<number>(1);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
   // const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [showControls, setShowControls] = useState(true);
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [showControls, setShowControls] = useState<boolean>(true);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -80,14 +80,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     // Load metadata for new video
     if (videoRef.current) {
+      const videoElement = videoRef.current; // Capture the current value of videoRef.current
       const handleLoadedMetadata = () => {
-        setVideoDuration(videoRef.current?.duration || 0);
+        setVideoDuration(videoElement?.duration || 0);
       };
-
-      videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
-
+  
+      videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+  
       return () => {
-        videoRef.current?.removeEventListener(
+        videoElement?.removeEventListener(
           "loadedmetadata",
           handleLoadedMetadata
         );
@@ -114,7 +115,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       const duration = videoRef.current.duration;
 
       setCurrentTime(current);
-      setProgress((current / duration) * 100);
+      if (duration > 0) {
+        setProgress((current / duration) * 100);
+      } else {
+        setProgress(0);
+      }
 
       // Mark as completed when reaching 90% of the video
       if (current >= duration * 0.9 && !isCompleted) {
@@ -199,7 +204,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
             <h3>Video Locked</h3>
-            <p>Complete previous lessons to unlock this content</p>
+            <p>You need to buy this course to watch this video</p>
           </div>
         </div>
       )}
@@ -207,9 +212,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <video
         ref={videoRef}
         className="video-element"
-        src={
-          src
-        }
+        src={src}
         poster={poster}
         onTimeUpdate={handleTimeUpdate}
         onEnded={() => {
@@ -231,7 +234,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           type="range"
           min="0"
           max="100"
-          value={progress}
+          value={isNaN(progress) ? 0 : progress}
           onChange={handleSeek}
           className="h-full bg-blue-500 rounded-full cursor-pointer transition-all"
           disabled={isLocked}

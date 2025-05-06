@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { coursService, courseDataDetails } from "../../services/coursService";
-import { useLocation } from "react-router-dom";
+import {Link, useLocation } from "react-router-dom";
 import { Accordion } from "react-bootstrap";
 import VideoPlayer from './VideoPlayer/VideoPlayer';
 const CoursesDetailsArea = ({
@@ -9,11 +9,14 @@ const CoursesDetailsArea = ({
   setBreadcrumbData: (data: courseDataDetails) => void;
 }) => {
   const [course, setCourse] = useState<courseDataDetails>();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
   const location = useLocation();
   const [currentLectureId, setCurrentLectureId] = useState<string>('');
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
+  const [currentLectureTitle, setCurrentLectureTitle] = useState<string>('');
+  const videoPlayerRef = useRef<HTMLDivElement>(null);
+
 
   const courseId = location.state?.courseId;
 
@@ -85,16 +88,24 @@ const CoursesDetailsArea = ({
   };
   const markLectureComplete = (lectureId: string) => {
     //use api for update the isPreview of lecture
-    console.log(lectureId);
+    // console.log(lectureId);
   };
-  const isLectureLocked = (lectureId: string) => {
-    //use api for get lecture isPreview
-    console.log(lectureId);
-    return false;
+  const isByingCurrentCourse = (coursId: string) => {
+    //api to check if the user is bying current course
+    return true;
   };
-  const setCurrentLecture = (lectureId: string, videoUrl: string) => {
+  const handleLectureSelect = (lectureId : string, videoUrl : string, title : string) => {
     setCurrentLectureId(lectureId);
     setCurrentVideoUrl(videoUrl);
+    setCurrentLectureTitle(title);
+    
+    // Scroll to video player
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'center' 
+      });
+    }
   };
 
   if (loading) {
@@ -125,19 +136,27 @@ const CoursesDetailsArea = ({
 
   return (
     <>
+    <style>
+      {`
+        .thumb img {
+        border-radius: 50% !important;
+        }
+        
+      `}
+    </style>
       <section className="courses-details-section section-padding pt-0">
         <div className="container">
           <div className="courses-details-wrapper">
             <div className="row g-4">
               <div className="col-lg-8">
                 <div className="courses-details-items">
-                  <div className="courses-image">
+                  <div ref={videoPlayerRef} className="courses-image">
                   <VideoPlayer
               src={currentVideoUrl || course.sections[0].lectures[0].videoUrl}
               poster={course.thumbnailPreview}
-              title={course.title}
+              title={currentLectureTitle || course.sections[0].lectures[0].title}
               duration={course.duration}
-              isLocked={isLectureLocked(currentLectureId)}
+              isLocked={!isByingCurrentCourse(course.id)}
               onComplete={() => markLectureComplete(currentLectureId)}
             />
                     
@@ -262,7 +281,7 @@ const CoursesDetailsArea = ({
                                   >
                                     <ul>
                                       {section.lectures?.map((lecture, i) => (
-                                        <li className="cursor-pointer" onClick={() => setCurrentLecture(lecture.id,lecture.videoUrl)} key={lecture.id}>
+                                        <li className="cursor-pointer" onClick={() => handleLectureSelect(lecture.id,lecture.videoUrl,lecture.title)} key={lecture.id}>
                                           <span>
                                             <i className="fas fa-file-alt"></i>
                                             Lesson {i + 1}: {lecture.title}
@@ -270,9 +289,11 @@ const CoursesDetailsArea = ({
                                           <span>
                                             <i
                                               className={
-                                                lecture.isPreview
+                                                !isByingCurrentCourse(course.id)
+                                                  ? "far fa-lock"
+                                                  : lecture.isPreview
                                                   ? "far fa-play-circle"
-                                                  : "far fa-lock"
+                                                  : "far fa-unlock"
                                               }
                                             ></i>
                                             ({Math.floor(lecture.duration / 60)}
@@ -302,7 +323,6 @@ const CoursesDetailsArea = ({
                                   course.instructorImg ||
                                   "assets/img/courses/instructors-1.png"
                                 }
-                                style={{ borderRadius: "50%" }}
                                 alt={course.instructorName.replace("|", " ")}
                               />
                             </div>
@@ -317,21 +337,21 @@ const CoursesDetailsArea = ({
                                   "Experienced instructor with expertise in this field."}
                               </p>
                               <div className="social-icon">
-                                <a href="#">
+                                <Link to="#">
                                   <i className="fab fa-facebook-f"></i>
-                                </a>
-                                <a href="#">
+                                </Link>
+                                <Link to="#">
                                   <i className="fab fa-instagram"></i>
-                                </a>
-                                <a href="#">
+                                </Link>
+                                <Link to="#">
                                   <i className="fab fa-dribbble"></i>
-                                </a>
-                                <a href="#">
+                                </Link>
+                                <Link to="#">
                                   <i className="fab fa-behance"></i>
-                                </a>
-                                <a href="#">
+                                </Link>
+                                <Link to="#">
                                   <i className="fab fa-linkedin-in"></i>
-                                </a>
+                                </Link>
                               </div>
                             </div>
                           </div>

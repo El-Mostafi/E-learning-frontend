@@ -25,7 +25,7 @@ export interface SectionData {
   isPreview: boolean;
   lectures: LectureData[];
 }
-interface LectureData {
+export interface LectureData {
   id: string;
   title: string;
   description: string;
