@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useCourse } from "../context/CourseContext";
 import Button from "./common/Button";
 import {
-  CheckCircle,
   AlertCircle,
   Edit,
   Book,
@@ -27,6 +26,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     maxUses: 0,
     expiryDate: new Date(),
   });
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const generateCouponCode = () => {
     const prefix = "COURSE";
@@ -75,6 +75,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const confirmPublish = async () => {
+    setIsPublishing(true);
     try {
       if (!state.courseDetails.thumbnail) {
         setErrors([...errors, "Thumbnail is required"]);
@@ -210,7 +211,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       window.scrollTo({ top: 400, behavior: "smooth" });
     }
 
-    // alert('Course published successfully!');
+    setIsPublishing(false);
   };
 
   const handlePricingChange = (isFree: boolean) => {
@@ -573,8 +574,21 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 Cancel
               </Button>
               <Button onClick={confirmPublish}>
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Confirm Publish
+                {isPublishing ? (
+                  <>
+                    Publishing{" "}
+                    <span
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-check mr-2"></i>
+                    Confirm Publish
+                  </>
+                )}
               </Button>
             </div>
           </div>

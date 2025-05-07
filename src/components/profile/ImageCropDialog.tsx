@@ -95,7 +95,7 @@ export default function ImageCropDialog({ imageUrl,imageName, onClose, onSave }:
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-3xl w-full p-6">
+      <div className="bg-white rounded-2xl max-h-[90vh] max-w-3xl w-full p-6 overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Edit Profile Picture</h2>
           <button
