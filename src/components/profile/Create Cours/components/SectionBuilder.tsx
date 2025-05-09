@@ -65,21 +65,64 @@ const SectionBuilder: React.FC<{
     }
   };
 
-  const removeSection = (id: string) => {
-    dispatch({
-      type: "REMOVE_SECTION",
-      payload: id,
-    });
+  const removeSection = async (sectionId: string) => {
+    const section = state.sections.find((sec) => sec.id === sectionId);
 
-    const newErrors = { ...errors };
-    Object.keys(newErrors).forEach((key) => {
-      if (key.startsWith(`${id}-`)) {
-        delete newErrors[key];
+    try {
+      if (section) {
+        const videos = section.videos.map((video) => ({
+          id: video.id,
+          publicId: video.publicId,
+        }));
+        for (const video of videos) {
+          const response = await cloudService.deleteFile(
+            video.publicId,
+            "video"
+          );
+          if (response.status === 200) {
+            dispatch({
+              type: "REMOVE_VIDEO_FROM_SECTION",
+              payload: { sectionId, videoId: video.id },
+            });
+          } else {
+            setErrors({
+              ...errors,
+              [`${sectionId}-${video.id}-apiError`]:
+                "An error occurred while deleting the video ",
+            });
+            return;
+          }
+        }
+        dispatch({
+          type: "REMOVE_SECTION",
+          payload: sectionId,
+        });
+        const newErrors = { ...errors };
+        Object.keys(newErrors).forEach((key) => {
+          if (key.startsWith(`${sectionId}-`)) {
+            delete newErrors[key];
+          }
+        });
+        setErrors(newErrors);
       }
-    });
-    setErrors(newErrors);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setErrors({
+          ...errors,
+          [`${sectionId}-apiError`]:
+            "An error occurred while deleting the video in section",
+        });
+      } else {
+        console.error("Unexpected error:", error);
+        setErrors({
+          ...errors,
+          [`${sectionId}-apiError`]:
+            "An error occurred while deleting the video in section",
+        });
+      }
+    }
   };
-  
 
   const validateAspectRatio = (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -209,7 +252,10 @@ const SectionBuilder: React.FC<{
             payload: {
               sectionId,
               videoId,
-              updates: { publicId: response.public_id, secureUrl: response.secure_url },
+              updates: {
+                publicId: response.public_id,
+                secureUrl: response.secure_url,
+              },
             },
           });
           console.log("Video uploaded:", response);
@@ -236,11 +282,45 @@ const SectionBuilder: React.FC<{
     [dispatch, updateVideoProgress, errors]
   );
 
-  const removeVideo = (sectionId: string, videoId: string) => {
-    dispatch({
-      type: "REMOVE_VIDEO_FROM_SECTION",
-      payload: { sectionId, videoId },
-    });
+  const removeVideo = async (
+    sectionId: string,
+    videoId: string,
+    publicId: string
+  ) => {
+    try {
+      if (publicId) {
+        const response = await cloudService.deleteFile(publicId, "video");
+        if (response.status === 200) {
+          dispatch({
+            type: "REMOVE_VIDEO_FROM_SECTION",
+            payload: { sectionId, videoId },
+          });
+        } else {
+          setErrors({
+            ...errors,
+            [`${sectionId}-${videoId}-apiError`]:
+              "An error occurred while deleting the video",
+          });
+          return;
+        }
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setErrors({
+          ...errors,
+          [`${sectionId}-${videoId}-apiError`]:
+            "An error occurred while deleting the video",
+        });
+      } else {
+        console.error("Unexpected error:", error);
+        setErrors({
+          ...errors,
+          [`${sectionId}-${videoId}-apiError`]:
+            "An error occurred while deleting the video",
+        });
+      }
+    }
   };
 
   const updateVideo = (
@@ -529,6 +609,18 @@ const SectionBuilder: React.FC<{
                             }`}
                           >
                             <div>
+                              {errors[`${section.id}-apiError`] && (
+                                <div className="my-2 flex items-start text-red-600 ">
+                                  <AlertCircle className="w-6 h-6 mr-1 flex-shrink-0 mt-0.5" />
+                                  <span>
+                                    {
+                                      errors[
+                                        `${section.id}-apiError`
+                                      ]
+                                    }
+                                  </span>
+                                </div>
+                              )}
                               <label
                                 htmlFor={`title-${section.id}`}
                                 className="block text-sm font-medium text-gray-700 mb-1"
@@ -645,7 +737,11 @@ const SectionBuilder: React.FC<{
                                       <button
                                         type="button"
                                         onClick={() =>
-                                          removeVideo(section.id, video.id)
+                                          removeVideo(
+                                            section.id,
+                                            video.id,
+                                            video.publicId
+                                          )
                                         }
                                         className="absolute top-2 right-2 bg-black bg-opacity-70 text-white rounded-full p-1 hover:bg-opacity-90"
                                         aria-label="Remove video"
@@ -723,9 +819,11 @@ const SectionBuilder: React.FC<{
 
                                       <div className="flex items-center text-xs text-gray-500 mt-2">
                                         <Film className="w-3 h-3 mr-1" />
-                                        <span>
-                                          {formatFileSize(video.file.size)}
-                                        </span>
+                                        {video.file && (
+                                          <span>
+                                            {formatFileSize(video.file.size)}
+                                          </span>
+                                        )}
                                         <span className="mx-1">•</span>
                                         <span>
                                           {formatDuration(video.duration || 0)}
@@ -739,7 +837,7 @@ const SectionBuilder: React.FC<{
                                         </div>
                                       )}
                                       {errors[
-                                        `${section.id}-${video.id}-title`
+                                        `${section.id}-${video.id}-apiError`
                                       ] && (
                                         <div className="mt-2 flex items-start text-red-600 text-xs">
                                           <AlertCircle className="w-3 h-3 mr-1 flex-shrink-0 mt-0.5" />

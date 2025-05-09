@@ -351,7 +351,7 @@ function ProfileForm() {
     (roleBasedStats.averageRating as number) -
     Math.floor(roleBasedStats.averageRating as number);
   const fractionalString = fractionalPart.toFixed(1).substring(1);
-  const getValidationError = (name: string, value: string): string => {
+  const getValidationError = useCallback((name: string, value: string): string => {
     let error = "";
 
     if (name === "firstName") {
@@ -430,7 +430,7 @@ function ProfileForm() {
     }
 
     return error;
-  };
+  }, [profile]);
   const validateField = (name: string, value: string) => {
     const error = getValidationError(name, value);
 
@@ -526,7 +526,7 @@ function ProfileForm() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [profile, isChangingPassword]);
+  }, [profile, isChangingPassword, getValidationError]);
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;

@@ -1,8 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef,useCallback } from "react";
 import { coursService, courseDataDetails } from "../../services/coursService";
-import {Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Accordion } from "react-bootstrap";
 import VideoPlayer from './VideoPlayer/VideoPlayer';
+import ReviewForm from "./ReviewForm";
+import courseReviewService from "../../services/courseReviewService";
+import CourseProgress from "./CourseProgress";
+import VideoNavigation from "./VideoNavigation";
+import courseProgressService from "../../services/courseProgressService";
+import CouponInput from "./CouponInput";
+
 const CoursesDetailsArea = ({
   setBreadcrumbData,
 }: {
@@ -15,10 +22,43 @@ const CoursesDetailsArea = ({
   const [currentLectureId, setCurrentLectureId] = useState<string>('');
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
   const [currentLectureTitle, setCurrentLectureTitle] = useState<string>('');
+  const [currentLectureIndex, setCurrentLectureIndex] = useState<number>(0);
+  const [totalLectureCount, setTotalLectureCount] = useState<number>(0);
+  const [hasPurchased, setHasPurchased] = useState<boolean>(false);
+  const [progress, setProgress] = useState<{completedLectures: string[], totalLectures: number}>({
+    completedLectures: [],
+    totalLectures: 0
+  });
+  const [discountedPrice, setDiscountedPrice] = useState<number | null>(null);
+  
   const videoPlayerRef = useRef<HTMLDivElement>(null);
-
-
   const courseId = location.state?.courseId;
+
+  // Get all lectures as a flat array for navigation
+  const getAllLectures = useCallback(() => {
+    if (!course) return [];
+    
+    const allLectures: {id: string, videoUrl: string, title: string, sectionTitle: string}[] = [];
+    
+    course.sections.forEach(section => {
+      section.lectures.forEach(lecture => {
+        allLectures.push({
+          id: lecture.id,
+          videoUrl: lecture.videoUrl,
+          title: lecture.title,
+          sectionTitle: section.title
+        });
+      });
+    });
+    
+    return allLectures;
+  }, [course]);
+
+  // Find lecture index in flat array
+  const findLectureIndex = useCallback((lectureId: string) => {
+    const allLectures = getAllLectures();
+    return allLectures.findIndex(lecture => lecture.id === lectureId);
+  }, [getAllLectures]);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -32,6 +72,47 @@ const CoursesDetailsArea = ({
         const response = await coursService.getCourseDetails(courseId);
         setCourse(response);
         setBreadcrumbData(response);
+        
+        const lectureCount = response.sections.reduce(
+          (total, section) => total + section.lectures.length, 0
+        );
+        setTotalLectureCount(lectureCount);
+        
+        if (response.sections.length > 0 && response.sections[0].lectures.length > 0) {
+          const firstLecture = response.sections[0].lectures[0];
+          setCurrentLectureId(firstLecture.id);
+          setCurrentVideoUrl(firstLecture.videoUrl);
+          setCurrentLectureTitle(firstLecture.title);
+        }
+        
+        // Check if course is purchased
+        const purchased = await courseProgressService.hasUserPurchasedCourse(courseId);
+        setHasPurchased(purchased);
+        
+        // Get course progress
+        const courseProgress = await courseProgressService.getProgress(courseId);
+        setProgress({
+          completedLectures: courseProgress.completedLectures,
+          totalLectures: lectureCount
+        });
+        
+        // If user has a last watched lecture, show that instead
+        if (purchased && courseProgress.lastWatchedLectureId) {
+          // Find this lecture in the course
+          let found = false;
+          for (const section of response.sections) {
+            for (const lecture of section.lectures) {
+              if (lecture.id === courseProgress.lastWatchedLectureId) {
+                setCurrentLectureId(lecture.id);
+                setCurrentVideoUrl(lecture.videoUrl);
+                setCurrentLectureTitle(lecture.title);
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+        }
       } catch (err) {
         setError("Failed to load course. Please try again later.");
         console.error(err);
@@ -42,6 +123,26 @@ const CoursesDetailsArea = ({
 
     fetchCourse();
   }, [courseId, setBreadcrumbData]);
+
+  // Update current lecture index when lecture changes
+  useEffect(() => {
+    if (currentLectureId) {
+      const index = findLectureIndex(currentLectureId);
+      setCurrentLectureIndex(index !== -1 ? index : 0);
+    }
+  }, [currentLectureId, findLectureIndex]);
+
+  const handleApplyCoupon = async (code: string) => {
+    try {
+      // In a real app, this would validate the coupon with your backend
+      const discount = 0.2; // 20% discount for demo
+      if (course?.price) {
+        setDiscountedPrice(course.price * (1 - discount));
+      }
+    } catch (err) {
+      throw new Error('Invalid coupon code');
+    }
+  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -62,6 +163,7 @@ const CoursesDetailsArea = ({
       ? (count / course!.reviewsLenght) * 100
       : 0;
   };
+  
   const formatDuration = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
     const remainingAfterHours = totalSeconds % 3600;
@@ -86,15 +188,28 @@ const CoursesDetailsArea = ({
       return parts.join(" ");
     }
   };
-  const markLectureComplete = (lectureId: string) => {
-    //use api for update the isPreview of lecture
-    // console.log(lectureId);
+  
+  const markLectureComplete = async (lectureId: string) => {
+    if (!courseId || !hasPurchased) return;
+    
+    try {
+      const updatedProgress = await courseProgressService.updateLectureProgress(
+        courseId,
+        lectureId,
+        true,
+        totalLectureCount
+      );
+      
+      setProgress({
+        completedLectures: updatedProgress.completedLectures,
+        totalLectures: updatedProgress.totalLectures
+      });
+    } catch (err) {
+      console.error("Failed to update lecture progress:", err);
+    }
   };
-  const isByingCurrentCourse = (coursId: string) => {
-    //api to check if the user is bying current course
-    return true;
-  };
-  const handleLectureSelect = (lectureId : string, videoUrl : string, title : string) => {
+  
+  const handleLectureSelect = (lectureId: string, videoUrl: string, title: string) => {
     setCurrentLectureId(lectureId);
     setCurrentVideoUrl(videoUrl);
     setCurrentLectureTitle(title);
@@ -105,6 +220,49 @@ const CoursesDetailsArea = ({
         behavior: 'smooth',
         block: 'center' 
       });
+    }
+  };
+  
+  const handleSubmitReview = async (review: { rating: number; comment: string }) => {
+    if (!courseId) return Promise.reject("Course ID is missing");
+    
+    try {
+      await courseReviewService.submitReview({
+        courseId,
+        rating: review.rating,
+        comment: review.comment
+      });
+      
+      // In a real app, you would refresh the reviews here
+      return Promise.resolve();
+    } catch (err) {
+      console.error("Failed to submit review:", err);
+      return Promise.reject(err);
+    }
+  };
+  
+  const handlePreviousVideo = () => {
+    if (currentLectureIndex > 0) {
+      const allLectures = getAllLectures();
+      const prevLecture = allLectures[currentLectureIndex - 1];
+      handleLectureSelect(prevLecture.id, prevLecture.videoUrl, prevLecture.title);
+    }
+  };
+  
+  const handleNextVideo = () => {
+    const allLectures = getAllLectures();
+    if (currentLectureIndex < allLectures.length - 1) {
+      const nextLecture = allLectures[currentLectureIndex + 1];
+      handleLectureSelect(nextLecture.id, nextLecture.videoUrl, nextLecture.title);
+    }
+  };
+  
+  const handlePurchaseCourse = () => {
+    // In a real app, this would redirect to checkout
+    // For demo purposes, we'll just mark as purchased
+    if (courseId) {
+      courseProgressService.markCoursePurchased(courseId);
+      setHasPurchased(true);
     }
   };
 
@@ -136,14 +294,50 @@ const CoursesDetailsArea = ({
 
   return (
     <>
-    <style>
-      {`
-        .thumb img {
-        border-radius: 50% !important;
-        }
-        
-      `}
-    </style>
+      <style>
+        {`
+          .thumb img {
+            border-radius: 50% !important;
+          }
+          
+          .video-navigation .btn {
+            transition: all 0.3s ease;
+          }
+          
+          .video-navigation .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+          }
+          
+          .rating-container .fas {
+            transition: color 0.2s ease;
+          }
+          
+          .progress-bar {
+            transition: width 0.5s ease-in-out;
+          }
+          
+          .course-progress {
+            animation: fadeIn 0.5s ease-in;
+          }
+          
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          
+          .continue-learning-btn {
+            background: linear-gradient(45deg, #4481eb, #04befe);
+            border: none;
+            transition: all 0.3s ease;
+          }
+          
+          .continue-learning-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 118, 255, 0.3);
+          }
+        `}
+      </style>
       <section className="courses-details-section section-padding pt-0">
         <div className="container">
           <div className="courses-details-wrapper">
@@ -151,16 +345,32 @@ const CoursesDetailsArea = ({
               <div className="col-lg-8">
                 <div className="courses-details-items">
                   <div ref={videoPlayerRef} className="courses-image">
-                  <VideoPlayer
-              src={currentVideoUrl || course.sections[0].lectures[0].videoUrl}
-              poster={course.thumbnailPreview}
-              title={currentLectureTitle || course.sections[0].lectures[0].title}
-              duration={course.duration}
-              isLocked={!isByingCurrentCourse(course.id)}
-              onComplete={() => markLectureComplete(currentLectureId)}
-            />
-                    
+                    <VideoPlayer
+                      src={currentVideoUrl || course.sections[0].lectures[0].videoUrl}
+                      poster={course.thumbnailPreview}
+                      title={currentLectureTitle || course.sections[0].lectures[0].title}
+                      duration={course.duration}
+                      isLocked={!hasPurchased}
+                      onComplete={() => markLectureComplete(currentLectureId)}
+                    />
                   </div>
+                  
+                  {hasPurchased && (
+                    <>
+                      <VideoNavigation 
+                        currentLectureIndex={currentLectureIndex}
+                        totalLectures={totalLectureCount}
+                        onPreviousVideo={handlePreviousVideo}
+                        onNextVideo={handleNextVideo}
+                      />
+                      
+                      <CourseProgress 
+                        completedLectures={progress.completedLectures.length}
+                        totalLectures={progress.totalLectures}
+                      />
+                    </>
+                  )}
+                  
                   <div className="courses-details-content">
                     <ul className="nav">
                       <li
@@ -281,15 +491,28 @@ const CoursesDetailsArea = ({
                                   >
                                     <ul>
                                       {section.lectures?.map((lecture, i) => (
-                                        <li className="cursor-pointer" onClick={() => handleLectureSelect(lecture.id,lecture.videoUrl,lecture.title)} key={lecture.id}>
-                                          <span>
-                                            <i className="fas fa-file-alt"></i>
-                                            Lesson {i + 1}: {lecture.title}
+                                        <li 
+                                          className="cursor-pointer d-flex justify-content-between align-items-center hover:bg-gray-100" 
+                                          onClick={() => handleLectureSelect(lecture.id, lecture.videoUrl, lecture.title)} 
+                                          key={lecture.id}
+                                          style={{
+                                            backgroundColor: currentLectureId === lecture.id ? 'rgba(0,0,0,0.05)' : '',
+                                           
+                                          }}
+                                        >
+                                          <span className="d-flex align-items-center">
+                                            <i className="fas fa-file-alt me-2"></i>
+                                            <span>
+                                              Lesson {i + 1}: {lecture.title}
+                                              {progress.completedLectures.includes(lecture.id) && (
+                                                <i className="fas fa-check-circle ms-2 text-success"></i>
+                                              )}
+                                            </span>
                                           </span>
                                           <span>
                                             <i
                                               className={
-                                                !isByingCurrentCourse(course.id)
+                                                !hasPurchased
                                                   ? "far fa-lock"
                                                   : lecture.isPreview
                                                   ? "far fa-play-circle"
@@ -424,6 +647,14 @@ const CoursesDetailsArea = ({
                                 </div>
                               </div>
                             ))}
+                            
+                            {/* Add review form for users who purchased the course */}
+                            {hasPurchased && (
+                              <ReviewForm 
+                                courseId={courseId}
+                                onSubmitReview={handleSubmitReview}
+                              />
+                            )}
                           </div>
                         </div>
                       </div>
@@ -462,15 +693,52 @@ const CoursesDetailsArea = ({
                       </div>
                     </div>
                     <div className="courses-content">
-                      <h3>${course.price?.toFixed(2) || "XXXX"}</h3>
+                      <h3>
+                        ${discountedPrice?.toFixed(2) || course.price?.toFixed(2) || "XXXX"}
+                        {discountedPrice && (
+                          <span className="original-price text-muted text-decoration-line-through ms-2">
+                            ${course.price?.toFixed(2)}
+                          </span>
+                        )}
+                      </h3>
                       <p>{course.description?.substring(0, 80)}...</p>
+                      
+                      {!hasPurchased && (
+                        <CouponInput onApplyCoupon={handleApplyCoupon} />
+                      )}
+                      
                       <div className="courses-btn">
-                        <a href="#" className="theme-btn">
-                          Add to Cart
-                        </a>
-                        <a href="#" className="theme-btn style-2">
-                          Buy Course
-                        </a>
+                        {!hasPurchased ? (
+                          <>
+                            <a href="#" className="theme-btn" onClick={(e) => { e.preventDefault(); handlePurchaseCourse(); }}>
+                              Add to Cart
+                            </a>
+                            <a href="#" className="theme-btn style-2" onClick={(e) => { e.preventDefault(); handlePurchaseCourse(); }}>
+                              Buy Course
+                            </a>
+                          </>
+                        ) : (
+                          <>
+                            <a href="#" className="theme-btn continue-learning-btn mr-4" onClick={(e) => {
+                              e.preventDefault();
+                              if (videoPlayerRef.current) {
+                                videoPlayerRef.current.scrollIntoView({ 
+                                  behavior: 'smooth',
+                                  block: 'center' 
+                                });
+                              }
+                            }}>
+                              <i className="fas fa-play-circle me-2"></i>
+                              Continue Learning
+                            </a>
+                            <div className="mt-3 d-flex justify-content-between">
+                              <span className={progress.completedLectures.length === progress.totalLectures ? "text-success" : ""}>
+                                <i className="fas fa-graduation-cap me-2"></i>
+                                {Math.round((progress.completedLectures.length / progress.totalLectures) * 100)}% Complete
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

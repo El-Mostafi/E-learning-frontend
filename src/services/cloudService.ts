@@ -43,7 +43,6 @@ export const cloudService = {
     formData.append("signature", signature.signature);
     formData.append('upload_preset', 'videos_preset');
     formData.append('tags', 'temporary,draft');
-    // formData.append('resource_type', 'video');
   
     try {
       const response = await axios.post<CloudinaryUploadResponse>(
@@ -64,5 +63,9 @@ export const cloudService = {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error('Upload failed :'+errorMessage);
     }
+  },
+  deleteFile: async (publicId: string, type: string) => {
+    const response = await axiosInstance.delete(`/delete/${type}/${publicId}`);
+    return response;
   }
 };

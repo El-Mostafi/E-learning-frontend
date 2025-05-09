@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { CourseState, VideoFile, Coupon } from '../types';
 
 type CourseAction =
+  |{ type: 'INITIALIZE_COURSE'; payload: Partial<CourseState> }
   | { type: 'SET_COURSE_DETAILS'; payload: Partial<CourseState['courseDetails']> }
   | { type: 'SET_SECTIONS'; payload: CourseState['sections'] }
   | { type: 'ADD_SECTION'; payload: CourseState['sections'][0] }
@@ -45,6 +46,11 @@ const initialState: CourseState = {
 
 const courseReducer = (state: CourseState, action: CourseAction): CourseState => {
   switch (action.type) {
+    case 'INITIALIZE_COURSE':
+      return {
+        ...state,
+        ...action.payload,
+      };
     case 'SET_COURSE_DETAILS':
       return {
         ...state,

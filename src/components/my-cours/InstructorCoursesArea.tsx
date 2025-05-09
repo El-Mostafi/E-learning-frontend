@@ -13,6 +13,7 @@ function InstructorCoursesArea() {
   const [courseToDelete, setCourseToDelete] = useState<courseInstructor | null>(
     null
   );
+  const [courseToEditId, setCourseToEditId] = useState<string>("");
   
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
@@ -52,8 +53,8 @@ function InstructorCoursesArea() {
     setShowDeleteModal(true);
   };
 
-  const handleEdit = () => {
-    
+  const handleEdit = (courseId: string) => {
+    setCourseToEditId(courseId)
     setShowEditModal(true);
   };
 
@@ -276,7 +277,7 @@ function InstructorCoursesArea() {
                           {cours.students} Students
                         </li>
                         <li>
-                          <button onClick={() => handleEdit()} className="theme-btn">
+                          <button onClick={() => handleEdit(cours.id)} className="theme-btn">
                             Edit
                           </button>
                         </li>
@@ -405,7 +406,7 @@ function InstructorCoursesArea() {
             <X className="w-6 h-6" />
           </button>
         </div>
-        <CreateCours />
+        <CreateCours mode="edit" courseId={courseToEditId} />
         </div>
       </div>
       )
