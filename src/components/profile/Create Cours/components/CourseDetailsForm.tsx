@@ -8,6 +8,7 @@ import TextStyle from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import { useCourse } from "../context/CourseContext";
 import Button from "./common/Button";
+import axios from "axios";
 import {
   Image as ImageIcon,
   Upload,
@@ -18,6 +19,7 @@ import {
   ListOrdered,
   Heading,
 } from "lucide-react";
+import { cloudService } from "../../../../services/cloudService";
 
 const CATEGORIES = [
   "Web Development",
@@ -31,7 +33,14 @@ const CATEGORIES = [
   "Personal Development",
 ];
 
-const LANGUAGES = ["Arabic","English", "Spanish", "French", "German", "Italian"];
+const LANGUAGES = [
+  "Arabic",
+  "English",
+  "Spanish",
+  "French",
+  "German",
+  "Italian",
+];
 
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
@@ -164,6 +173,39 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
       setErrors({ ...errors, level: "" });
     }
   };
+  const handelDeleteImage = async () => {
+    try {
+      if (courseDetails.imgPublicId) {
+        const response = await cloudService.deleteFile(
+          courseDetails.imgPublicId,
+          "image"
+        );
+        if (response.status === 200) {
+          dispatch({
+            type: "SET_COURSE_DETAILS",
+            payload: {
+              thumbnail: null,
+              thumbnailPreview: "",
+              imgPublicId: "",
+              secureUrl: "",
+            },
+          });
+        }
+        else {
+          setErrors({ ...errors, thumbnail: "An error occurred while deleting the image" })
+        }
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setErrors({...errors, thumbnail:"An error occurred while deleting the image"});
+      } else {
+        console.error("Unexpected error:", error);
+        setErrors({...errors, thumbnail:"An error occurred while deleting the image"});
+      }
+      window.scrollTo({ top: 400, behavior: "smooth" });
+    }
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -172,7 +214,7 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
       newErrors.title = "Title is required";
     }
 
-    if (!courseDetails.thumbnail) {
+    if (!courseDetails.thumbnailPreview) {
       newErrors.thumbnail = "Thumbnail is required";
     }
 
@@ -239,10 +281,7 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch({
-                    type: "SET_COURSE_DETAILS",
-                    payload: { thumbnail: null, thumbnailPreview: "" },
-                  });
+                  handelDeleteImage();
                 }}
               >
                 <svg

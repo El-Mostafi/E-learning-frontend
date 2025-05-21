@@ -4,12 +4,14 @@ interface ProgressBarProps {
   currentStep: number;
   totalSteps: number;
   labels?: string[];
+  onStepClick?: (step: number) => void;
 }
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ 
   currentStep, 
   totalSteps, 
-  labels = ['Course Details', 'Sections', 'Quiz', 'Publish'] 
+  labels = ['Course Details', 'Sections', 'Videos', 'Quiz', 'Publish'],
+  onStepClick
 }) => {
   return (
     <div className="w-full mb-6 sm:mb-8">
@@ -18,6 +20,8 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
           <div 
             key={index}
             className={`flex flex-col items-center ${index <= currentStep ? 'text-blue-600' : 'text-gray-400'}`}
+            onClick={() => onStepClick?.(index)}
+            style={{ cursor: onStepClick ? 'pointer' : 'default' }}
           >
             <div 
               className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-medium mb-1

@@ -13,7 +13,7 @@ export interface CourseDetails {
 export interface VideoFile {
   id: string;
   publicId: string;
-  file: File;
+  file?: File;
   secureUrl: string;
   progress: number;
   preview: string;
@@ -50,6 +50,7 @@ export interface Coupon {
 }
 
 export interface CourseState {
+  id?: string;
   courseDetails: CourseDetails;
   sections: Section[];
   quizQuestions: QuizQuestion[];
@@ -59,5 +60,6 @@ export interface CourseState {
     price: number;
     isFree: boolean;
   };
+  oldPrice?: number;
   coupons: Coupon[];
 }

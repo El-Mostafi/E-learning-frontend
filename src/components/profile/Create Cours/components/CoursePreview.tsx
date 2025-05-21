@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useCourse } from "../context/CourseContext";
 import Button from "./common/Button";
 import {
-  CheckCircle,
   AlertCircle,
   Edit,
   Book,
@@ -15,19 +14,21 @@ import { cloudService } from "../../../../services/cloudService";
 import { coursService } from "../../../../services/coursService";
 import axios from "axios";
 
-const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({ onBack, mode }) => {
   const { state, dispatch } = useCourse();
   const { courseDetails, sections, quizQuestions, pricing, coupons } = state;
 
   const [errors, setErrors] = useState<string[]>([]);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
   const [newCoupon, setNewCoupon] = useState({
     code: "",
     discountPercentage: 0,
     maxUses: 0,
     expiryDate: new Date(),
   });
-
+  const [isPublishing, setIsPublishing] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  
   const generateCouponCode = () => {
     const prefix = "COURSE";
     const randomChars = Math.random()
@@ -43,7 +44,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     if (
       !courseDetails.title ||
-      !courseDetails.thumbnail ||
+      !courseDetails.thumbnailPreview ||
       !courseDetails.category ||
       !courseDetails.level ||
       !courseDetails.description
@@ -74,7 +75,144 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
+  const confrimUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      if (!state.courseDetails.secureUrl && !state.courseDetails.imgPublicId && !state.courseDetails.thumbnail) {
+        setErrors([...errors, "Thumbnail is required"]);
+        setShowConfirmation(false);
+        window.scrollTo({ top: 400, behavior: "smooth" });
+        return;
+      }
+      let securUrl: string = "";
+      let publicId: string = "";
+      if (!state.courseDetails.secureUrl && !state.courseDetails.imgPublicId) {
+        const { data: signatureData } = await cloudService.getSignatureImage();
+        if (!signatureData) {
+          setErrors([...errors, "An error occurred"]);
+          setShowConfirmation(false);
+          window.scrollTo({ top: 400, behavior: "smooth" });
+          return;
+        }
+
+        const { data: uploadData } = await cloudService.uploadFile(
+          state.courseDetails.thumbnail!,
+          signatureData,
+          "images_preset"
+        );
+        securUrl = uploadData.secure_url;
+        publicId = uploadData.public_id;
+        console.log("Uploaded asset:", uploadData);
+        if (!uploadData.secure_url) {
+          setErrors([...errors, "test"]);
+          setShowConfirmation(false);
+          window.scrollTo({ top: 400, behavior: "smooth" });
+          return;
+        }
+        dispatch({
+          type: "SET_COURSE_DETAILS",
+          payload: {
+            secureUrl: uploadData.secure_url,
+            imgPublicId: uploadData.public_id,
+          },
+        });
+      }
+      const response = await coursService.updateCours({
+        ...state,
+        courseDetails: {
+          ...state.courseDetails,
+          secureUrl: securUrl == "" ? state.courseDetails.secureUrl : securUrl,
+          imgPublicId:
+            publicId == "" ? state.courseDetails.imgPublicId : publicId,
+        },
+      });
+      console.log("Course updated:", response.data);
+      if (response.data.success == true) {
+        console.log("course updated successfully");
+
+        let index = 1;
+        const publicIds: string[] = [];
+
+        for (const section of state.sections) {
+          const sectionPayload = {
+            title: section.title,
+            description: section.description,
+            isPreview: false,
+            orderIndex: index++,
+          };
+
+          const SectionResponse = await coursService.createSection(
+            state.id!,
+            sectionPayload
+          );
+          console.log("section created:", SectionResponse.data);
+
+          if (SectionResponse.data.success == true) {
+            console.log("section created successfully");
+
+            for (const video of section.videos) {
+              const videoPayload = {
+                title: video.title,
+                description: video.description,
+                videoUrl: video.secureUrl,
+                isPreview: false,
+                duration: video.duration,
+                publicId: video.publicId,
+              };
+
+              publicIds.push(video.publicId);
+
+              const VideoResponse = await coursService.createVideo(
+                state.id!,
+                SectionResponse.data.sectionId,
+                videoPayload
+              );
+
+              console.log("video created:", VideoResponse.data);
+
+              if (VideoResponse.data.success == true) {
+                console.log("video created successfully");
+              }
+            }
+          }
+        }
+
+        for (const question of state.quizQuestions) {
+          const QuizPaylod = {
+            question: question.question,
+            options: question.options,
+            correctAnswer: question.correctAnswer,
+          };
+          const QuizResponse = await coursService.createQuiz(
+            state.id!,
+            QuizPaylod
+          );
+          console.log("quiz created:", QuizResponse.data);
+        }
+        console.log(publicIds);
+        const publishResponse = await coursService.publishCours(
+          state.id!,
+          publicIds
+        );
+        console.log("Course updated:", publishResponse.data);
+
+        window.location.href = "/my-courses";
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setErrors([...errors, "An error occurred Try again later"]);
+      } else {
+        console.error("Unexpected error:", error);
+        setErrors([...errors, "An error occurred Try again later"]);
+      }
+      setShowConfirmation(false);
+      window.scrollTo({ top: 400, behavior: "smooth" });
+    }
+    setIsUpdating(false);
+  }
   const confirmPublish = async () => {
+    setIsPublishing(true);
     try {
       if (!state.courseDetails.thumbnail) {
         setErrors([...errors, "Thumbnail is required"]);
@@ -102,7 +240,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         publicId = uploadData.public_id;
         console.log("Uploaded asset:", uploadData);
         if (!uploadData.secure_url) {
-          setErrors([...errors, "test"]);
+          setErrors([...errors, "error occured"]);
           setShowConfirmation(false);
           window.scrollTo({ top: 400, behavior: "smooth" });
           return;
@@ -210,7 +348,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       window.scrollTo({ top: 400, behavior: "smooth" });
     }
 
-    // alert('Course published successfully!');
+    setIsPublishing(false);
   };
 
   const handlePricingChange = (isFree: boolean) => {
@@ -554,7 +692,7 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <Button onClick={onBack} variant="outline">
           Back
         </Button>
-        <Button onClick={handlePublish}>Publish Course</Button>
+        <Button onClick={handlePublish}>{mode === 'edit' ? 'Update Course' : 'Publish Course'}</Button>
       </div>
 
       {showConfirmation && (
@@ -572,9 +710,22 @@ const CoursePreview: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               >
                 Cancel
               </Button>
-              <Button onClick={confirmPublish}>
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Confirm Publish
+              <Button onClick={mode === 'edit' ? confrimUpdate : confirmPublish}>
+                {isPublishing || isUpdating ? (
+                  <>
+                  {mode === 'edit' ? 'Updating ' : 'Publishing '}
+                    <span
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-check mr-2"></i>
+                    {mode === 'edit' ? 'Confirm Update' : 'Confirm Publish'}
+                  </>
+                )}
               </Button>
             </div>
           </div>

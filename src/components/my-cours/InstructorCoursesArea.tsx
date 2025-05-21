@@ -1,18 +1,25 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NiceSelect, { Option } from "../../ui/NiceSelect";
 import { coursService, courseInstructor } from "../../services/coursService";
-import { Star, AlertCircle } from "lucide-react";
-
+import { X,Star, AlertCircle } from "lucide-react";
+import CreateCours  from "../profile/Create Cours/index";
 function InstructorCoursesArea() {
   const [courses, setCourses] = useState<courseInstructor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState<courseInstructor | null>(null);
-  const [sortBy, setSortBy] = useState("01");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [courseToDelete, setCourseToDelete] = useState<courseInstructor | null>(
+    null
+  );
+  const [courseToEditId, setCourseToEditId] = useState<string>("");
   
-  const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  const [sortBy, setSortBy] = useState<string>("01");
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const coursesPerPage = 9;
 
   useEffect(() => {
@@ -45,43 +52,47 @@ function InstructorCoursesArea() {
     setCourseToDelete(course);
     setShowDeleteModal(true);
   };
-  
+
+  const handleEdit = (courseId: string) => {
+    setCourseToEditId(courseId)
+    setShowEditModal(true);
+  };
 
   const confirmDelete = async () => {
     if (!courseToDelete) return;
-    
+    setIsDeleting(true);
     try {
       const response = await coursService.deleteCours(courseToDelete.id);
       console.log(response.data);
-      setCourses(courses.filter(course => course.id !== courseToDelete.id));
+      setCourses(courses.filter((course) => course.id !== courseToDelete.id));
       setShowDeleteModal(false);
       setCourseToDelete(null);
     } catch (err) {
       setError("Failed to delete course. Please try again later.");
       console.log(err);
     }
+    setIsDeleting(false);
   };
 
-  const selectHandler = (item: Option,value: string) => {
+  const selectHandler = (item: Option, value: string) => {
     setSortBy(value);
     const sortedCourses = [...courses];
     console.log(item, sortBy);
     switch (value) {
-      case "02": 
+      case "02":
         sortedCourses.sort((a, b) => b.students - a.students);
         break;
-      case "03": 
+      case "03":
         sortedCourses.sort((a, b) => b.reviews - a.reviews);
         break;
-      case "04": 
-        sortedCourses.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      case "04":
+        sortedCourses.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         break;
-      default: 
-        sortedCourses.sort((a, b) => 
-          a.id.localeCompare(b.id)
-        );
+      default:
+        sortedCourses.sort((a, b) => a.id.localeCompare(b.id));
     }
 
     setCourses(sortedCourses);
@@ -154,7 +165,12 @@ function InstructorCoursesArea() {
           <div className="coureses-notices-wrapper">
             <div className="courses-showing">
               <h5>
-                Showing <span>{indexOfFirstCourse + 1}-{Math.min(indexOfLastCourse, courses.length)}</span> Of <span>{courses.length}</span> Results
+                Showing{" "}
+                <span>
+                  {indexOfFirstCourse + 1}-
+                  {Math.min(indexOfLastCourse, courses.length)}
+                </span>{" "}
+                Of <span>{courses.length}</span> Results
               </h5>
             </div>
             <div className="form-clt">
@@ -184,7 +200,9 @@ function InstructorCoursesArea() {
                   <div className="courses-card-items style-2">
                     <div className="courses-image">
                       <img
-                        src={cours.thumbnailPreview || "assets/img/courses/09.jpg"}
+                        src={
+                          cours.thumbnailPreview || "assets/img/courses/09.jpg"
+                        }
                         alt="img"
                       />
                       <h3 className="courses-title">{cours.title}</h3>
@@ -235,7 +253,10 @@ function InstructorCoursesArea() {
                         <div className="icon-items">
                           <i>
                             <img
-                              src={cours.instructorImg || "assets/img/courses/c1.jpg"}
+                              src={
+                                cours.instructorImg ||
+                                "assets/img/courses/c1.jpg"
+                              }
                               alt="img"
                             />
                           </i>
@@ -256,13 +277,13 @@ function InstructorCoursesArea() {
                           {cours.students} Students
                         </li>
                         <li>
-                          <Link to="/courses-details" className="theme-btn">
+                          <button onClick={() => handleEdit(cours.id)} className="theme-btn">
                             Edit
-                          </Link>
+                          </button>
                         </li>
                         <li>
-                          <button 
-                            onClick={() => handleDelete(cours)} 
+                          <button
+                            onClick={() => handleDelete(cours)}
                             className="theme-btn red-btn"
                           >
                             Delete
@@ -279,9 +300,9 @@ function InstructorCoursesArea() {
             <ul>
               {currentPage > 1 && (
                 <li>
-                  <a 
-                    title='Previous'
-                    className="page-numbers" 
+                  <a
+                    title="Previous"
+                    className="page-numbers"
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
@@ -292,25 +313,29 @@ function InstructorCoursesArea() {
                   </a>
                 </li>
               )}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <li key={pageNum}>
-                  <a
-                    className={`page-numbers ${pageNum === currentPage ? 'current' : ''}`}
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(pageNum);
-                    }}
-                  >
-                    {pageNum}
-                  </a>
-                </li>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (pageNum) => (
+                  <li key={pageNum}>
+                    <a
+                      className={`page-numbers ${
+                        pageNum === currentPage ? "current" : ""
+                      }`}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(pageNum);
+                      }}
+                    >
+                      {pageNum}
+                    </a>
+                  </li>
+                )
+              )}
               {currentPage < totalPages && (
                 <li>
-                  <a 
-                    title='Next'
-                    className="page-numbers" 
+                  <a
+                    title="Next"
+                    className="page-numbers"
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
@@ -334,7 +359,8 @@ function InstructorCoursesArea() {
               <h2 className="text-xl font-semibold">Confirm Deletion</h2>
             </div>
             <p className="mb-6">
-              Are you sure you want to delete the course "{courseToDelete?.title}"? This action cannot be undone.
+              Are you sure you want to delete the course "
+              {courseToDelete?.title}"? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-4">
               <button
@@ -347,12 +373,45 @@ function InstructorCoursesArea() {
                 onClick={confirmDelete}
                 className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600"
               >
-                Delete
+                {isDeleting ? (
+                  <>
+                    Deleting{" "}
+                    <span
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-trash mr-2"></i>
+                    Delete
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
+      {showEditModal && (
+        <div  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-h-[90vh] w-full max-w-4xl p-6 overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">Edit Course</h2>
+          <button
+            onClick={() => setShowEditModal(false)}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label='Close'
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <CreateCours mode="edit" courseId={courseToEditId} />
+        </div>
+      </div>
+      )
+
+      }
     </>
   );
 }

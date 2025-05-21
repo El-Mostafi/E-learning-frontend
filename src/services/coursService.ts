@@ -36,7 +36,7 @@ interface SectionData {
   }[];
 }
 
-interface CreateQuizPayload {
+interface QuizPayload {
   question: string;
   options: {
     A: string;
@@ -46,13 +46,41 @@ interface CreateQuizPayload {
   };
   correctAnswer: "A" | "B" | "C" | "D";
 }
-interface CreateSectionPayload {
+interface SectionPayload {
+  id?: string;
   title: string;
   orderIndex: number;
   description: string;
   isPreview: boolean;
 }
-interface CreateVideoPayload {
+interface QuizToEdit {
+  id: string;
+  question: string;
+  options: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+  correctAnswer: "A" | "B" | "C" | "D";
+}
+interface SectionToEdit {
+  id: string;
+  title: string;
+  orderIndex: number;
+  description: string;
+  lectures: VideoToEdit[];
+}
+interface VideoToEdit {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  videoUrl: string;
+  publicId: string;
+}
+interface VideoPayload {
+  id?: string;
   title: string;
   duration: number;
   videoUrl: string;
@@ -111,6 +139,13 @@ export interface Review {
   createdAt: Date;
 }
 
+export interface courseToEdit extends CreateCoursePayload{
+  id: string;
+  oldPrice: number;
+  sections: SectionToEdit[];
+  quizQuestions: QuizToEdit[];
+}
+
 export const coursService = {
   createCours: async (courseState: CourseState) => {
     const payload: CreateCoursePayload = {
@@ -140,9 +175,37 @@ export const coursService = {
     );
     return response;
   },
+  updateCours: async (courseState: CourseState) => {
+    const payload: CreateCoursePayload = {
+      title: courseState.courseDetails.title,
+      description: courseState.courseDetails.description.replace(
+        /<p>|<\/p>/g,
+        ""
+      ),
+      thumbnailPreview: courseState.courseDetails.secureUrl!,
+      imgPublicId: courseState.courseDetails.imgPublicId!,
+      level: courseState.courseDetails.level,
+      language: courseState.courseDetails.language,
+      pricing: {
+        price: courseState.pricing.isFree ? 0 : courseState.pricing.price,
+        isFree: courseState.pricing.isFree,
+      },
+      oldPrice: courseState.pricing.isFree ? 0 : courseState.oldPrice,
+      category: {
+        name: courseState.courseDetails.category,
+      },
+      coupons: courseState.coupons,
+    };
+
+    const response = await axiosInstance.put(
+      `/courses/${courseState.id}/update-course`,
+      payload
+    );
+    return response;
+  },
   createSection: async (
     courseId: string,
-    sectionData: CreateSectionPayload
+    sectionData: SectionPayload
   ) => {
     const response = await axiosInstance.post(
       `/courses/${courseId}/sections/create-section`,
@@ -153,7 +216,7 @@ export const coursService = {
   createVideo: async (
     courseId: string,
     sectionId: string,
-    VideoData: CreateVideoPayload
+    VideoData: VideoPayload
   ) => {
     const response = await axiosInstance.post(
       `/courses/${courseId}/sections/${sectionId}/lectures/create-lecture`,
@@ -161,7 +224,7 @@ export const coursService = {
     );
     return response;
   },
-  createQuiz: async (courseId: string, QuizData: CreateQuizPayload) => {
+  createQuiz: async (courseId: string, QuizData: QuizPayload) => {
     const response = await axiosInstance.post(
       `/courses/${courseId}/exams/create-exam`,
       QuizData
@@ -214,5 +277,12 @@ export const coursService = {
       {rating: review.rating, text: review.comment}
     );
     return response.data;
-  }
+  },
+  
+  getCourseToEdit: async (courseId: string) => {
+    const response = await axiosInstance.get<courseToEdit>(
+      `/courses/${courseId}/update-course`
+    );
+    return response.data;
+  },
 };

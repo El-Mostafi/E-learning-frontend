@@ -10,7 +10,7 @@ import {
 import "./VideoPlayer.css";
 
 interface VideoPlayerProps {
-  src: string | "";
+  src: string;
   poster?: string;
   onComplete?: () => void;
   isLocked?: boolean;
@@ -85,9 +85,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       const handleLoadedMetadata = () => {
         setVideoDuration(videoElement?.duration || 0);
       };
-
+  
       videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
-
+  
       return () => {
         videoElement?.removeEventListener(
           "loadedmetadata",
