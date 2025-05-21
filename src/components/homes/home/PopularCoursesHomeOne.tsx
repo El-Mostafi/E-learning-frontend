@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { coursService } from "../../../services/coursService";
 import { courseDataGenerale } from "../../../services/coursService";
+import { useNavigate } from "react-router-dom";
 
 const styles = `
   .courses-card-main-items {
@@ -173,6 +174,7 @@ const formatDuration = (totalSeconds: number): string => {
 };
 
 const PopularCoursesHomeOne = () => {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<courseDataGenerale[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [loading, setLoading] = useState(true);
@@ -294,9 +296,9 @@ const PopularCoursesHomeOne = () => {
                         </div>
                         <h3 className="courses-title">{course.title}</h3>
                         <h4 className="topic-title">
-                          {course.description.length > 50
-                            ? `${course.description.substring(0, 50)}...`
-                            : course.description}
+                          {course.description.replace(/<\/?[^>]+(>|$)/g, "").length > 50
+                          ? `${course.description.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 50)}...`
+                          : course.description.replace(/<\/?[^>]+(>|$)/g, "")}
                         </h4>
                         <div className="courses-content">
                           <ul className="post-cat">
@@ -352,12 +354,21 @@ const PopularCoursesHomeOne = () => {
                             </li>
                           </ul>
                           <h5>
-                            <Link to={`/courses-details/${course.id}`}>
+                            <Link to="/courses-details/${course.id}"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate("/courses-details", {
+                                state: { courseId: course.id },
+                              });
+                            }}
+                            >
                               Learn With {course.title}
                             </Link>
                           </h5>
                           <h4>${course.price}</h4>
-                          <span>{course.description}</span>
+                            <span>
+                            {course.description.replace(/<\/?[^>]+(>|$)/g, "")}
+                            </span>
                           <div className="client-items">
                             <div
                               className="client-img bg-cover"
@@ -378,7 +389,14 @@ const PopularCoursesHomeOne = () => {
                             </li>
                           </ul>
                           <Link
-                            to={`/courses-details/${course.id}`}
+                            to="/courses-details"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate("/courses-details", {
+                                state: { courseId: course.id },
+                              });
+                            }
+}
                             className="theme-btn yellow-btn"
                           >
                             Enroll Now

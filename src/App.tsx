@@ -41,6 +41,7 @@ import ResetPassword from "./components/reset-password";
 import Profile from "./components/profile";
 import MyCourses from "./components/my-cours";
 
+
 const router = createBrowserRouter([
   { path: "/", element: <HomeOne /> },
   { path: "/sign-in", element: <SignIn /> },

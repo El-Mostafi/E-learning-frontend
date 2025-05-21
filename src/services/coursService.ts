@@ -18,22 +18,24 @@ interface CreateCoursePayload {
   };
   coupons?: Coupon[];
 }
-export interface SectionData {
-  id: string;
-  title: string;
-  orderIndex: number;
-  isPreview: boolean;
-  lectures: LectureData[];
-}
-interface LectureData {
+
+interface SectionData {
   id: string;
   title: string;
   description: string;
-  duration: number;
-  videoUrl: string;
-  publicId: string;
+  orderIndex: number;
   isPreview: boolean;
+  lectures: {
+    id: string;
+    title: string;
+    description: string;
+    duration: number;
+    isPreview: boolean;
+    videoUrl: string | "";
+    publicId?: string;
+  }[];
 }
+
 interface CreateQuizPayload {
   question: string;
   options: {
@@ -64,32 +66,48 @@ export interface courseInstructor {
   thumbnailPreview: string;
   category: string;
   level: string;
+  language: string;
   reviews: number;
   students: number;
-  instructorName: string;
-  instructorImg: string;
+  instructorName?: string;
+  instructorImg?: string;
   createdAt: Date;
 }
+
 export interface courseDataGenerale extends courseInstructor {
   description: string;
   price: number;
   duration: number;
   InstructorId: string;
 }
+
 export interface courseDataDetails extends courseDataGenerale {
   reviewsLenght: number;
   ratingsCount: number[];
   sections: SectionData[];
   instructorExpertise: string;
-  instructorBaiography: string;
+  instructorBiography: string;
   feedbacks: Review[];
 }
+
+export interface courseData extends courseDataDetails {
+  description: string;
+  sections: SectionData[];
+  certifications: number;
+  progress?: number;
+  completed?: boolean;
+  completedAt?: Date | null;
+  startedAt?: Date;
+  isUserEnrolled: boolean;
+}
+
+
 
 export interface Review {
   rating: number;
   comment: string;
-  userName: string;
-  userImg: string;
+  userName?: string;
+  userImg?: string;
   createdAt: Date;
 }
 
@@ -172,9 +190,29 @@ export const coursService = {
     return response;
   },
   getCourseDetails: async (courseId: string) => {
-    const response = await axiosInstance.get<courseDataDetails>(
+    const response = await axiosInstance.get<courseData>(
       `/courses/${courseId}`
     );
     return response.data;
   },
+  verifyCoupon: async (courseId: string, couponCode: string) => {
+    const response = await axiosInstance.post<number>(
+      "/courses/verify-coupon",
+      { courseId, couponCode }
+    );
+    return response.data;
+  },
+  checkEnrollment: async (courseId: string) => {
+    const response = await axiosInstance.get<boolean>(
+      `/courses/${courseId}/check-enrollment`
+    );
+    return response.data;
+  },
+  rateCourse: async (courseId: string, review: Review) => {
+    const response = await axiosInstance.post<string>(
+      `/courses/${courseId}/add-review`,
+      {rating: review.rating, text: review.comment}
+    );
+    return response.data;
+  }
 };

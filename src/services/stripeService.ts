@@ -1,11 +1,10 @@
 import axiosInstance from "./api";
 
 
-
 export const stripeService = {
-  createPaymentIntent: async (amount: number, currency: string) => {
+  createPaymentIntent: async () => {
 
-    return await axiosInstance.post<{ clientSecret: string }>("/payment-intent", { amount, currency });
+    return await axiosInstance.post<{ clientSecret: string }>("/payment-intent");
     
   },
 };

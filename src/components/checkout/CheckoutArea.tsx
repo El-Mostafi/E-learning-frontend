@@ -1,13 +1,32 @@
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { stripeService } from "../../services/stripeService";
+import { cartService } from "../../services/cartService";
 import { CheckCircle } from "lucide-react";
+import { enrollmentService } from "../../services/enrollmentService";
+import { useNavigate } from "react-router-dom";
+
 const CheckoutArea = () => {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [cart, setCart] = useState<any>(null);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      const cartData = await cartService.getCart();
+      if (!cartData || cartData.courses.length === 0) {
+        navigate("/shop-cart");
+      } else{
+        setCart(cartData)
+      }
+    };
+    fetchCart();
+  }, [navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -18,6 +37,13 @@ const CheckoutArea = () => {
     setProcessing(true);
 
     try {
+      // Get cart details first
+      const cart = await cartService.getCart();
+
+      // Create payment intent with cart amount
+      const response = await stripeService.createPaymentIntent();
+
+      // Create payment method
       const { error: pmError, paymentMethod } =
         await stripe.createPaymentMethod({
           type: "card",
@@ -29,28 +55,30 @@ const CheckoutArea = () => {
         return setError(pmError.message!);
       }
 
-      const respons = await stripeService.createPaymentIntent(1000, "usd");
-      //   console.log(respons.data.clientSecret);
-
+      // Confirm payment with client secret
       const { error: confirmError } = await stripe.confirmCardPayment(
-        respons.data.clientSecret,
+        response.data.clientSecret,
         {
           payment_method: paymentMethod.id,
         }
       );
 
+      console.log("client secretttt", response.data.clientSecret)
+
       if (confirmError) {
         setProcessing(false);
         return setError(confirmError.message!);
       }
+      
       setShowSuccessToast(true);
-      setTimeout(() => setShowSuccessToast(false), 5000); // Hide after 5 seconds
+      setTimeout(() => setShowSuccessToast(false), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
     }
     setProcessing(false);
   };
 
+  // Rest of the component remains the same...
   const cardElementOptions = {
     style: {
       base: {
@@ -138,6 +166,11 @@ const CheckoutArea = () => {
           <div className="row">
             <div className="col-12">
               <form onSubmit={handleSubmit}>
+              {cart && (
+                          <div className="total-amount mb-4 text-lg font-semibold">
+                            Total to Pay: ${cart.total.toFixed(2)}
+                          </div>
+                        )}
                 <div className="row g-4">
                   <div className="col-md-5 col-lg-4 col-xl-3">
                     <div className="checkout-radio">
@@ -309,7 +342,7 @@ const CheckoutArea = () => {
                             className="theme-btn"
                             disabled={!stripe || processing}
                           >
-                            {processing ? "Processing..." : "Payment Now"}
+                            {processing ? "Processing..." : cart && `Pay ${cart.total.toFixed(2)}$`}
                           </button>
                         </div>
                       </div>

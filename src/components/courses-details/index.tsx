@@ -8,26 +8,23 @@ import HeaderOne from "../../layouts/headers/HeaderOne";
 import CoursesDetailsArea from "./CoursesDetailsArea";
 
 import RelatedCourses from "./RelatedCourses";
-import { courseDataDetails } from "../../services/coursService";
-
- 
+import { courseData, courseDataDetails } from "../../services/coursService";
 
 const CoursesDetails = () => {
-  const [breadcrumbData, setBreadcrumbData] = useState<courseDataDetails | null>(null);
+  const [breadcrumbData, setBreadcrumbData] =
+    useState<courseData | null>(null);
   return (
     <>
-    <Preloader />
-    <HeaderOne />
-    <BreadcrumbCoursesDetails data={breadcrumbData!} />
+      <Preloader />
+      <HeaderOne />
+      <BreadcrumbCoursesDetails data={breadcrumbData!} />
       <CoursesDetailsArea setBreadcrumbData={setBreadcrumbData} />
-    <RelatedCourses />
-    <MarqueeOne style_2={true} />
-    <FooterOne /> 
-    <ScrollTop />     
+      <RelatedCourses />
+      <MarqueeOne style_2={true} />
+      <FooterOne />
+      <ScrollTop />
     </>
   );
 };
 
 export default CoursesDetails;
-
-

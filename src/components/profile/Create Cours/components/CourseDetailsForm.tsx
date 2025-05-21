@@ -62,8 +62,8 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
       img.onload = () => {
         URL.revokeObjectURL(img.src);
         const aspectRatio = img.naturalWidth / img.naturalHeight;
-        const targetRatio = 400 / 230; // ≈ 1.739
-        const isValid = Math.abs(aspectRatio - targetRatio) < 0.1;
+        const targetRatio = 0; // Allow any aspect ratio
+        const isValid = targetRatio === 0 || Math.abs(aspectRatio - targetRatio) < 0.1;
         resolve(isValid);
       };
 

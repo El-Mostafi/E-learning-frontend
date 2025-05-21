@@ -9,6 +9,7 @@ import ShopCartArea from "./ShopCartArea";
  
 
 const ShopCart = () => {
+  
   return (
     <>
     <Preloader />

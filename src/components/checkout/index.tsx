@@ -10,7 +10,7 @@ import { loadStripe } from "@stripe/stripe-js";
 
 const Checkout = () => {
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
-  
+
   return (
     <>
       <Preloader />
