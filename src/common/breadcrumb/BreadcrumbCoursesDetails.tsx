@@ -71,20 +71,15 @@ const BreadcrumbCoursesDetails = ({ data }: { data: courseData }) => {
                 <div className="client-image-items">
                   <div className="client-content">
                     <span>Reviews</span>
-                    {data.feedbacks.map((feedback, index) => (
-                      <div className="star" key={index}>
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <span
-                            key={i}
-                            className={`${
-                              i <= feedback.rating ? "fas" : "far"
-                            } fa-star`}
-                          />
-                        ))}
-                        
-                        <b>({data.reviewsLenght})</b>
-                      </div>
-                    ))}
+                    <div className="star">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <span
+                          key={i}
+                          className={`${i <= Math.round(data.reviews) ? "fas" : "far"} fa-star`}
+                        />
+                      ))}
+                      <b>({data.reviewsLenght})</b>
+                    </div>
                   </div>
                 </div>
               </div>
