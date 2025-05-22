@@ -228,18 +228,17 @@ const PopularCoursesHomeOne = () => {
     const fetchCourses = async () => {
       setLoading(true);
       try {
-        const { data, totalCount } = await coursService.getPopularCourses(
-          4.0,
-          currentPage,
+        const { data, totalCount } = await coursService.getTrendingCourses(
           pageSize,
+          currentPage,
           selectedCategory
         );
+
         setCourses(data);
 
         const uniqueCategories = Array.from(
           new Set(data.map((course) => course.category))
         );
-        console.log(uniqueCategories);
         setCategories(uniqueCategories);
 
         setTotalPages(Math.ceil(totalCount / pageSize));
@@ -256,10 +255,10 @@ const PopularCoursesHomeOne = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Stay at the popular courses section after pagination
-    const section = document.querySelector(".popular-courses-section");
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Use a more specific selector to only scroll to Trending Courses section
+    const trendingSection = document.getElementById("trending-courses-section");
+    if (trendingSection) {
+      trendingSection.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
@@ -287,11 +286,11 @@ const PopularCoursesHomeOne = () => {
 
       <section className="popular-courses-section fix section-padding section-bg">
         <div className="container">
-            <div className="section-title-area mb-5 d-flex justify-content-between align-items-center flex-wrap">
+          <div className="section-title-area mb-5 d-flex justify-content-between align-items-center flex-wrap">
             <div className="section-title">
               <h6 className="wow fadeInUp">Popular Courses</h6>
               <h2 className="wow fadeInUp" data-wow-delay=".3S">
-              Explore Top Courses
+                Explore Top Courses
               </h2>
             </div>
             <ul
@@ -299,40 +298,40 @@ const PopularCoursesHomeOne = () => {
               style={{ paddingLeft: "2rem", paddingRight: "2rem" }}
             >
               {["All", ...categories].map((category, index) => (
-              <li
-                key={index}
-                className="nav-item wow fadeInUp"
-                data-wow-delay={`${0.2 * (index + 1)}s`}
-              >
-                <button
-                type="button"
-                className={`category-tab-btn px-5 py-2 rounded-lg font-semibold border transition-colors duration-200
+                <li
+                  key={index}
+                  className="nav-item wow fadeInUp"
+                  data-wow-delay={`${0.2 * (index + 1)}s`}
+                >
+                  <button
+                    type="button"
+                    className={`category-tab-btn px-5 py-2 rounded-lg font-semibold border transition-colors duration-200
                 ${
-                selectedCategory === category
-                  ? "bg-blue-500 border-blue-600 text-white shadow-md"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-blue-100"
+                  selectedCategory === category
+                    ? "bg-blue-500 border-blue-600 text-white shadow-md"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-blue-100"
                 }
               `}
-                style={{
-                  outline:
-                  selectedCategory === category
-                    ? "2px solid #3b82f6"
-                    : "none",
-                  outlineOffset: "2px",
-                  zIndex: selectedCategory === category ? 1 : undefined,
-                  position: "relative",
-                }}
-                onClick={() => {
-                  setSelectedCategory(category);
-                  setCurrentPage(1);
-                }}
-                >
-                {category}
-                </button>
-              </li>
+                    style={{
+                      outline:
+                        selectedCategory === category
+                          ? "2px solid #3b82f6"
+                          : "none",
+                      outlineOffset: "2px",
+                      zIndex: selectedCategory === category ? 1 : undefined,
+                      position: "relative",
+                    }}
+                    onClick={() => {
+                      setSelectedCategory(category);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    {category}
+                  </button>
+                </li>
               ))}
             </ul>
-            </div>
+          </div>
           <div className="tab-content">
             <div id="All" className="tab-pane fade show active">
               <div className="row">

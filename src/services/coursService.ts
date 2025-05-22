@@ -1,6 +1,14 @@
 import axiosInstance from "./api";
 import { CourseState } from "../components/profile/Create Cours/types";
 import { Coupon } from "../components/profile/Create Cours/types/index";
+
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
+}
+
 interface CreateCoursePayload {
   title: string;
   description: string;
@@ -129,8 +137,6 @@ export interface courseData extends courseDataDetails {
   isUserEnrolled: boolean;
 }
 
-
-
 export interface Review {
   rating: number;
   comment: string;
@@ -139,7 +145,7 @@ export interface Review {
   createdAt: Date;
 }
 
-export interface courseToEdit extends CreateCoursePayload{
+export interface courseToEdit extends CreateCoursePayload {
   id: string;
   oldPrice: number;
   sections: SectionToEdit[];
@@ -203,10 +209,7 @@ export const coursService = {
     );
     return response;
   },
-  createSection: async (
-    courseId: string,
-    sectionData: SectionPayload
-  ) => {
+  createSection: async (courseId: string, sectionData: SectionPayload) => {
     const response = await axiosInstance.post(
       `/courses/${courseId}/sections/create-section`,
       sectionData
@@ -274,15 +277,54 @@ export const coursService = {
   rateCourse: async (courseId: string, review: Review) => {
     const response = await axiosInstance.post<string>(
       `/courses/${courseId}/add-review`,
-      {rating: review.rating, text: review.comment}
+      { rating: review.rating, text: review.comment }
     );
     return response.data;
   },
-  
+
   getCourseToEdit: async (courseId: string) => {
     const response = await axiosInstance.get<courseToEdit>(
       `/courses/${courseId}/update-course`
     );
+    return response.data;
+  },
+
+  // Frontend API service
+  getPopularCourses: async (
+    avgRating?: number,
+    page?: number,
+    limit?: number,
+    category?: string
+  ) => {
+    const response = await axiosInstance.get<{
+      data: courseDataGenerale[];
+      totalCount: number;
+    }>("/popular-courses", {
+      params: {
+        avgRating,
+        page,
+        limit,
+        category: category === "All" ? undefined : category,
+      },
+    });
+    return response.data;
+  },
+
+  getTrendingCourses: async (
+    limit?: number,
+    page?: number,
+    category?: string
+  ) => {
+    const response = await axiosInstance.get<{
+      data: courseDataGenerale[];
+      totalCount: number;
+    }>("/trending-courses", {
+      params: {
+        limit,
+        page,
+        category: category === "All" ? undefined : category,
+      },
+    });
     return response.data;
   },
 };

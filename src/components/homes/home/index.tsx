@@ -16,6 +16,8 @@ import TestimonialHomeOne from "./TestimonialHomeOne";
 import TopCategoryHomeOne from "./TopCategoryHomeOne";
 import { useAuth } from "../../../context/AuthContext";
 import FooterOne from "../../../layouts/footers/FooterOne";
+import TrendingCourses from "./TrendingCourses";
+
 
 const HomeOne = () => {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ const HomeOne = () => {
       <TopCategoryHomeOne />
       <AboutHomeOne />
       <PopularCoursesHomeOne />
+      <TrendingCourses />
       <MarqueeOne />
       <ChooseHomeOne />
       <TeamHomeOne />
