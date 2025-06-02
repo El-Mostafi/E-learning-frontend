@@ -27,7 +27,7 @@ const CouponInput: React.FC<CouponInputProps> = ({ onApplyCoupon }) => {
       setSuccess(success);
       setCouponCode('');
     } catch (err) {
-      setError('Invalid coupon code');
+      setError('Invalid coupon code'+err);
     } finally {
       setIsApplying(false);
     }
