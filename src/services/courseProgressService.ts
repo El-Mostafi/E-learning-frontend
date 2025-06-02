@@ -42,7 +42,7 @@ const courseProgressService = {
     totalLectures: number
   ): Promise<CourseProgress> => {
     // Get existing progress
-    let progress = await courseProgressService.getProgress(courseId);
+    const progress = await courseProgressService.getProgress(courseId);
     
     // Update completed lectures array
     if (isCompleted && !progress.completedLectures.includes(lectureId)) {
