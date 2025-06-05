@@ -3,8 +3,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { stripeService } from "../../services/stripeService";
 import { cartService } from "../../services/cartService";
 import { CheckCircle } from "lucide-react";
-import { enrollmentService } from "../../services/enrollmentService";
 import { useNavigate } from "react-router-dom";
+import { cartDetails } from "../../services/interfaces/cart.interface";
 
 const CheckoutArea = () => {
   const stripe = useStripe();
@@ -12,7 +12,7 @@ const CheckoutArea = () => {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [cart, setCart] = useState<any>(null);
+  const [cart, setCart] = useState<cartDetails|null>(null);
 
   const navigate = useNavigate();
 
