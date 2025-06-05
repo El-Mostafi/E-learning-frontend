@@ -62,7 +62,9 @@ function CoursesGridArea() {
       filtered = filtered.filter(
         (course) =>
           course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase())
+          course
+            .instructorName!.toLowerCase()
+            .includes(searchTerm.toLowerCase())
       );
     }
 
@@ -88,7 +90,7 @@ function CoursesGridArea() {
 
     if (selectedInstructor.length > 0) {
       filtered = filtered.filter((course) =>
-        selectedInstructor.includes(course.instructorName)
+        selectedInstructor.includes(course.instructorName!)
       );
     }
 
@@ -183,12 +185,12 @@ function CoursesGridArea() {
     setCurrentPage(pageNumber);
   };
 
-  const selectHandler = (item: Option, value: string) => {
-    setSortBy(value);
+  const selectHandler = (item: Option) => {
+    setSortBy(item.value);
     console.log(item, sortBy);
     const sortedCourses = [...filteredCourses];
 
-    switch (value) {
+    switch (item.value) {
       case "02":
         sortedCourses.sort((a, b) => b.students - a.students);
         break;
@@ -295,6 +297,7 @@ function CoursesGridArea() {
               max-height: 2.8em;           
               cursor: pointer;
             }
+              
           
         `}
       </style>
@@ -327,7 +330,7 @@ function CoursesGridArea() {
                     <div className="wid-title">
                       <h5>Category</h5>
                     </div>
-                    <div className="courses-list">
+                    <div className="courses-list max-h-[635px] overflow-y-auto">
                       {categories.map((category) => (
                         <label key={category} className="checkbox-single">
                           <span className="d-flex gap-xl-3 gap-2 align-items-center">
@@ -397,7 +400,7 @@ function CoursesGridArea() {
                     <div className="wid-title">
                       <h5>Instructors</h5>
                     </div>
-                    <div className="courses-list">
+                    <div className="courses-list max-h-[150px] overflow-y-auto">
                       {instructors.map((instructor) => (
                         <label key={instructor} className="checkbox-single">
                           <span className="d-flex gap-xl-3 gap-2 align-items-center">
@@ -405,16 +408,16 @@ function CoursesGridArea() {
                               <input
                                 type="checkbox"
                                 checked={selectedInstructor.includes(
-                                  instructor
+                                  instructor!
                                 )}
                                 onChange={() =>
-                                  handleInstructorChange(instructor)
+                                  handleInstructorChange(instructor!)
                                 }
                               />
                               <span className="checkmark d-center"></span>
                             </span>
                             <span className="text-color">
-                              {instructor.replace("|", " ")}
+                              {instructor!.replace("|", " ")}
                             </span>
                           </span>
                         </label>
@@ -517,7 +520,7 @@ function CoursesGridArea() {
                             className="pb-3"
                             src={
                               course.thumbnailPreview ||
-                              "assets/img/courses/01.jpg"
+                              "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
                             }
                             alt="course thumbnail"
                           />
@@ -578,22 +581,25 @@ function CoursesGridArea() {
                             </Link>
                           </h5>
                           <div className="client-items">
-                            <div className="icon-items">
-                              <i>
-                                <img
-                                  src={
-                                    course.instructorImg ||
-                                    "assets/img/courses/c1.jpg"
-                                  }
-                                  alt="img"
-                                />
-                              </i>
+                            <div className="w-7 h-7 rounded-full overflow-hidden mr-2 bg-gray-100">
+                              <img
+                                src={
+                                  course.instructorImg ||
+                                  "https://via.placeholder.com/40x40"
+                                }
+                                alt={course.instructorName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src =
+                                    "https://via.placeholder.com/40x40";
+                                }}
+                              />
                             </div>
                             <p>
                               <Link
                                 to={`/instructor-details/${course.InstructorId}`}
                               >
-                                {course.instructorName.replace("|", " ")}
+                                {course.instructorName!.replace("|", " ")}
                               </Link>
                             </p>
                           </div>
@@ -648,22 +654,25 @@ function CoursesGridArea() {
                             Education is only empowers people to pursue career
                           </span>
                           <div className="client-items">
-                            <div className="client-img bg-cover">
-                              <i>
-                                <img
-                                  src={
-                                    course.instructorImg ||
-                                    "assets/img/courses/c1.jpg"
-                                  }
-                                  alt="img"
-                                />
-                              </i>
+                            <div className="w-7 h-7 rounded-full overflow-hidden mr-2 bg-gray-100">
+                              <img
+                                src={
+                                  course.instructorImg ||
+                                  "https://via.placeholder.com/40x40"
+                                }
+                                alt={course.instructorName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src =
+                                    "https://via.placeholder.com/40x40";
+                                }}
+                              />
                             </div>
                             <Link
                               to={"/instructor-details/" + course.InstructorId}
                               className={"text-white"}
                             >
-                              {course.instructorName.replace("|", " ")}
+                              {course.instructorName!.replace("|", " ")}
                             </Link>
                           </div>
                           <ul className="post-class">
@@ -694,12 +703,12 @@ function CoursesGridArea() {
                   </div>
                 ))}
               </div>
-              <div className="page-nav-wrap pt-5">
-                <ul>
+              <div className="page-nav-wrap pt-5 text-center">
+                <ul className="inline-flex gap-2 justify-center items-center">
                   {currentPage > 1 && (
                     <li>
                       <a
-                        aria-label="Previous"
+                        title="Previous"
                         className="page-numbers"
                         href="#"
                         onClick={(e) => {
@@ -711,28 +720,50 @@ function CoursesGridArea() {
                       </a>
                     </li>
                   )}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (pageNum) => (
-                      <li key={pageNum}>
-                        <a
-                          className={`page-numbers ${
-                            pageNum === currentPage ? "current" : ""
-                          }`}
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handlePageChange(pageNum);
-                          }}
-                        >
-                          {pageNum}
-                        </a>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((pageNum) => {
+                      return (
+                        pageNum <= 2 || // first 2
+                        pageNum > totalPages - 2 || // last 2
+                        (pageNum >= currentPage - 1 &&
+                          pageNum <= currentPage + 1) // around current
+                      );
+                    })
+                    .reduce((acc, pageNum, idx, arr) => {
+                      if (idx > 0 && pageNum - arr[idx - 1] > 1) {
+                        acc.push("...");
+                      }
+                      acc.push(pageNum);
+                      return acc;
+                    }, [] as (number | string)[])
+                    .map((item, index) => (
+                      <li key={index}>
+                        {item === "..." ? (
+                          <span className="page-numbers dots">...</span>
+                        ) : (
+                          <a
+                            className={`page-numbers ${
+                              item === currentPage ? "current" : ""
+                            }`}
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (typeof item === "number") {
+                                handlePageChange(item);
+                              }
+                            }}
+                          >
+                            {item}
+                          </a>
+                        )}
                       </li>
-                    )
-                  )}
+                    ))}
+
                   {currentPage < totalPages && (
                     <li>
                       <a
-                        aria-label="Next"
+                        title="Next"
                         className="page-numbers"
                         href="#"
                         onClick={(e) => {

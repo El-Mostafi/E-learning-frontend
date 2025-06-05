@@ -77,7 +77,8 @@ const SectionBuilder: React.FC<{
         for (const video of videos) {
           const response = await cloudService.deleteFile(
             video.publicId,
-            "video"
+            "video",
+            state.id!
           );
           if (response.status === 200) {
             dispatch({
@@ -289,7 +290,8 @@ const SectionBuilder: React.FC<{
   ) => {
     try {
       if (publicId) {
-        const response = await cloudService.deleteFile(publicId, "video");
+        const response = await cloudService.deleteFile(publicId, "video",state.id!);
+        console.log(response);
         if (response.status === 200) {
           dispatch({
             type: "REMOVE_VIDEO_FROM_SECTION",

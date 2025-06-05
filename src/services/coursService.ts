@@ -2,12 +2,12 @@ import axiosInstance from "./api";
 import { CourseState } from "../components/profile/Create Cours/types";
 import { Coupon } from "../components/profile/Create Cours/types/index";
 
-interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  totalPages: number;
-  currentPage: number;
-}
+// interface PaginatedResponse<T> {
+//   data: T[];
+//   total: number;
+//   totalPages: number;
+//   currentPage: number;
+// }
 
 interface CreateCoursePayload {
   title: string;
@@ -44,7 +44,7 @@ interface SectionData {
   }[];
 }
 
-interface QuizPayload {
+export interface QuizPayload {
   question: string;
   options: {
     A: string;
@@ -53,6 +53,9 @@ interface QuizPayload {
     D: string;
   };
   correctAnswer: "A" | "B" | "C" | "D";
+}
+export interface QuizQuestion extends QuizPayload {
+  id: string;
 }
 interface SectionPayload {
   id?: string;
@@ -128,7 +131,6 @@ export interface courseDataDetails extends courseDataGenerale {
 
 export interface courseData extends courseDataDetails {
   description: string;
-  sections: SectionData[];
   certifications: number;
   progress?: number;
   completed?: boolean;
@@ -231,6 +233,12 @@ export const coursService = {
     const response = await axiosInstance.post(
       `/courses/${courseId}/exams/create-exam`,
       QuizData
+    );
+    return response;
+  },
+  getQuiz: async (courseId: string) => {
+    const response = await axiosInstance.get<QuizQuestion[]>(
+      `/courses/${courseId}/exams`,
     );
     return response;
   },

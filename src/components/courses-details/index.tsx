@@ -8,7 +8,7 @@ import HeaderOne from "../../layouts/headers/HeaderOne";
 import CoursesDetailsArea from "./CoursesDetailsArea";
 
 import RelatedCourses from "./RelatedCourses";
-import { courseData, courseDataDetails } from "../../services/coursService";
+import { courseData } from "../../services/coursService";
 
 const CoursesDetails = () => {
   const [breadcrumbData, setBreadcrumbData] =

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../services/api";
 import { cartDetails } from "../../services/interfaces/cart.interface";
-import Preloader from "../../common/Preloader";
 import { enrollmentService } from "../../services/enrollmentService";
 import { cartService } from "../../services/cartService";
+import { ShoppingBag, ShieldCheck } from 'lucide-react';
 
 const ShopCartArea = () => {
   const [cart, setCart] = useState<cartDetails | null>(null);
@@ -103,10 +103,10 @@ const ShopCartArea = () => {
 
   return (
     <>
-      <div className="container-lg py-5">
-        <div className="row g-4">
+      <div className="w-100 py-5 px-5" >
+        <div className="row g-4 w-full">
           {/* Cart Items Section */}
-          <div className="col-lg-8">
+          <div className="col-lg-9">
             <div className="card border-0 shadow-sm">
               <div className="card-body p-4">
                 <h2 className="h3 mb-4">
@@ -130,6 +130,7 @@ const ShopCartArea = () => {
                           <td>
                             <div className="d-flex align-items-center gap-3">
                               <button
+                                title="Remove Course"
                                 onClick={() => handleRemoveFromCart(course._id)}
                                 className="btn btn-link text-danger p-0"
                               >
@@ -217,7 +218,7 @@ const ShopCartArea = () => {
           </div>
 
           {/* Summary Section */}
-          <div className="col-lg-4">
+          <div className="col-lg-3">
             <div className="card border-0 shadow-sm h-100">
               <div className="card-body p-4">
                 <h3 className="h5 mb-4">Order Summary</h3>
@@ -291,8 +292,22 @@ const ShopCartArea = () => {
               </div>
             </div>
           </div>
+          <div className="mt-8 flex flex-wrap gap-4 items-center justify-between">
+                  <Link 
+                    to="/courses" 
+                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center transition-colors duration-200"
+                  >
+                    <ShoppingBag size={18} className="mr-2" />
+                    Continue Shopping
+                  </Link>
+                  
+                  <div className="flex items-center text-sm text-gray-500">
+                    <ShieldCheck size={16} className="mr-2" />
+                    Secure checkout with SSL encryption
+                  </div>
+                </div>
+              </div>
         </div>
-      </div>
     </>
   );
 };

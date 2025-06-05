@@ -5,31 +5,39 @@ import axiosInstance from "./api";
 interface Enrollment {
   course: string;
   participant: string;
+  completedSections: completedSection[]; 
   progress: number;
   completed: boolean;
   completedAt: Date | null;
   startedAt: Date;
+  hasPassedQuizze: boolean;
+  QuizzeScore: number;
 }
+export interface completedSection {
+  sectionId: string;
+  lectureId: string;
+  completedAt: Date;
+}
+
+
 
 export interface courseData {
   id: string;
   title: string;
-  description: string;
   thumbnailPreview: string;
+  category: string;
   level: string;
   language: string;
-  category: Category;
-  reviews: Review[];
-  rating?: number;
-  sections: SectionData[];
-  completedSections: {
-    sectionId: string;
-    lectureId: string;
-  }[];
-  certifications: number;
+  reviews: number;
   students: number;
   instructorName: string;
   instructorImg: string;
+  createdAt: Date;
+  completedSections: number;
+  lectureTotal: number; 
+  description: string;
+  price: number;
+  duration: number;
   progress: number;
   completed: boolean;
   completedAt: Date | null;
@@ -40,31 +48,7 @@ export interface Category {
   name: string;
 }
 
-export interface Review {
-  userName?: string;
-  userImg?: string;
-  course?: string;
-  text: string;
-  rating: number;
-  createdAt: Date;
-}
 
-interface SectionData {
-  id: string;
-  title: string;
-  orderIndex: number;
-  isPreview: boolean;
-  lectures: LectureData[];
-}
-interface LectureData {
-  _id: string;
-  title: string;
-  description: string;
-  duration: number;
-  videoUrl: string;
-  publicId: string;
-  isPreview: boolean;
-}
 
 export const enrollmentService = {
   enroll: async (courseId: string, userId: string) => {
@@ -100,6 +84,13 @@ export const enrollmentService = {
   updateProgress: async (courseId: string, sectionId: string, lectureId: string) => {
     const response = await axiosInstance.put<Enrollment>(
       `/my-courses/enrolled/${courseId}/update-progress/${sectionId}/${lectureId}`
+    );
+    return response.data;
+  },
+  markQuizPassed: async (courseId: string, score: number) => {
+    const response = await axiosInstance.put<Enrollment>(
+      `/my-courses/enrolled/${courseId}/quiz-pass`,
+      { score }
     );
     return response.data;
   },
