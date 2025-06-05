@@ -1,33 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { ChevronRight, BookOpen } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   courseData,
   enrollmentService,
 } from "../../services/enrollmentService";
 
-interface Course {
-  id: string;
-  title: string;
-  progress: number;
-  completed: boolean;
-  completedAt: Date | null;
-  startedAt: Date;
-  thumbnailPreview: string;
-  sections: {
-    id: string;
-    title: string;
-    lectures: {
-      id: string;
-      title: string;
-      duration: number;
-    }[];
-  }[];
-}
+// interface Course {
+//   id: string;
+//   title: string;
+//   progress: number;
+//   completed: boolean;
+//   completedAt: Date | null;
+//   startedAt: Date;
+//   thumbnailPreview: string;
+//   sections: {
+//     id: string;
+//     title: string;
+//     lectures: {
+//       id: string;
+//       title: string;
+//       duration: number;
+//     }[];
+//   }[];
+// }
 
 const CourseTable: React.FC = () => {
   const [courses, setCourses] = useState<courseData[]>([]);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -57,7 +57,7 @@ const CourseTable: React.FC = () => {
         </Link>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50">
@@ -74,11 +74,22 @@ const CourseTable: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {courses.map((course, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors">
+              <tr
+                onClick={() => {
+                  navigate("/courses-details", {
+                    state: { courseId: course.id },
+                  });
+                }}
+                key={index}
+                className="hover:bg-gray-50 transition-colors cursor-pointer"
+              >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
                     <img
-                      src={course.thumbnailPreview}
+                      src={
+                        course.thumbnailPreview ||
+                        "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
+                      }
                       alt={course.title}
                       className="w-10 h-10 rounded-lg object-cover shadow-sm"
                     />
