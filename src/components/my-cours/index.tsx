@@ -4,26 +4,28 @@ import Preloader from "../../common/Preloader";
 import ScrollTop from "../../common/ScrollTop";
 import FooterOne from "../../layouts/footers/FooterOne";
 import HeaderOne from "../../layouts/headers/HeaderOne";
-import MyCoursesAreaInstructor from "./InstructorCoursesArea";
-import StudentCoursesArea from "./StudentCoursesArea";
+import MyCoursesAreaInstructor from "./InstructorCourses/InstructorCoursesArea";
 import { useAuth } from "../../context/AuthContext";
+import StudentCoursesAreaTow from "./StudentCourses/StudentCoursesAreaTow";
 
-
- 
 const MyCourses = () => {
-	const { user } = useAuth();
+  const { user } = useAuth();
 
   return (
-		<>
-		<Preloader />
-			<HeaderOne />
-			<BreadcrumbCourses title="My Courses" subtitle="Courses" />
-			{(user!==null && user.role === "student") ? <StudentCoursesArea /> : <MyCoursesAreaInstructor />}
-			<MarqueeOne style_2={true} />
-			<FooterOne />
-			<ScrollTop />
-		</>
-	);
+    <>
+      <Preloader />
+      <HeaderOne />
+      <BreadcrumbCourses title="My Courses" subtitle="Courses" />
+      {user !== null && user.role === "student" ? (
+        <StudentCoursesAreaTow />
+      ) : (
+        <MyCoursesAreaInstructor />
+      )}
+      <MarqueeOne style_2={true} />
+      <FooterOne />
+      <ScrollTop />
+    </>
+  );
 };
 
 export default MyCourses;

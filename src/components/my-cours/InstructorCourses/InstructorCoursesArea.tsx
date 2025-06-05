@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import NiceSelect, { Option } from "../../ui/NiceSelect";
-import { coursService, courseInstructor } from "../../services/coursService";
-import { X,Star, AlertCircle } from "lucide-react";
-import CreateCours  from "../profile/Create Cours/index";
+import NiceSelect, { Option } from "../../../ui/NiceSelect";
+import { coursService, courseInstructor } from "../../../services/coursService";
+import { X, Star, AlertCircle } from "lucide-react";
+import CreateCours from "../../profile/Create Cours/index";
 function InstructorCoursesArea() {
   const [courses, setCourses] = useState<courseInstructor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -14,7 +14,7 @@ function InstructorCoursesArea() {
     null
   );
   const [courseToEditId, setCourseToEditId] = useState<string>("");
-  
+
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const [sortBy, setSortBy] = useState<string>("01");
@@ -54,7 +54,7 @@ function InstructorCoursesArea() {
   };
 
   const handleEdit = (courseId: string) => {
-    setCourseToEditId(courseId)
+    setCourseToEditId(courseId);
     setShowEditModal(true);
   };
 
@@ -74,11 +74,11 @@ function InstructorCoursesArea() {
     setIsDeleting(false);
   };
 
-  const selectHandler = (item: Option, value: string) => {
-    setSortBy(value);
+  const selectHandler = (item: Option) => {
+    setSortBy(item.value);
     const sortedCourses = [...courses];
     console.log(item, sortBy);
-    switch (value) {
+    switch (item.value) {
       case "02":
         sortedCourses.sort((a, b) => b.students - a.students);
         break;
@@ -157,6 +157,31 @@ function InstructorCoursesArea() {
             max-width: 500px;
             width: 90%;
           }
+            .courses-card-main-items {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .courses-card-items {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .courses-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .courses-content h3 {
+            flex: 1;
+          }
+          
+          .post-class {
+            margin-top: auto;
+          }
         `}
       </style>
 
@@ -201,7 +226,8 @@ function InstructorCoursesArea() {
                     <div className="courses-image">
                       <img
                         src={
-                          cours.thumbnailPreview || "assets/img/courses/09.jpg"
+                          cours.thumbnailPreview ||
+                          "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
                         }
                         alt="img"
                       />
@@ -263,7 +289,7 @@ function InstructorCoursesArea() {
                         </div>
                         <p>
                           <Link to="/instructor-details">
-                            {cours.instructorName.replace("|", " ")}
+                            {cours.instructorName?.replace("|", " ")}
                           </Link>
                         </p>
                       </div>
@@ -277,7 +303,10 @@ function InstructorCoursesArea() {
                           {cours.students} Students
                         </li>
                         <li>
-                          <button onClick={() => handleEdit(cours.id)} className="theme-btn">
+                          <button
+                            onClick={() => handleEdit(cours.id)}
+                            className="theme-btn"
+                          >
                             Edit
                           </button>
                         </li>
@@ -297,7 +326,7 @@ function InstructorCoursesArea() {
             ))}
           </div>
           <div className="page-nav-wrap pt-5 text-center">
-            <ul>
+            <ul className="inline-flex gap-2 justify-center items-center">
               {currentPage > 1 && (
                 <li>
                   <a
@@ -313,24 +342,45 @@ function InstructorCoursesArea() {
                   </a>
                 </li>
               )}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (pageNum) => (
-                  <li key={pageNum}>
-                    <a
-                      className={`page-numbers ${
-                        pageNum === currentPage ? "current" : ""
-                      }`}
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handlePageChange(pageNum);
-                      }}
-                    >
-                      {pageNum}
-                    </a>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((pageNum) => {
+                  return (
+                    pageNum <= 2 || // first 2
+                    pageNum > totalPages - 2 || // last 2
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1) // around current
+                  );
+                })
+                .reduce((acc, pageNum, idx, arr) => {
+                  if (idx > 0 && pageNum - arr[idx - 1] > 1) {
+                    acc.push("...");
+                  }
+                  acc.push(pageNum);
+                  return acc;
+                }, [] as (number | string)[])
+                .map((item, index) => (
+                  <li key={index}>
+                    {item === "..." ? (
+                      <span className="page-numbers dots">...</span>
+                    ) : (
+                      <a
+                        className={`page-numbers ${
+                          item === currentPage ? "current" : ""
+                        }`}
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (typeof item === "number") {
+                            handlePageChange(item);
+                          }
+                        }}
+                      >
+                        {item}
+                      </a>
+                    )}
                   </li>
-                )
-              )}
+                ))}
+
               {currentPage < totalPages && (
                 <li>
                   <a
@@ -352,7 +402,7 @@ function InstructorCoursesArea() {
       </section>
 
       {showDeleteModal && (
-        <div className="modal-overlay">
+        <div className="modal-overlay backdrop-blur-sm">
           <div className="modal-content">
             <div className="flex items-center gap-4 mb-6">
               <AlertCircle className="w-8 h-8 text-red-500" />
@@ -394,24 +444,24 @@ function InstructorCoursesArea() {
         </div>
       )}
       {showEditModal && (
-        <div  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-h-[90vh] w-full max-w-4xl p-6 overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Edit Course</h2>
-          <button
-            onClick={() => setShowEditModal(false)}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-            aria-label='Close'
-          >
-            <X className="w-6 h-6" />
-          </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-h-[90vh] w-full max-w-4xl p-6 overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Edit Course
+              </h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <CreateCours mode="edit" courseId={courseToEditId} />
+          </div>
         </div>
-        <CreateCours mode="edit" courseId={courseToEditId} />
-        </div>
-      </div>
-      )
-
-      }
+      )}
     </>
   );
 }
