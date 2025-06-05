@@ -5,7 +5,6 @@ import { cartService } from "../../services/cartService";
 import { CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cartDetails } from "../../services/interfaces/cart.interface";
-import { enrollmentService } from "../../services/enrollmentService";
 
 const CheckoutArea = () => {
   const stripe = useStripe();
@@ -30,70 +29,55 @@ const CheckoutArea = () => {
   }, [navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
-  e.preventDefault();
-  setError("");
-  if (!stripe || !elements) {
-    return;
-  }
-  setProcessing(true);
-
-  try {
-    // Get cart details first
-    const cart = await cartService.getCart();
-
-    // Create payment intent with cart amount
-    const response = await stripeService.createPaymentIntent();
-
-    // Create payment method
-    const { error: pmError, paymentMethod } =
-      await stripe.createPaymentMethod({
-        type: "card",
-        card: elements.getElement(CardElement)!,
-      });
-
-    if (pmError) {
-      setProcessing(false);
-      return setError(pmError.message!);
+    e.preventDefault();
+    setError("");
+    if (!stripe || !elements) {
+      return;
     }
-
-    // TRY TO ENROLL IN COURSES BEFORE CONFIRMING PAYMENT
-    const enrollmentPromises = cart.courses.map(course => 
-      enrollmentService.enroll(course._id) // Replace with actual userId
-    );
+    setProcessing(true);
 
     try {
-      await Promise.all(enrollmentPromises);
-      await cartService.clearCart();
-    } catch (enrollmentError) {
-      setProcessing(false);
-      return setError("Failed to enroll in courses. Payment not processed."+enrollmentError);
-    }
+      // Get cart details first
+      // const cart = await cartService.getCart();
 
-    // Only confirm payment if enrollment succeeded
-    const { error: confirmError } = await stripe.confirmCardPayment(
-      response.data.clientSecret,
-      {
-        payment_method: paymentMethod.id,
+      // Create payment intent with cart amount
+      const response = await stripeService.createPaymentIntent();
+
+      // Create payment method
+      const { error: pmError, paymentMethod } =
+        await stripe.createPaymentMethod({
+          type: "card",
+          card: elements.getElement(CardElement)!,
+        });
+
+      if (pmError) {
+        setProcessing(false);
+        return setError(pmError.message!);
       }
-    );
 
-    console.log("client secretttt", response.data.clientSecret);
+      // Confirm payment with client secret
+      const { error: confirmError } = await stripe.confirmCardPayment(
+        response.data.clientSecret,
+        {
+          payment_method: paymentMethod.id,
+        }
+      );
 
-    if (confirmError) {
-      // Payment failed - you might want to rollback enrollments here
-      // This is a complex scenario that requires backend handling
-      setProcessing(false);
-      return setError(confirmError.message!);
+      console.log("client secretttt", response.data.clientSecret)
+
+      if (confirmError) {
+        setProcessing(false);
+        return setError(confirmError.message!);
+      }
+
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 5000);
+      navigate("/courses");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payment failed");
     }
-    
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 5000);
-    navigate("/courses");
-  } catch (err) {
-    setError(err instanceof Error ? err.message : "Payment failed");
-  }
-  setProcessing(false);
-};
+    setProcessing(false);
+  };
 
   // Rest of the component remains the same...
   const cardElementOptions = {
