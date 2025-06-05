@@ -39,12 +39,12 @@ const CoursesArea = () => {
     setCurrentPage(pageNumber);
   };
 
-  const selectHandler = (item: Option, value: string) => {
-    setSortBy(value);
+  const selectHandler = (item: Option) => {
+    setSortBy(item.value);
     const sortedCourses = [...courses];
     console.log(item, sortBy);
 
-    switch (value) {
+    switch (item.value) {
       case "02":
         sortedCourses.sort((a, b) => b.students - a.students);
         break;
@@ -105,6 +105,32 @@ const CoursesArea = () => {
             border-radius: 50%;
           }
           
+          /* Fix for uniform card heights */
+          .courses-card-main-items {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .courses-card-items {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .courses-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .courses-content h3 {
+            flex: 1;
+          }
+          
+          .post-class {
+            margin-top: auto;
+          }
         `}
       </style>
       <section className="popular-courses-section fix section-padding">
@@ -156,7 +182,8 @@ const CoursesArea = () => {
                     <div className="courses-image">
                       <img
                         src={
-                          course.thumbnailPreview || "assets/img/courses/09.jpg"
+                          course.thumbnailPreview ||
+                          "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
                         }
                         alt="img"
                       />
@@ -211,26 +238,32 @@ const CoursesArea = () => {
                             });
                           }}
                         >
-                          Learn With {course.level} {course.title} Course
+                          {`Learn With ${course.level} ${course.title} Course`.substring(
+                            0,
+                            80
+                          ) + "..."}
                         </Link>
                       </h3>
                       <div className="client-items">
-                        <div className="icon-items">
-                          <i>
-                            <img
-                              src={
-                                course.instructorImg ||
-                                "assets/img/courses/c1.jpg"
-                              }
-                              alt="img"
-                            />
-                          </i>
+                        <div className="w-7 h-7 rounded-full overflow-hidden mr-2 bg-gray-100">
+                          <img
+                            src={
+                              course.instructorImg ||
+                              "https://via.placeholder.com/40x40"
+                            }
+                            alt={course.instructorName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://via.placeholder.com/40x40";
+                            }}
+                          />
                         </div>
                         <p>
                           <Link
                             to={"/instructor-details/" + course.InstructorId}
                           >
-                            {course.instructorName.replace("|", " ")}
+                            {course.instructorName!.replace("|", " ")}
                           </Link>
                         </p>
                       </div>
@@ -265,11 +298,11 @@ const CoursesArea = () => {
             ))}
           </div>
           <div className="page-nav-wrap pt-5 text-center">
-            <ul>
+            <ul className="inline-flex gap-2 justify-center items-center">
               {currentPage > 1 && (
                 <li>
                   <a
-                    aria-label="Previous"
+                    title="Previous"
                     className="page-numbers"
                     href="#"
                     onClick={(e) => {
@@ -281,28 +314,49 @@ const CoursesArea = () => {
                   </a>
                 </li>
               )}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (pageNum) => (
-                  <li key={pageNum}>
-                    <a
-                      className={`page-numbers ${
-                        pageNum === currentPage ? "current" : ""
-                      }`}
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handlePageChange(pageNum);
-                      }}
-                    >
-                      {pageNum}
-                    </a>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((pageNum) => {
+                  return (
+                    pageNum <= 2 || // first 2
+                    pageNum > totalPages - 2 || // last 2
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1) // around current
+                  );
+                })
+                .reduce((acc, pageNum, idx, arr) => {
+                  if (idx > 0 && pageNum - arr[idx - 1] > 1) {
+                    acc.push("...");
+                  }
+                  acc.push(pageNum);
+                  return acc;
+                }, [] as (number | string)[])
+                .map((item, index) => (
+                  <li key={index}>
+                    {item === "..." ? (
+                      <span className="page-numbers dots">...</span>
+                    ) : (
+                      <a
+                        className={`page-numbers ${
+                          item === currentPage ? "current" : ""
+                        }`}
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (typeof item === "number") {
+                            handlePageChange(item);
+                          }
+                        }}
+                      >
+                        {item}
+                      </a>
+                    )}
                   </li>
-                )
-              )}
+                ))}
+
               {currentPage < totalPages && (
                 <li>
                   <a
-                    aria-label="Next"
+                    title="Next"
                     className="page-numbers"
                     href="#"
                     onClick={(e) => {
