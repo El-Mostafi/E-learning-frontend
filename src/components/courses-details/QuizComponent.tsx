@@ -1,19 +1,15 @@
 import React, { useState } from "react";
-import Certificate from "./certificate/Certificate";
-import { QuizQuestion } from "../profile/Create Cours/types";
+import { QuizQuestion } from "../../services/coursService";
+// import Certificate from "./certificate/Certificate";
 
 interface QuizComponentProps {
   questions: QuizQuestion[];
   onComplete: (score: number) => void;
-  courseName: string;
-  studentName: string;
 }
 
 const QuizComponent: React.FC<QuizComponentProps> = ({
   questions,
   onComplete,
-  courseName,
-  studentName,
 }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<
@@ -27,14 +23,14 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
   const totalQuestions = questions.length;
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
   //this will come from course details this is use just for demo
-  const [certificateData, setCertificateData] = useState({
-    studentName: "John Smith",
-    courseName: "Advanced Web Development with React",
-    score: 95,
-    date: "May 15, 2023",
-    instructorName: "Dr. Emily Johnson",
-    certificateId: "CERT-8392-4721-EDU",
-  });
+  // const [certificateData, setCertificateData] = useState({
+  //   studentName: "John Smith",
+  //   courseName: "Advanced Web Development with React",
+  //   score: 95,
+  //   date: "May 15, 2023",
+  //   instructorName: "Dr. Emily Johnson",
+  //   certificateId: "CERT-8392-4721-EDU",
+  // });
 
   const handleAnswerSelect = (questionId: string, answer: string) => {
     setSelectedAnswers((prev) => ({
@@ -107,7 +103,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
               </span>
             </div>
             <h2 className="text-2xl font-bold mb-2">
-              {passed ? "Congratulations!" : "Almost There!"}
+              {passed ? "Congratulations! you Can Take Certificate" : "Almost There!"}
             </h2>
             <p className="text-gray-600 mb-4">
               You scored {quizScore.toFixed(1)}%
@@ -168,41 +164,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
           </div>
         </div>
 
-        {passed && (
-          // <Certificate
-          //   studentName={studentName}
-          //   courseName={courseName}
-          //   completionDate={new Date()}
-          //   score={quizScore}
-          // />
-          <div className="mt-8 bg-gray-50 rounded-lg shadow-lg flex flex-col">
-            <div className="bg-white shadow-sm p-4 mb-4">
-              <h2 className="text-xl font-semibold text-blue-900">
-                Eduspace Certificate
-              </h2>
-            </div>
-
-            <div className="flex-1 p-4 h-[100vh]">
-              <Certificate
-                studentName={certificateData.studentName}
-                courseName={certificateData.courseName}
-                score={certificateData.score}
-                date={certificateData.date}
-                instructorName={certificateData.instructorName}
-                certificateId={certificateData.certificateId}
-              />
-            </div>
-
-            <div className="bg-white shadow-sm p-4 mt-auto flex justify-end">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-              >
-                Print Certificate
-              </button>
-            </div>
-          </div>
-        )}
+        
       </div>
     );
   }

@@ -1,18 +1,25 @@
 import { useNavigate } from "react-router-dom";
 import {
+  QuizQuestion,
   Review,
   coursService,
   courseData,
-  courseDataDetails,
 } from "../../services/coursService";
 import axiosInstance from "../../services/api";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Accordion, Button, ProgressBar } from "react-bootstrap";
+import { Accordion, Button } from "react-bootstrap";
 import VideoPlayer from "./VideoPlayer/VideoPlayer";
-import { enrollmentService } from "../../services/enrollmentService";
+import {
+  enrollmentService,
+  completedSection,
+} from "../../services/enrollmentService";
 import CouponInput from "./CouponInput";
-import VideoNavigation from "./VideoNavigation";
+import axios from "axios";
+import QuizComponent from "./QuizComponent";
+import { X, Award, CheckCircle, Download, Play } from "lucide-react";
+import ModernReviewForm from "./Review/ModernReviewForm";
+import ReviewsList from './Review/ReviewsList';
 
 const CoursesDetailsArea = ({
   setBreadcrumbData,
@@ -20,12 +27,11 @@ const CoursesDetailsArea = ({
   setBreadcrumbData: (data: courseData) => void;
 }) => {
   const [course, setCourse] = useState<courseData>();
-  const [couponCode, setCouponCode] = useState<string>("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     discountPercentage: number;
   } | null>(null);
-  const [couponError, setCouponError] = useState("");
+  const [, setCouponError] = useState("");
   const [cartLoading, setCartLoading] = useState(false);
   const [buyNowLoading, setBuyNowLoading] = useState(false);
   const [cartError, setCartError] = useState("");
@@ -50,11 +56,21 @@ const CoursesDetailsArea = ({
 
   const [progress, setProgress] = useState<number>(0);
   const [completed, setCompleted] = useState<boolean>(false);
-  const [review, setReview] = useState<Review>();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [statusType, setStatusType] = useState<string>("success");
-  const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+  const [lectureCount, setLectureCount] = useState<number>(0);
+  const [lectureCountCompleted, setLectureCountCompleted] = useState<number>(0);
+  const [completedSections, setCompletedSections] = useState<
+    completedSection[]
+  >([]);
+  const [showQuiz, setShowQuiz] = useState<boolean>(false);
+  const [takeCertificate, setTakeCertificate] = useState<boolean>(false);
+  const [quizzeQuestions, setQuizzeQuestions] = useState<QuizQuestion[]>([]);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const [animate, ] = useState(true);
+  const styleSuffixes = ["one", "two", "three", "four", "five"];
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -73,20 +89,30 @@ const CoursesDetailsArea = ({
         setCurrentSectionIndex(0);
         setCurrentLectureIndex(0);
 
-        if (response.isUserEnrolled){
-          setCurrentVideoUrl(response.sections[0]!.lectures[0]!.videoUrl! || "");
+        if (response.isUserEnrolled) {
+          setCurrentVideoUrl(
+            response.sections[0]!.lectures[0]!.videoUrl! || ""
+          );
           setProgress(response.progress!);
           setCompleted(response.completed!);
         }
 
-        setIsUserEnrolled(response.isUserEnrolled)
-
-        console.log("Course Response", response);
-      } catch (err: any) {
-        setCartError(
-          err.response?.data?.message || "Failed to fetch course data"
+        setIsUserEnrolled(response.isUserEnrolled);
+        const lectureCount = response.sections.reduce(
+          (total, section) => total + section.lectures.length,
+          0
         );
-        console.error(err);
+        setLectureCount(lectureCount);
+
+        // console.log("Course Response", response);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("API Error:", error.response?.data);
+          setError(error.response?.data?.message);
+        } else {
+          console.error("Unexpected error:", error);
+          setError("Failed to fetch course data");
+        }
       } finally {
         setLoading(false);
       }
@@ -102,7 +128,7 @@ const CoursesDetailsArea = ({
 
         const response = await axiosInstance.get("/cart");
         const cartItems = response.data.courses;
-        const inCart = cartItems.some((item: any) => item._id === courseId);
+        const inCart = cartItems.some((item: { _id: string }) => item._id === courseId);
         setIsInCart(inCart);
       } catch (error) {
         console.error("Error checking cart status:", error);
@@ -113,8 +139,30 @@ const CoursesDetailsArea = ({
 
     checkCartStatus();
   }, [courseId]);
+  useEffect(() => {
+    const fetchEnrollment = async () => {
+      try {
+        if (!courseId) return;
 
+        const response = await enrollmentService.getEnrolledCourseById(
+          courseId
+        );
+        setCompletedSections(response.completedSections);
+        setLectureCountCompleted(response.completedSections.length);
+        setTakeCertificate(response.hasPassedQuizze);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("API Error:", error.response?.data);
+          setError(error.response?.data?.message);
+        } else {
+          console.error("Unexpected error:", error);
+          setError("Failed to fetch enrollment data");
+        }
+      }
+    };
 
+    fetchEnrollment();
+  }, [courseId]);
   const markLectureComplete = async () => {
     try {
       if (!course) {
@@ -131,6 +179,8 @@ const CoursesDetailsArea = ({
       const updatedProgress = Math.min(Math.max(result.progress, 0), 100);
       setProgress(updatedProgress);
       setCompleted(result.completed);
+      setCompletedSections(result.completedSections);
+      setLectureCountCompleted(result.completedSections.length);
 
       const currentSection = course.sections[currentSectionIndex];
       let nextSectionIndex = currentSectionIndex;
@@ -151,7 +201,8 @@ const CoursesDetailsArea = ({
         course.sections[nextSectionIndex].lectures[nextLectureIndex].id
       );
       setCurrentVideoUrl(
-        course.sections[nextSectionIndex].lectures[nextLectureIndex].videoUrl! || ""
+        course.sections[nextSectionIndex].lectures[nextLectureIndex]
+          .videoUrl! || ""
       );
       setCurrentLectureTitle(
         course.sections[nextSectionIndex].lectures[nextLectureIndex].title
@@ -163,7 +214,7 @@ const CoursesDetailsArea = ({
   };
 
   const renderStars = (rating: number) => {
-    console.log("Rating:", rating);
+    // console.log("Rating:", rating);
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
@@ -173,7 +224,7 @@ const CoursesDetailsArea = ({
         ></i>
       );
     }
-    console.log("Stars:", stars);
+    // console.log("Stars:", stars);
     return stars;
   };
 
@@ -256,11 +307,16 @@ const CoursesDetailsArea = ({
       alert(
         `Course ${isInCart ? "removed from" : "added to"} cart successfully!`
       );
-    } catch (error: any) {
-      setCartError(
-        error.response?.data?.message ||
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setCartError(error.response?.data?.message);
+      } else {
+        console.error("Unexpected error:", error);
+        setCartError(
           `Failed to ${isInCart ? "remove" : "add"} course. Please try again.`
-      );
+        );
+      }
       console.error(error);
     } finally {
       setCartLoading(false);
@@ -294,11 +350,14 @@ const CoursesDetailsArea = ({
 
       // Redirect to cart page
       navigate("/shop-cart");
-    } catch (error: any) {
-      setCartError(
-        error.response?.data?.message ||
-          "Failed to proceed to checkout. Please try again."
-      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setCartError(error.response?.data?.message);
+      } else {
+        console.error("Unexpected error:", error);
+        setCartError("Failed to proceed to checkout. Please try again.");
+      }
       console.error(error);
     } finally {
       setBuyNowLoading(false);
@@ -327,17 +386,23 @@ const CoursesDetailsArea = ({
       });
       console.log("Coupon applied successfully:", discount);
       return true;
-    } catch (error: any) {
-      setCouponError(
-        error.response?.data?.message || "Invalid or expired coupon code"
-      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setCouponError(error.response?.data?.message);
+      } else {
+        console.error("Unexpected error:", error);
+        setCouponError("Invalid or expired coupon code");
+      }
       setAppliedCoupon(null);
       return false;
     }
   };
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitReview = async (reviewData: {
+    rating: number;
+    comment: string;
+  }) => {
     setIsSubmitting(true);
     setStatusMessage("");
     setStatusType("success");
@@ -348,37 +413,154 @@ const CoursesDetailsArea = ({
         setStatusType("error");
         return;
       }
-      if (!review) {
-        setStatusMessage("Review data is missing");
-        setStatusType("error");
-        return;
-      }
-      if (!review.rating || !review.comment) {
-        setStatusMessage("Please provide a rating and comment");
-        setStatusType("error");
-        return;
-      }
-      if (review.rating < 1 || review.rating > 5) {
-        setStatusMessage("Rating must be between 1 and 5");
-        setStatusType("error");
-        return;
-      }
-      const response = await coursService.rateCourse(courseId, review!);
+
+      const reviewToSubmit: Review = {
+        ...reviewData,
+        createdAt: new Date(),
+      };
+
+      const response = await coursService.rateCourse(courseId, reviewToSubmit);
       if (response) {
+        console.log("Review submitted successfully:", response);
         setStatusMessage(response);
         setStatusType("success");
         const updatedCourse = await coursService.getCourseDetails(courseId);
         setCourse(updatedCourse);
       }
-      setReview({} as Review); // Reset review state
-    } catch (error: any) {
-      setStatusMessage(
-        error.response?.data?.message || "Failed to submit review"
-      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        setStatusMessage(error.response?.data?.message);
+      } else {
+        console.error("Unexpected error:", error);
+        setStatusMessage("Failed to submit review");
+      }
       setStatusType("error");
     } finally {
       setIsSubmitting(false);
     }
+  };
+  const handleQuizComplete = async (score: number) => {
+    try {
+      console.log("Quiz completed with score:", score);
+
+      if (score >= 70) {
+        console.log("User passed the quiz!");
+
+        const response = await enrollmentService.markQuizPassed(
+          courseId,
+          score
+        );
+        setTakeCertificate(response.hasPassedQuizze);
+        console.log("Course marked as completed.");
+      } else {
+        console.log("User did not pass the quiz.");
+      }
+    } catch (err) {
+      console.error("Failed to save quiz results:", err);
+    }
+  };
+  const handleShowQuiz = async () => {
+    setShowQuiz(true);
+
+    if (quizzeQuestions.length === 0) {
+      try {
+        setLoadingQuiz(true);
+        const response = await coursService.getQuiz(courseId);
+        setQuizzeQuestions(response.data);
+      } catch (error) {
+        console.error("Error fetching quiz:", error);
+      } finally {
+        setLoadingQuiz(false);
+      }
+    }
+  };
+  const getProgressStyleClass = (
+    currentStars: number,
+    ratingsCounts: number[]
+  ) => {
+    if (!ratingsCounts || ratingsCounts.length !== 5) {
+      return `style-${styleSuffixes[2]}`;
+    }
+
+    const ratingsWithDetails = ratingsCounts.map((count, index) => ({
+      stars: index + 1,
+      count: count,
+      originalIndex: index,
+    }));
+
+    const sortedRatings = [...ratingsWithDetails].sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      return b.stars - a.stars;
+    });
+
+    const rank = sortedRatings.findIndex((item) => item.stars === currentStars);
+
+    if (rank !== -1 && rank < styleSuffixes.length) {
+      return `style-${styleSuffixes[rank]}`;
+    }
+
+    return `style-${styleSuffixes[2]}`;
+  };
+
+  const GetCertificate = () => {
+    console.log("takeCertificate", takeCertificate);
+  };
+  const renderQuizSection = () => {
+    if (!isUserEnrolled) return null;
+
+    if (!completed) return null;
+
+    return (
+      <>
+        <div className="mt-8">
+          <div className="text-center mb-8">
+            <div className="bg-green-50 rounded-lg p-8 border border-green-200">
+              <h3 className="text-2xl font-bold text-green-800 mb-4">
+                🎉 Congratulations on completing the course!
+              </h3>
+              <p className="text-green-700 mb-6">
+                You've watched all the lectures. Ready to test your knowledge?
+              </p>
+              <button
+                onClick={handleShowQuiz}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Take Final Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+        {showQuiz && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-h-[90vh] w-full max-w-4xl p-6 overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Final Quiz
+                </h2>
+                <button
+                  onClick={() => setShowQuiz(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              {loadingQuiz ? (
+                <p className="text-center text-gray-600">Loading quiz...</p>
+              ) : (
+                <QuizComponent
+                  questions={quizzeQuestions}
+                  onComplete={handleQuizComplete}
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </>
+    );
   };
 
   if (loading) {
@@ -408,14 +590,8 @@ const CoursesDetailsArea = ({
   }
 
   const currentSection = course.sections[currentSectionIndex];
-  const currentLecture = currentSection?.lectures[currentLectureIndex];
+  // const currentLecture = currentSection?.lectures[currentLectureIndex];
 
-  console.log(
-    "Hello from console",
-    currentSectionId,
-    currentLectureId,
-    currentSection
-  );
   return (
     <>
       <style>
@@ -437,7 +613,8 @@ const CoursesDetailsArea = ({
                     <VideoPlayer
                       src={
                         currentVideoUrl ||
-                        course.sections[0].lectures[0].videoUrl || ""
+                        course.sections[0].lectures[0].videoUrl ||
+                        ""
                       }
                       poster={course.thumbnailPreview}
                       title={
@@ -449,6 +626,124 @@ const CoursesDetailsArea = ({
                       onComplete={() => markLectureComplete()}
                     />
                   </div>
+                  {isUserEnrolled && (
+                    <>
+                      <div className="video-navigation mt-3 mb-4 d-flex justify-content-between">
+                        <Button
+                          className="btn btn-outline-primary d-flex align-items-center"
+                          variant="outline-secondary"
+                          disabled={
+                            currentSectionIndex === 0 &&
+                            currentLectureIndex === 0
+                          }
+                          onClick={() => {
+                            const newIndex =
+                              currentLectureIndex > 0
+                                ? currentLectureIndex - 1
+                                : course.sections[currentSectionIndex - 1]
+                                    ?.lectures.length - 1;
+                            const newSection =
+                              currentLectureIndex > 0
+                                ? currentSectionIndex
+                                : currentSectionIndex - 1;
+
+                            handleLectureSelect(
+                              course.sections[newSection].id,
+                              course.sections[newSection].lectures[newIndex].id,
+                              course.sections[newSection].lectures[newIndex]
+                                .videoUrl,
+                              course.sections[newSection].lectures[newIndex]
+                                .title,
+                              newSection,
+                              newIndex
+                            );
+                          }}
+                        >
+                          <i className="fas fa-arrow-left me-2"></i>
+                          Previous Lecture
+                        </Button>
+                        <div className="d-flex align-items-center">
+                          <span className="mx-3 text-muted">
+                            {currentLectureIndex + 1} / {lectureCount}
+                          </span>
+                        </div>
+                        <Button
+                          className="btn btn-primary d-flex align-items-center"
+                          disabled={
+                            currentSectionIndex ===
+                              course.sections.length - 1 &&
+                            currentLectureIndex ===
+                              currentSection.lectures.length - 1 &&
+                            completed
+                          }
+                          variant={
+                            currentSectionIndex ===
+                              course.sections.length - 1 &&
+                            currentLectureIndex ===
+                              currentSection.lectures.length - 1 &&
+                            completed
+                              ? "success"
+                              : "primary"
+                          }
+                          onClick={markLectureComplete}
+                        >
+                          {currentSectionIndex === course.sections.length - 1 &&
+                          currentLectureIndex ===
+                            currentSection.lectures.length - 1 &&
+                          !completed ? (
+                            "Complete Course"
+                          ) : currentSectionIndex ===
+                              course.sections.length - 1 &&
+                            currentLectureIndex ===
+                              currentSection.lectures.length - 1 &&
+                            completed ? (
+                            "Completed"
+                          ) : (
+                            <>
+                              Next Lecture
+                              <i className="fas fa-arrow-right ms-2"></i>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <div className="course-progress mb-4">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h5 className="m-0">Course Progress</h5>
+                          <span className="progress-percentage">
+                            {progress}%
+                          </span>
+                        </div>
+
+                        <div
+                          className="progress"
+                          style={{ height: "7px", borderRadius: "5px" }}
+                        >
+                          <div
+                            className="progress-bar progress-bar-striped progress-bar-animated"
+                            role="progressbar"
+                            style={{
+                              width: `${progress}%`,
+                              background: "linear-gradient( #4481eb, #04befe)",
+                              borderRadius: "5px",
+                              height: "7px",
+                            }}
+                            aria-valuenow={progress}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                          ></div>
+                        </div>
+
+                        <div className="d-flex justify-content-between mt-2 text-muted">
+                          <small>
+                            Completed: {lectureCountCompleted} lectures
+                          </small>
+                          <small>Total: {lectureCount} lectures</small>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {renderQuizSection()}
+
                   <div className="courses-details-content">
                     <ul className="nav">
                       <li
@@ -597,9 +892,13 @@ const CoursesDetailsArea = ({
                                               className={
                                                 !isUserEnrolled
                                                   ? "far fa-lock"
-                                                  : lecture.isPreview
-                                                  ? "far fa-play-circle"
-                                                  : "far fa-unlock"
+                                                  : completedSections.some(
+                                                      (section) =>
+                                                        section.lectureId.toString() ===
+                                                        lecture.id.toString()
+                                                    )
+                                                  ? "far fa-check-circle text-green-500"
+                                                  : "far fa-play-circle text-blue-500"
                                               }
                                             ></i>
                                             ({Math.floor(lecture.duration / 60)}
@@ -633,7 +932,9 @@ const CoursesDetailsArea = ({
                               />
                             </div>
                             <div className="content">
-                              <h4>{course.instructorName!.replace("|", " ")}</h4>
+                              <h4>
+                                {course.instructorName!.replace("|", " ")}
+                              </h4>
                               <span>
                                 {course.instructorExpertise ||
                                   "Lead Instructor"}
@@ -680,27 +981,34 @@ const CoursesDetailsArea = ({
                                 <p>{course.reviewsLenght}+ Reviews</p>
                               </div>
                               <div className="reviews-ratting-right">
-                                {course.ratingsCount.map((count, index) => {
-                                  const stars = index + 1;
+                                {[1, 2, 3, 4, 5].map((starValue) => {
+                                  const countForThisStar =
+                                    course.ratingsCount[starValue - 1];
+                                  const progressStyleClass =
+                                    getProgressStyleClass(
+                                      starValue,
+                                      course.ratingsCount
+                                    );
+
                                   return (
                                     <div
                                       className="reviews-ratting-item"
-                                      key={stars}
+                                      key={starValue}
                                     >
                                       <div className="star">
-                                        {renderStars(stars)}
+                                        {renderStars(starValue)}
                                       </div>
                                       <div className="progress">
                                         <div
-                                          className={`progress-value style-${stars}`}
+                                          className={`progress-value ${progressStyleClass}`}
                                           style={{
                                             width: `${calculatePercentage(
-                                              count
+                                              countForThisStar
                                             )}%`,
                                           }}
                                         ></div>
                                       </div>
-                                      <span>({count})</span>
+                                      <span>({countForThisStar})</span>
                                     </div>
                                   );
                                 })}
@@ -713,124 +1021,14 @@ const CoursesDetailsArea = ({
                             }
 
                             {isUserEnrolled && progress >= 25 && (
-                              <div className="add-review-form">
-                                <h4>Write a Review</h4>
-                                <form onSubmit={handleSubmitReview}>
-                                  <div className="form-group">
-                                    <div className="rating-stars">
-                                      {[1, 2, 3, 4, 5].map((star) => {
-                                        const isFilled =
-                                          hoveredStar !== null
-                                            ? star <= hoveredStar
-                                            : star <= (review?.rating ?? 0);
-                                        return (
-                                          <button
-                                            type="button"
-                                            key={star}
-                                            className={`star ${
-                                              isFilled ? "filled" : ""
-                                            }`}
-                                            onMouseEnter={() =>
-                                              setHoveredStar(star)
-                                            }
-                                            onMouseLeave={() =>
-                                              setHoveredStar(null)
-                                            }
-                                            onClick={() =>
-                                              setReview({
-                                                ...(review ?? {
-                                                  comment: "",
-                                                  createdAt: new Date(),
-                                                }),
-                                                rating: hoveredStar ?? star,
-                                              })
-                                            }
-                                          >
-                                            ★
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                  <div className="form-group">
-                                    <textarea
-                                      placeholder="Your Review"
-                                      value={review?.comment ?? ""}
-                                      onChange={(e) =>
-                                        setReview({
-                                          ...(review ?? {
-                                            rating: 0,
-                                            createdAt: new Date(),
-                                          }),
-                                          comment: e.target.value,
-                                        })
-                                      }
-                                      required
-                                    />
-                                  </div>
-                                  <button
-                                    type="submit"
-                                    className="submit-button"
-                                    disabled={isSubmitting}
-                                  >
-                                    {isSubmitting
-                                      ? "Submitting..."
-                                      : "Submit Review"}
-                                  </button>
-                                </form>
-                                {statusMessage && (
-                                  <div
-                                    className={`status-message ${statusType}`}
-                                  >
-                                    {statusMessage}
-                                  </div>
-                                )}
-                              </div>
+                              <ModernReviewForm
+                                onSubmit={handleSubmitReview}
+                                isSubmitting={isSubmitting}
+                                statusMessage={statusMessage}
+                                statusType={statusType}
+                              />
                             )}
-                            <div className="reviews-ratting-right">
-                              {course.feedbacks?.map((feedback, index) => (
-                              <div
-                                className="instructors-box-items"
-                                key={index}
-                              >
-                                <div className="thumb">
-                                <img
-                                  src={
-                                  feedback.userImg ||
-                                  "assets/img/courses/instructors-3.png"
-                                  }
-                                  alt={feedback.userName}
-                                />
-                                </div>
-                                <div className="content">
-                                <h4
-                                  style={{
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  }}
-                                  title={feedback.userName}
-                                >
-                                  {feedback.userName!.replace("|", " ")}
-                                </h4>
-                                <div className="star">
-                                  {[1, 2, 3, 4, 5].map((i) => (
-                                  <span
-                                    key={i}
-                                    className={`${
-                                    i <= feedback.rating ? "fas" : "far"
-                                    } fa-star`}
-                                  />
-                                  ))}
-                                </div>
-
-                                <p style={{ textAlign: "justify" }}>
-                                  "{feedback.comment}"
-                                </p>
-                                </div>
-                              </div>
-                              ))}
-                            </div>
+                            <ReviewsList reviews={course.feedbacks || []} />
                           </div>
                         </div>
                       </div>
@@ -987,126 +1185,125 @@ const CoursesDetailsArea = ({
                     ) : (
                       // For enrolled users
                       <>
-                        <div className="border-top p-3 bg-light flex-shrink-0">
-                          <div className="d-flex justify-content-between">
-                            <Button
-                              className="btn btn-outline-primary d-flex align-items-center"
-                              variant="outline-secondary"
-                              disabled={
-                                currentSectionIndex === 0 &&
-                                currentLectureIndex === 0
-                              }
-                              onClick={() => {
-                                const newIndex =
-                                  currentLectureIndex > 0
-                                    ? currentLectureIndex - 1
-                                    : course.sections[currentSectionIndex - 1]
-                                        ?.lectures.length - 1;
-                                const newSection =
-                                  currentLectureIndex > 0
-                                    ? currentSectionIndex
-                                    : currentSectionIndex - 1;
+                        <div className="enrolled-course-card">
+                          {completed && (
+                            <div className="completion-badge">
+                              <CheckCircle className="w-5 h-5" />
+                            </div>
+                          )}
 
-                                handleLectureSelect(
-                                  course.sections[newSection].id,
-                                  course.sections[newSection].lectures[newIndex]
-                                    .id,
-                                  course.sections[newSection].lectures[newIndex]
-                                    .videoUrl,
-                                  course.sections[newSection].lectures[newIndex]
-                                    .title,
-                                  newSection,
-                                  newIndex
-                                );
-                              }}
-                            >
-                               <i className="fas fa-arrow-left me-2"></i>
-                              Previous
-                            </Button>
-                            <Button
-                              className="theme-btn continue-learning-btn mr-4"
-                              disabled={
-                                currentSectionIndex ===
-                                  course.sections.length - 1 &&
-                                currentLectureIndex ===
-                                  currentSection.lectures.length - 1 &&
-                                completed
-                              }
-                              variant={
-                                currentSectionIndex ===
-                                  course.sections.length - 1 &&
-                                currentLectureIndex ===
-                                  currentSection.lectures.length - 1 &&
-                                completed
-                                  ? "success"
-                                  : "primary"
-                              }
-                              onClick={markLectureComplete}
-                            >
-                              {currentSectionIndex ===
-                                course.sections.length - 1 &&
-                              currentLectureIndex ===
-                                currentSection.lectures.length - 1 &&
-                              !completed
-                                ? "Complete Course"
-                                : currentSectionIndex ===
-                                    course.sections.length - 1 &&
-                                  currentLectureIndex ===
-                                    currentSection.lectures.length - 1 &&
+                          <div className="flex items-center gap-3">
+                            {completed ? (
+                              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 animate-pulse-slow">
+                                <CheckCircle className="w-6 h-6" />
+                              </div>
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <Play className="w-6 h-6" />
+                              </div>
+                            )}
+                            <div>
+                              <h3
+                                className={`font-bold ${
                                   completed
-                                ? "Completed"
-                                : "Next Lecture"}
-                            </Button>
-                          </div>
-                        </div>
-                        <div
-                          className="flex-grow-1 position-relative"
-                          style={{ minWidth: "200px", padding: "5px 0" }}
-                        >
-                          <ProgressBar
-                            now={progress}
-                            label={
-                              <span
-                                style={{
-                                  position: "absolute",
-                                  left: "50%",
-                                  top: "50%",
-                                  transform: "translate(-50%, -50%)",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  color: "#fff",
-                                  zIndex: 1,
-                                }}
+                                    ? "text-emerald-800"
+                                    : "text-blue-800"
+                                }`}
                               >
-                                {progress}%
-                              </span>
-                            }
-                            animated={true}
-                            style={{
-                              height: "20px", // Increased height
-                              overflow: "visible", // Prevent clipping
-                            }}
-                            className="rounded-1" // Smaller border radius instead of pill
-                            variant="success"
-                            visuallyHidden={false}
-                            bsPrefix="progress"
-                            // Custom styles
-                            isChild
-                          />
-                        </div>{" "}
-                        <div className="mt-2 text-center">
-                          <span
-                            className={`badge ${
-                              completed ? "bg-success" : "bg-warning text-dark"
-                            }`}
-                            style={{
-                              fontSize: "1rem",
-                              padding: "0.5rem 1rem",
-                              borderRadius: "0.5rem",
-                            }}
-                          >
-                            {progress}% Completed
-                          </span>
+                                {completed
+                                  ? "Course Completed!"
+                                  : "In Progress"}
+                              </h3>
+                              <p
+                                className={`text-sm ${
+                                  completed
+                                    ? "text-emerald-600"
+                                    : "text-blue-600"
+                                }`}
+                              >
+                                {completed
+                                  ? "Great achievement!"
+                                  : "Keep learning!"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="progress-container">
+                            <div className="progress-bar">
+                              <div
+                                ref={progressRef}
+                                className="progress-fill"
+                                style={{
+                                  width: animate ? `${progress}%` : "0%",
+                                }}
+                              />
+                            </div>
+                            <div className="progress-stats">
+                              <div className="flex justify-between items-center">
+                                <span>{Math.round(progress)}% Complete</span>
+                                <span className="text-xs opacity-75">
+                                  Your Progress
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-3">
+                            {!completed && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (videoPlayerRef.current) {
+                                    videoPlayerRef.current.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "center",
+                                    });
+                                  }
+                                }}
+                                className="continue-learning-btn"
+                              >
+                                <Play className="w-4 h-4" />
+                                Continue Learning
+                              </button>
+                            )}
+
+                            {completed && takeCertificate && (
+                              <button
+                                onClick={GetCertificate}
+                                className="certificate-btn"
+                              >
+                                <Award className="w-5 h-5" />
+                                Get Certificate
+                                <Download className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {completed && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (videoPlayerRef.current) {
+                                    videoPlayerRef.current.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "center",
+                                    });
+                                  }
+                                }}
+                                className="w-full px-4 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                              >
+                                <Play className="w-4 h-4" />
+                                Review Course
+                              </button>
+                            )}
+                          </div>
+
+                          {completed && (
+                            <div className="mt-4 flex justify-center">
+                              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                🏆 Achievement Unlocked
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
@@ -1174,35 +1371,7 @@ const CoursesDetailsArea = ({
                           Certifications
                         </span>
                         <div className="certificate-container">
-                          {isUserEnrolled && completed ? (
-                            <div className="certificate-button-wrapper">
-                              <button
-                                className="certificate-button"
-                                onClick={() =>
-                                  alert("Certificate downloaded successfully!")
-                                }
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                  <polyline points="7 10 12 15 17 10" />
-                                  <line x1="12" y1="15" x2="12" y2="3" />
-                                </svg>
-                                Get Certificate
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text">Yes</span>
-                          )}
+                          <span className="text">Yes</span>
                         </div>
                       </li>
                     </ul>
