@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../services/api";
 import { cartDetails } from "../../services/interfaces/cart.interface";
-import { enrollmentService } from "../../services/enrollmentService";
-import { cartService } from "../../services/cartService";
+// import { enrollmentService } from "../../services/enrollmentService";
+// import { cartService } from "../../services/cartService";
 import { ShoppingBag, ShieldCheck } from 'lucide-react';
 
 const ShopCartArea = () => {
@@ -137,7 +137,7 @@ const ShopCartArea = () => {
                                 <i className="fas fa-trash fa-sm"></i>
                               </button>
                               <img
-                                src={course.thumbnailPreview}
+                                src={course.thumbnailPreview || "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"}
                                 alt={course.title}
                                 className="rounded-2"
                                 style={{
@@ -249,26 +249,25 @@ const ShopCartArea = () => {
                     <Link
                       to="/my-courses"
                       className="btn btn-primary btn-lg w-100"
-                      onClick={async () => {
-                        try {
-                          for (const course of cart.courses) {
-                            await enrollmentService.enroll(
-                              course._id,
-                              cart.userId
-                            );
-                          }
-                        } catch (error) {
-                          console.error("Enrollment failed:", error);
-                        }
-                        try {
-                          const response = await cartService.clearCart();
-                          if (response){
-                            setCart(null);
-                          }
-                        }catch (error) {
-                          console.error("Error clearing cart:", error);
-                        }
-                      }}
+                      // onClick={async () => {
+                      //   try {
+                      //     for (const course of cart.courses) {
+                      //       await enrollmentService.enroll(
+                      //         course._id
+                      //       );
+                      //     }
+                      //   } catch (error) {
+                      //     console.error("Enrollment failed:", error);
+                      //   }
+                      //   try {
+                      //     const response = await cartService.clearCart();
+                      //     if (response){
+                      //       setCart(null);
+                      //     }
+                      //   }catch (error) {
+                      //     console.error("Error clearing cart:", error);
+                      //   }
+                      // }}
                     >
                       Proceed to Checkout
                     </Link>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface CouponInputProps {
-  onApplyCoupon: (code: string) => Promise<boolean>;
+  onApplyCoupon: (code: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const CouponInput: React.FC<CouponInputProps> = ({ onApplyCoupon }) => {
@@ -11,27 +11,33 @@ const CouponInput: React.FC<CouponInputProps> = ({ onApplyCoupon }) => {
   const [success, setSuccess] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!couponCode.trim()) {
-      setError('Please enter a coupon code');
-      return;
-    }
-    
-    setIsApplying(true);
-    setError('');
-    setSuccess(false);
-    
-    try {
-      const success = await onApplyCoupon(couponCode.trim());
-      setSuccess(success);
+  e.preventDefault();
+
+  if (!couponCode.trim()) {
+    setError('Please enter a coupon code');
+    return;
+  }
+
+  setIsApplying(true);
+  setError('');
+  setSuccess(false);
+
+  try {
+    const result = await onApplyCoupon(couponCode.trim());
+
+    if (result.success) {
+      setSuccess(true);
       setCouponCode('');
-    } catch (err) {
-      setError('Invalid coupon code'+err);
-    } finally {
-      setIsApplying(false);
+    } else {
+      setError(result.error || 'Invalid coupon code');
     }
-  };
+  } catch (err) {
+    setError('An unexpected error occurred :'+ err);
+  } finally {
+    setIsApplying(false);
+  }
+};
+
 
   return (
     <div className="coupon-container mb-4">

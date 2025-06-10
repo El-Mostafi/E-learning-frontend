@@ -1,4 +1,10 @@
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { Accordion, Button } from "react-bootstrap";
+import axios from "axios";
+import { X, Award, CheckCircle, Download, Play } from "lucide-react";
+
+// Services
 import {
   QuizQuestion,
   Review,
@@ -6,111 +12,135 @@ import {
   courseData,
 } from "../../services/coursService";
 import axiosInstance from "../../services/api";
-import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Accordion, Button } from "react-bootstrap";
-import VideoPlayer from "./VideoPlayer/VideoPlayer";
 import {
   enrollmentService,
   completedSection,
 } from "../../services/enrollmentService";
+
+// Components
+import VideoPlayer from "./VideoPlayer/VideoPlayer";
 import CouponInput from "./CouponInput";
-import axios from "axios";
 import QuizComponent from "./QuizComponent";
-import { X, Award, CheckCircle, Download, Play } from "lucide-react";
 import ModernReviewForm from "./Review/ModernReviewForm";
-import ReviewsList from './Review/ReviewsList';
+import ReviewsList from "./Review/ReviewsList";
 
-const CoursesDetailsArea = ({
-  setBreadcrumbData,
-}: {
+interface CoursesDetailsAreaProps {
   setBreadcrumbData: (data: courseData) => void;
+}
+
+const QUIZ_PASS_THRESHOLD = 70;
+
+const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
+  setBreadcrumbData,
 }) => {
+  // Core state
   const [course, setCourse] = useState<courseData>();
-  const [appliedCoupon, setAppliedCoupon] = useState<{
-    code: string;
-    discountPercentage: number;
-  } | null>(null);
-  const [, setCouponError] = useState("");
-  const [cartLoading, setCartLoading] = useState(false);
-  const [buyNowLoading, setBuyNowLoading] = useState(false);
-  const [cartError, setCartError] = useState("");
-  const [isInCart, setIsInCart] = useState(false);
-  const [cartChecking, setCartChecking] = useState(true);
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const courseId = location.state?.courseId;
-
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+
+  // Course navigation state
   const [currentSectionId, setCurrentSectionId] = useState<string>("");
   const [currentLectureId, setCurrentLectureId] = useState<string>("");
   const [currentSectionIndex, setCurrentSectionIndex] = useState<number>(0);
   const [currentLectureIndex, setCurrentLectureIndex] = useState<number>(0);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentLectureTitle, setCurrentLectureTitle] = useState<string>("");
-  const videoPlayerRef = useRef<HTMLDivElement>(null);
-  const [isUserEnrolled, setIsUserEnrolled] = useState<boolean>(false);
 
+  // User enrollment state
+  const [isUserEnrolled, setIsUserEnrolled] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [completed, setCompleted] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<string>("");
-  const [statusType, setStatusType] = useState<string>("success");
   const [lectureCount, setLectureCount] = useState<number>(0);
   const [lectureCountCompleted, setLectureCountCompleted] = useState<number>(0);
   const [completedSections, setCompletedSections] = useState<
     completedSection[]
   >([]);
+
+  // Cart state
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountPercentage: number;
+  } | null>(null);
+  // Removed couponError state as it was not read. CouponInput can handle display based on onApplyCoupon's return.
+  const [cartLoading, setCartLoading] = useState(false);
+  const [buyNowLoading, setBuyNowLoading] = useState(false);
+  const [cartError, setCartError] = useState("");
+  const [isInCart, setIsInCart] = useState(false);
+  const [cartChecking, setCartChecking] = useState(true);
+
+  // Quiz state
   const [showQuiz, setShowQuiz] = useState<boolean>(false);
   const [takeCertificate, setTakeCertificate] = useState<boolean>(false);
-  const [quizzeQuestions, setQuizzeQuestions] = useState<QuizQuestion[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]); // Renamed from quizzeQuestions
   const [loadingQuiz, setLoadingQuiz] = useState(false);
-  const progressRef = useRef<HTMLDivElement>(null);
-  const [animate, ] = useState(true);
+
+  // Review state
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState<boolean>(false); // Renamed from isSubmitting
+  const [reviewStatusMessage, setReviewStatusMessage] = useState<string>(""); // Renamed from statusMessage
+  const [reviewStatusType, setReviewStatusType] = useState<string>("success"); // Renamed from statusType
+
+  // Refs and constants
+  const videoPlayerRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null); // This ref is assigned but not directly manipulated in this component beyond being a ref target.
+  // Removed 'animate' state as it was always true and its setter unused.
   const styleSuffixes = ["one", "two", "three", "four", "five"];
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  const courseId = location.state?.courseId;
+
+  // Fetch course data
   useEffect(() => {
     const fetchCourse = async () => {
+      if (!courseId) {
+        setError("Course ID is missing"); // Changed from setCartError to setError for general errors
+        setLoading(false);
+        return;
+      }
       try {
-        if (!courseId) {
-          setCartError("Course ID is missing");
-          setLoading(false);
-          return;
-        }
         const response = await coursService.getCourseDetails(courseId);
         setCourse(response);
         setBreadcrumbData(response);
-        setCurrentSectionId(response.sections[0].id);
-        setCurrentLectureId(response.sections[0].lectures[0].id);
-        setCurrentLectureTitle(response.sections[0].lectures[0].title);
-        setCurrentSectionIndex(0);
-        setCurrentLectureIndex(0);
+        console.log("Course data:", response.appliedCoupon);
+        setAppliedCoupon(response.appliedCoupon===undefined ? null : response.appliedCoupon);
 
-        if (response.isUserEnrolled) {
-          setCurrentVideoUrl(
-            response.sections[0]!.lectures[0]!.videoUrl! || ""
-          );
-          setProgress(response.progress!);
-          setCompleted(response.completed!);
+        if (
+          response.sections.length > 0 &&
+          response.sections[0].lectures.length > 0
+        ) {
+          const firstSection = response.sections[0];
+          const firstLecture = firstSection.lectures[0];
+
+          setCurrentSectionId(firstSection.id);
+          setCurrentLectureId(firstLecture.id);
+          setCurrentLectureTitle(firstLecture.title);
+          setCurrentSectionIndex(0);
+          setCurrentLectureIndex(0);
+
+          if (response.isUserEnrolled) {
+            setCurrentVideoUrl(firstLecture.videoUrl || "");
+            setProgress(response.progress ?? 0); // Use nullish coalescing
+            setCompleted(response.completed ?? false); // Use nullish coalescing
+          }
+        } else {
+          // Handle case where course has no sections or lectures
+          setError("Course content is not available.");
         }
 
         setIsUserEnrolled(response.isUserEnrolled);
-        const lectureCount = response.sections.reduce(
+
+        const totalLectures = response.sections.reduce(
           (total, section) => total + section.lectures.length,
           0
         );
-        setLectureCount(lectureCount);
-
-        // console.log("Course Response", response);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          console.error("API Error:", error.response?.data);
-          setError(error.response?.data?.message);
+        setLectureCount(totalLectures);
+      } catch (err) {
+        console.error("Error fetching course:", err);
+        if (axios.isAxiosError(err)) {
+          setError(
+            err.response?.data?.message || "Failed to fetch course data"
+          );
         } else {
-          console.error("Unexpected error:", error);
           setError("Failed to fetch course data");
         }
       } finally {
@@ -121,142 +151,132 @@ const CoursesDetailsArea = ({
     fetchCourse();
   }, [courseId, setBreadcrumbData]);
 
+  // Check cart status
   useEffect(() => {
     const checkCartStatus = async () => {
+      if (!courseId) return;
       try {
-        if (!courseId) return;
-
         const response = await axiosInstance.get("/cart");
         const cartItems = response.data.courses;
-        const inCart = cartItems.some((item: { _id: string }) => item._id === courseId);
+        const inCart = cartItems.some(
+          (item: { _id: string }) => item._id === courseId
+        );
         setIsInCart(inCart);
-      } catch (error) {
-        console.error("Error checking cart status:", error);
+      } catch (err) {
+        console.error("Error checking cart status:", err);
+        // Optionally set a specific error for cart checking if needed
       } finally {
         setCartChecking(false);
       }
     };
-
     checkCartStatus();
   }, [courseId]);
+
+  // Fetch enrollment data
   useEffect(() => {
     const fetchEnrollment = async () => {
-      try {
-        if (!courseId) return;
+      if (!courseId || !isUserEnrolled) return; // Only fetch if enrolled
 
+      try {
         const response = await enrollmentService.getEnrolledCourseById(
           courseId
         );
         setCompletedSections(response.completedSections);
         setLectureCountCompleted(response.completedSections.length);
         setTakeCertificate(response.hasPassedQuizze);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          console.error("API Error:", error.response?.data);
-          setError(error.response?.data?.message);
-        } else {
-          console.error("Unexpected error:", error);
-          setError("Failed to fetch enrollment data");
-        }
+      } catch (err) {
+        console.error("Error fetching enrollment:", err);
+        const message = axios.isAxiosError(err)
+          ? err.response?.data?.message
+          : "Failed to fetch enrollment data";
+        setError(
+          (prevError) =>
+            prevError || message || "Failed to fetch enrollment data"
+        ); // Set error only if not already set
       }
     };
 
-    fetchEnrollment();
-  }, [courseId]);
+    if (isUserEnrolled) {
+      // Ensure isUserEnrolled is true before fetching
+      fetchEnrollment();
+    }
+  }, [courseId, isUserEnrolled]); // Added isUserEnrolled as a dependency
+
+  // Course navigation methods
   const markLectureComplete = async () => {
+    if (!course || !courseId) return;
+
     try {
-      if (!course) {
-        return;
-      }
       const result = await enrollmentService.updateProgress(
         courseId,
         currentSectionId,
         currentLectureId
       );
-      console.log(courseId, currentSectionId, currentLectureId);
 
-      // Ensure progress is within 0-100 range
       const updatedProgress = Math.min(Math.max(result.progress, 0), 100);
       setProgress(updatedProgress);
       setCompleted(result.completed);
       setCompletedSections(result.completedSections);
       setLectureCountCompleted(result.completedSections.length);
 
-      const currentSection = course.sections[currentSectionIndex];
-      let nextSectionIndex = currentSectionIndex;
-      let nextLectureIndex = currentLectureIndex;
+      const currentSec = course.sections[currentSectionIndex];
+      let nextSecIdx = currentSectionIndex;
+      let nextLecIdx = currentLectureIndex;
 
-      if (currentLectureIndex < currentSection.lectures.length - 1) {
-        nextLectureIndex = currentLectureIndex + 1;
+      if (currentLectureIndex < currentSec.lectures.length - 1) {
+        nextLecIdx = currentLectureIndex + 1;
       } else if (currentSectionIndex < course.sections.length - 1) {
-        nextSectionIndex = currentSectionIndex + 1;
-        nextLectureIndex = 0;
+        nextSecIdx = currentSectionIndex + 1;
+        nextLecIdx = 0;
       }
 
-      // Update state in one batch
-      setCurrentSectionIndex(nextSectionIndex);
-      setCurrentLectureIndex(nextLectureIndex);
-      setCurrentSectionId(course.sections[nextSectionIndex].id);
-      setCurrentLectureId(
-        course.sections[nextSectionIndex].lectures[nextLectureIndex].id
-      );
-      setCurrentVideoUrl(
-        course.sections[nextSectionIndex].lectures[nextLectureIndex]
-          .videoUrl! || ""
-      );
-      setCurrentLectureTitle(
-        course.sections[nextSectionIndex].lectures[nextLectureIndex].title
-      );
-    } catch (error) {
-      console.error("Error marking lecture as complete:", error);
+      // Only update lecture if not completed or not the last lecture
+      if (
+        !result.completed ||
+        nextSecIdx !== currentSectionIndex ||
+        nextLecIdx !== currentLectureIndex
+      ) {
+        const nextSectionData = course.sections[nextSecIdx];
+        const nextLectureData = nextSectionData.lectures[nextLecIdx];
+
+        setCurrentSectionIndex(nextSecIdx);
+        setCurrentLectureIndex(nextLecIdx);
+        setCurrentSectionId(nextSectionData.id);
+        setCurrentLectureId(nextLectureData.id);
+        setCurrentVideoUrl(nextLectureData.videoUrl || "");
+        setCurrentLectureTitle(nextLectureData.title);
+      }
+    } catch (err) {
+      console.error("Error marking lecture as complete:", err);
       setError("Failed to mark lecture as complete. Please try again.");
     }
   };
 
-  const renderStars = (rating: number) => {
-    // console.log("Rating:", rating);
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <i
-          key={i}
-          className={`fas fa-star ${i <= rating ? "" : "color-2"}`}
-        ></i>
-      );
-    }
-    // console.log("Stars:", stars);
-    return stars;
-  };
+  const handlePreviousLecture = () => {
+    if (!course) return;
 
-  // Calculate percentage for progress bars
-  const calculatePercentage = (count: number) => {
-    return course!.reviewsLenght > 0
-      ? (count / course!.reviewsLenght) * 100
-      : 0;
-  };
-  const formatDuration = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const remainingAfterHours = totalSeconds % 3600;
-    const minutes = Math.floor(remainingAfterHours / 60);
-    const seconds = Math.round(remainingAfterHours % 60);
+    const isFirstLectureInCurrentSection = currentLectureIndex === 0;
 
-    if (hours > 0) {
-      const parts = [];
-      parts.push(`${hours}h`);
-      if (minutes > 0) {
-        parts.push(`${minutes}min`);
-      }
-      return parts.join(" ");
-    } else {
-      const parts = [];
-      if (minutes > 0) {
-        parts.push(`${minutes}min`);
-      }
-      if (seconds > 0 || totalSeconds === 0) {
-        parts.push(`${seconds}s`);
-      }
-      return parts.join(" ");
+    let prevSectionIndex = currentSectionIndex;
+    let prevLectureIndex = currentLectureIndex - 1;
+
+    if (isFirstLectureInCurrentSection) {
+      if (currentSectionIndex === 0) return; // Already at the very first lecture
+      prevSectionIndex = currentSectionIndex - 1;
+      prevLectureIndex = course.sections[prevSectionIndex].lectures.length - 1;
     }
+
+    const targetSection = course.sections[prevSectionIndex];
+    const targetLecture = targetSection.lectures[prevLectureIndex];
+
+    handleLectureSelect(
+      targetSection.id,
+      targetLecture.id,
+      targetLecture.videoUrl,
+      targetLecture.title,
+      prevSectionIndex,
+      prevLectureIndex
+    );
   };
 
   const handleLectureSelect = (
@@ -264,8 +284,8 @@ const CoursesDetailsArea = ({
     lectureId: string,
     videoUrl: string,
     title: string,
-    sectionIndex: number = 0,
-    lectureIndex: number = 0
+    sectionIndex: number, // Removed default value, should always be provided
+    lectureIndex: number // Removed default value
   ) => {
     setCurrentSectionId(sectionId);
     setCurrentLectureId(lectureId);
@@ -274,22 +294,18 @@ const CoursesDetailsArea = ({
     setCurrentSectionIndex(sectionIndex);
     setCurrentLectureIndex(lectureIndex);
 
-    // Scroll to video player
-    if (videoPlayerRef.current) {
-      videoPlayerRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
+    scrollToVideoPlayer();
   };
 
+  // Cart methods
   const handleCartAction = async () => {
+    if (!courseId) {
+      setCartError("Course ID is missing");
+      return;
+    }
+    setCartLoading(true);
+    setCartError("");
     try {
-      setCartLoading(true);
-      setCartError("");
-
-      if (!courseId) throw new Error("Course ID is missing");
-
       if (isInCart) {
         await axiosInstance.delete("/cart/remove", { data: { courseId } });
       } else {
@@ -301,26 +317,17 @@ const CoursesDetailsArea = ({
           });
         }
       }
-
-      // Toggle the cart state after successful operation
       setIsInCart(!isInCart);
-      alert(
-        `Course ${isInCart ? "removed from" : "added to"} cart successfully!`
-      );
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("API Error:", error.response?.data);
-        setCartError(error.response?.data?.message);
-      } else {
-        console.error("Unexpected error:", error);
-        setCartError(
-          `Failed to ${isInCart ? "remove" : "add"} course. Please try again.`
-        );
-      }
-      console.error(error);
+      // Consider using a toast notification instead of alert
+      // alert(`Course ${isInCart ? "removed from" : "added to"} cart successfully!`);
+    } catch (err) {
+      console.error("Cart action error:", err);
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message
+        : `Failed to ${isInCart ? "remove" : "add"} course.`;
+      setCartError(message || `An unexpected error occurred.`);
     } finally {
       setCartLoading(false);
-      setAppliedCoupon(null);
     }
   };
 
@@ -364,155 +371,184 @@ const CoursesDetailsArea = ({
       setAppliedCoupon(null);
     }
   };
-
   const handleApplyCoupon = async (code: string) => {
-    try {
-      console.log("Applying coupon:", code, courseId);
-      setCouponError("");
-      if (!code || !courseId) {
-        setCouponError("Please enter a coupon code");
-        return false;
-      }
-
-      const discount = await coursService.verifyCoupon(courseId, code);
-      if (!discount) {
-        setCouponError("Invalid or expired coupon code");
-        return false;
-      }
-
-      setAppliedCoupon({
-        code: code,
-        discountPercentage: discount,
-      });
-      console.log("Coupon applied successfully:", discount);
-      return true;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("API Error:", error.response?.data);
-        setCouponError(error.response?.data?.message);
-      } else {
-        console.error("Unexpected error:", error);
-        setCouponError("Invalid or expired coupon code");
-      }
-      setAppliedCoupon(null);
-      return false;
+  try {
+    if (!code || !courseId) {
+      return { success: false, error: "Please enter a coupon code" };
     }
-  };
 
+    const discount = await coursService.verifyCoupon(courseId, code);
+    if (!discount) {
+      return { success: false, error: "Invalid or expired coupon code" };
+    }
+
+    setAppliedCoupon({
+      code: code,
+      discountPercentage: discount,
+    });
+
+    return { success: true };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error:", error.response?.data);
+      return { success: false, error: error.response?.data?.errors[0].message || "Coupon error" };
+    } else {
+      return { success: false, error: "Invalid or expired coupon code" };
+    }
+  }
+};
+
+  
+
+  // Review methods
   const handleSubmitReview = async (reviewData: {
     rating: number;
     comment: string;
   }) => {
-    setIsSubmitting(true);
-    setStatusMessage("");
-    setStatusType("success");
-
+    if (!courseId) {
+      setReviewStatusMessage("Course ID is missing");
+      setReviewStatusType("error");
+      return;
+    }
+    setIsReviewSubmitting(true);
+    setReviewStatusMessage("");
+    setReviewStatusType("success");
     try {
-      if (!courseId) {
-        setStatusMessage("Course ID is missing");
-        setStatusType("error");
-        return;
-      }
+      const reviewToSubmit: Review = { ...reviewData, createdAt: new Date() };
+      const responseMessage = await coursService.rateCourse(
+        courseId,
+        reviewToSubmit
+      );
 
-      const reviewToSubmit: Review = {
-        ...reviewData,
-        createdAt: new Date(),
-      };
+      setReviewStatusMessage(
+        responseMessage || "Review submitted successfully!"
+      );
+      setReviewStatusType("success");
 
-      const response = await coursService.rateCourse(courseId, reviewToSubmit);
-      if (response) {
-        console.log("Review submitted successfully:", response);
-        setStatusMessage(response);
-        setStatusType("success");
-        const updatedCourse = await coursService.getCourseDetails(courseId);
-        setCourse(updatedCourse);
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("API Error:", error.response?.data);
-        setStatusMessage(error.response?.data?.message);
-      } else {
-        console.error("Unexpected error:", error);
-        setStatusMessage("Failed to submit review");
-      }
-      setStatusType("error");
+      const updatedCourse = await coursService.getCourseDetails(courseId); // Re-fetch to update reviews
+      setCourse(updatedCourse);
+    } catch (err) {
+      console.error("Review submission error:", err);
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message
+        : "Failed to submit review.";
+      setReviewStatusMessage(message || "An unexpected error occurred.");
+      setReviewStatusType("error");
     } finally {
-      setIsSubmitting(false);
+      setIsReviewSubmitting(false);
     }
   };
+
+  // Quiz methods
   const handleQuizComplete = async (score: number) => {
+    if (!courseId) return;
     try {
-      console.log("Quiz completed with score:", score);
-
-      if (score >= 70) {
-        console.log("User passed the quiz!");
-
+      if (score >= QUIZ_PASS_THRESHOLD) {
         const response = await enrollmentService.markQuizPassed(
           courseId,
           score
         );
         setTakeCertificate(response.hasPassedQuizze);
-        console.log("Course marked as completed.");
       } else {
-        console.log("User did not pass the quiz.");
+        // Optionally inform user they didn't pass
       }
     } catch (err) {
       console.error("Failed to save quiz results:", err);
+      // Optionally set an error state for this action
     }
   };
-  const handleShowQuiz = async () => {
-    setShowQuiz(true);
 
-    if (quizzeQuestions.length === 0) {
+  const handleShowQuiz = async () => {
+    if (!courseId) return;
+    setShowQuiz(true);
+    if (quizQuestions.length === 0) {
       try {
         setLoadingQuiz(true);
         const response = await coursService.getQuiz(courseId);
-        setQuizzeQuestions(response.data);
-      } catch (error) {
-        console.error("Error fetching quiz:", error);
+        setQuizQuestions(response.data);
+      } catch (err) {
+        console.error("Error fetching quiz:", err);
+        // Optionally set an error for quiz fetching
       } finally {
         setLoadingQuiz(false);
       }
     }
   };
+
+  // Utility methods
+  const renderStars = (rating: number) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <i
+          key={i}
+          className={`fas fa-star ${i <= Math.round(rating) ? "" : "color-2"}`}
+        />
+      );
+    }
+    return stars;
+  };
+
+  const calculatePercentage = (count: number) => {
+    return course?.reviewsLenght && course.reviewsLenght > 0
+      ? (count / course.reviewsLenght) * 100
+      : 0;
+  };
+
+  const formatDuration = (totalSeconds: number = 0) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.round(totalSeconds % 60);
+
+    const parts = [];
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}min`);
+    if (hours === 0 && (seconds > 0 || totalSeconds === 0 || minutes === 0)) {
+      // Show seconds if no hours/minutes or if total is 0
+      parts.push(`${seconds}s`);
+    }
+    return parts.length > 0 ? parts.join(" ") : "0s";
+  };
+
   const getProgressStyleClass = (
     currentStars: number,
-    ratingsCounts: number[]
+    ratingsCounts: number[] | undefined
   ) => {
     if (!ratingsCounts || ratingsCounts.length !== 5) {
-      return `style-${styleSuffixes[2]}`;
+      return `style-${styleSuffixes[2]}`; // Default
     }
-
     const ratingsWithDetails = ratingsCounts.map((count, index) => ({
       stars: index + 1,
       count: count,
-      originalIndex: index,
     }));
-
     const sortedRatings = [...ratingsWithDetails].sort((a, b) => {
-      if (b.count !== a.count) {
-        return b.count - a.count;
-      }
+      if (b.count !== a.count) return b.count - a.count;
       return b.stars - a.stars;
     });
-
     const rank = sortedRatings.findIndex((item) => item.stars === currentStars);
-
-    if (rank !== -1 && rank < styleSuffixes.length) {
-      return `style-${styleSuffixes[rank]}`;
-    }
-
-    return `style-${styleSuffixes[2]}`;
+    return rank !== -1 && rank < styleSuffixes.length
+      ? `style-${styleSuffixes[rank]}`
+      : `style-${styleSuffixes[2]}`;
   };
 
   const GetCertificate = () => {
-    console.log("takeCertificate", takeCertificate);
+    // Implement actual certificate download/navigation logic here
+    if (takeCertificate) {
+      // e.g., navigate(`/certificate/${courseId}`);
+      alert("Certificate functionality to be implemented.");
+    }
   };
+
+  const scrollToVideoPlayer = () => {
+    videoPlayerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
+  // Render quiz section
   const renderQuizSection = () => {
-    if (!isUserEnrolled) return null;
-
-    if (!completed) return null;
-
+    if (!isUserEnrolled || !completed) return null;
     return (
       <>
         <div className="mt-8">
@@ -552,7 +588,7 @@ const CoursesDetailsArea = ({
                 <p className="text-center text-gray-600">Loading quiz...</p>
               ) : (
                 <QuizComponent
-                  questions={quizzeQuestions}
+                  questions={quizQuestions}
                   onComplete={handleQuizComplete}
                 />
               )}
@@ -589,18 +625,38 @@ const CoursesDetailsArea = ({
     );
   }
 
-  const currentSection = course.sections[currentSectionIndex];
-  // const currentLecture = currentSection?.lectures[currentLectureIndex];
+  const currentCourseSection = course.sections[currentSectionIndex];
+  // const currentCourseLecture = currentCourseSection?.lectures[currentLectureIndex]; // Not explicitly needed here
+
+  // Logic for Next/Complete button
+  const isLastLectureInCourse =
+    currentSectionIndex === course.sections.length - 1 &&
+    currentLectureIndex === currentCourseSection?.lectures.length - 1;
+
+  let nextButtonText: React.ReactNode = (
+    <>
+      {" "}
+      Next Lecture <i className="fas fa-arrow-right ms-2" />{" "}
+    </>
+  );
+  let nextButtonVariant: "primary" | "success" = "primary";
+  const nextButtonDisabled = completed && isLastLectureInCourse;
+
+  if (isLastLectureInCourse) {
+    nextButtonText = completed ? "Completed" : "Complete Course";
+    if (completed) nextButtonVariant = "success";
+  }
 
   return (
     <>
       <style>
         {`
-        .thumb img {
-        border-radius: 50% !important;
-        }
-        
-      `}
+          .thumb img {
+            border-radius: 50% !important;
+          }
+          
+
+        `}
       </style>
 
       <section className="courses-details-section section-padding pt-0">
@@ -613,139 +669,97 @@ const CoursesDetailsArea = ({
                     <VideoPlayer
                       src={
                         currentVideoUrl ||
-                        course.sections[0].lectures[0].videoUrl ||
+                        course.sections[0]?.lectures[0]?.videoUrl ||
                         ""
                       }
                       poster={course.thumbnailPreview}
                       title={
                         currentLectureTitle ||
-                        course.sections[0].lectures[0].title
+                        course.sections[0]?.lectures[0]?.title ||
+                        "Course Video"
                       }
                       duration={course.duration}
                       isLocked={!isUserEnrolled}
-                      onComplete={() => markLectureComplete()}
+                      onComplete={markLectureComplete}
                     />
                   </div>
-                  {isUserEnrolled && (
-                    <>
-                      <div className="video-navigation mt-3 mb-4 d-flex justify-content-between">
-                        <Button
-                          className="btn btn-outline-primary d-flex align-items-center"
-                          variant="outline-secondary"
-                          disabled={
-                            currentSectionIndex === 0 &&
-                            currentLectureIndex === 0
-                          }
-                          onClick={() => {
-                            const newIndex =
-                              currentLectureIndex > 0
-                                ? currentLectureIndex - 1
-                                : course.sections[currentSectionIndex - 1]
-                                    ?.lectures.length - 1;
-                            const newSection =
-                              currentLectureIndex > 0
-                                ? currentSectionIndex
-                                : currentSectionIndex - 1;
 
-                            handleLectureSelect(
-                              course.sections[newSection].id,
-                              course.sections[newSection].lectures[newIndex].id,
-                              course.sections[newSection].lectures[newIndex]
-                                .videoUrl,
-                              course.sections[newSection].lectures[newIndex]
-                                .title,
-                              newSection,
-                              newIndex
-                            );
-                          }}
-                        >
-                          <i className="fas fa-arrow-left me-2"></i>
-                          Previous Lecture
-                        </Button>
-                        <div className="d-flex align-items-center">
-                          <span className="mx-3 text-muted">
-                            {currentLectureIndex + 1} / {lectureCount}
-                          </span>
-                        </div>
-                        <Button
-                          className="btn btn-primary d-flex align-items-center"
-                          disabled={
-                            currentSectionIndex ===
-                              course.sections.length - 1 &&
-                            currentLectureIndex ===
-                              currentSection.lectures.length - 1 &&
-                            completed
-                          }
-                          variant={
-                            currentSectionIndex ===
-                              course.sections.length - 1 &&
-                            currentLectureIndex ===
-                              currentSection.lectures.length - 1 &&
-                            completed
-                              ? "success"
-                              : "primary"
-                          }
-                          onClick={markLectureComplete}
-                        >
-                          {currentSectionIndex === course.sections.length - 1 &&
-                          currentLectureIndex ===
-                            currentSection.lectures.length - 1 &&
-                          !completed ? (
-                            "Complete Course"
-                          ) : currentSectionIndex ===
-                              course.sections.length - 1 &&
-                            currentLectureIndex ===
-                              currentSection.lectures.length - 1 &&
-                            completed ? (
-                            "Completed"
-                          ) : (
-                            <>
-                              Next Lecture
-                              <i className="fas fa-arrow-right ms-2"></i>
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                      <div className="course-progress mb-4">
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                          <h5 className="m-0">Course Progress</h5>
-                          <span className="progress-percentage">
-                            {progress}%
-                          </span>
+                  {isUserEnrolled &&
+                    currentCourseSection && ( // Ensure currentCourseSection exists
+                      <>
+                        <div className="video-navigation mt-3 mb-4 d-flex justify-content-between">
+                          <Button
+                            className="btn btn-outline-primary d-flex align-items-center"
+                            variant="outline-secondary"
+                            disabled={
+                              currentSectionIndex === 0 &&
+                              currentLectureIndex === 0
+                            }
+                            onClick={handlePreviousLecture}
+                          >
+                            <i className="fas fa-arrow-left me-2" />
+                            Previous Lecture
+                          </Button>
+
+                          <div className="d-flex align-items-center">
+                            <span className="mx-3 text-muted">
+                              Lecture {currentLectureIndex + 1} /{" "}
+                              {currentCourseSection.lectures.length} (Section{" "}
+                              {currentSectionIndex + 1})
+                            </span>
+                          </div>
+
+                          <Button
+                            className="btn d-flex align-items-center" // Removed btn-primary, variant handles it
+                            variant={nextButtonVariant}
+                            disabled={nextButtonDisabled}
+                            onClick={markLectureComplete}
+                          >
+                            {nextButtonText}
+                          </Button>
                         </div>
 
-                        <div
-                          className="progress"
-                          style={{ height: "7px", borderRadius: "5px" }}
-                        >
+                        <div className="course-progress mb-4">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h5 className="m-0">Course Progress</h5>
+                            <span className="progress-percentage">
+                              {progress.toFixed(0)}%
+                            </span>
+                          </div>
                           <div
-                            className="progress-bar progress-bar-striped progress-bar-animated"
-                            role="progressbar"
-                            style={{
-                              width: `${progress}%`,
-                              background: "linear-gradient( #4481eb, #04befe)",
-                              borderRadius: "5px",
-                              height: "7px",
-                            }}
-                            aria-valuenow={progress}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                          ></div>
+                            className="progress"
+                            style={{ height: "7px", borderRadius: "5px" }}
+                          >
+                            <div
+                              className="progress-bar progress-bar-striped progress-bar-animated"
+                              role="progressbar"
+                              style={{
+                                width: `${progress}%`,
+                                background:
+                                  "linear-gradient( #4481eb, #04befe)",
+                                borderRadius: "5px",
+                                height: "7px",
+                              }}
+                              aria-valuenow={progress}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                            />
+                          </div>
+                          <div className="d-flex justify-content-between mt-2 text-muted">
+                            <small>
+                              Completed: {lectureCountCompleted} lectures
+                            </small>
+                            <small>Total: {lectureCount} lectures</small>
+                          </div>
                         </div>
+                      </>
+                    )}
 
-                        <div className="d-flex justify-content-between mt-2 text-muted">
-                          <small>
-                            Completed: {lectureCountCompleted} lectures
-                          </small>
-                          <small>Total: {lectureCount} lectures</small>
-                        </div>
-                      </div>
-                    </>
-                  )}
                   {renderQuizSection()}
 
                   <div className="courses-details-content">
                     <ul className="nav">
+                      {/* Tab navigation links */}
                       <li
                         className="nav-item wow fadeInUp"
                         data-wow-delay=".3s"
@@ -795,7 +809,9 @@ const CoursesDetailsArea = ({
                         </a>
                       </li>
                     </ul>
+
                     <div className="tab-content">
+                      {/* Course Info Tab */}
                       <div id="Course" className="tab-pane fade show active">
                         <div className="description-content">
                           <h3>Description</h3>
@@ -804,7 +820,7 @@ const CoursesDetailsArea = ({
                             dangerouslySetInnerHTML={{
                               __html: course.description,
                             }}
-                          ></p>
+                          />
                           <h3 className="mt-5">
                             What you'll learn in this course?
                           </h3>
@@ -817,7 +833,7 @@ const CoursesDetailsArea = ({
                               <ul className="list-item">
                                 {course.sections?.slice(0, 5).map((section) => (
                                   <li key={section.id}>
-                                    <i className="fas fa-check-circle"></i>
+                                    <i className="fas fa-check-circle" />{" "}
                                     {section.title}
                                   </li>
                                 ))}
@@ -829,7 +845,7 @@ const CoursesDetailsArea = ({
                                   ?.slice(5, 10)
                                   .map((section) => (
                                     <li key={section.id}>
-                                      <i className="fas fa-check-circle"></i>
+                                      <i className="fas fa-check-circle" />{" "}
                                       {section.title}
                                     </li>
                                   ))}
@@ -848,15 +864,20 @@ const CoursesDetailsArea = ({
                         </div>
                       </div>
 
+                      {/* Curriculum Tab */}
                       <div id="Curriculum" className="tab-pane fade">
                         <div className="course-curriculum-items">
                           <h3>Course Curriculum</h3>
                           <div className="courses-faq-items">
-                            <Accordion defaultActiveKey="0">
-                              {course.sections.map((section, sectionIndex) => (
+                            <Accordion
+                              defaultActiveKey={
+                                isUserEnrolled ? "0" : undefined
+                              }
+                            >
+                              {course.sections.map((section, secIdx) => (
                                 <Accordion.Item
-                                  key={`section-${sectionIndex}`}
-                                  eventKey={String(sectionIndex)}
+                                  key={`section-${section.id}-${secIdx}`}
+                                  eventKey={String(secIdx)}
                                 >
                                   <Accordion.Header>
                                     {section.title}
@@ -868,48 +889,50 @@ const CoursesDetailsArea = ({
                                     }}
                                   >
                                     <ul>
-                                      {section.lectures?.map((lecture, i) => (
-                                        <li
-                                          className="cursor-pointer"
-                                          onClick={() =>
-                                            handleLectureSelect(
-                                              section.id,
-                                              lecture.id,
-                                              lecture.videoUrl,
-                                              lecture.title,
-                                              sectionIndex,
-                                              i
-                                            )
-                                          }
-                                          key={lecture.id}
-                                        >
-                                          <span>
-                                            <i className="fas fa-file-alt"></i>
-                                            Lesson {i + 1}: {lecture.title}
-                                          </span>
-                                          <span>
-                                            <i
-                                              className={
-                                                !isUserEnrolled
-                                                  ? "far fa-lock"
-                                                  : completedSections.some(
-                                                      (section) =>
-                                                        section.lectureId.toString() ===
-                                                        lecture.id.toString()
-                                                    )
-                                                  ? "far fa-check-circle text-green-500"
-                                                  : "far fa-play-circle text-blue-500"
-                                              }
-                                            ></i>
-                                            ({Math.floor(lecture.duration / 60)}
-                                            :
-                                            {Math.round(lecture.duration % 60)
-                                              .toString()
-                                              .padStart(2, "0")}{" "}
-                                            min)
-                                          </span>
-                                        </li>
-                                      ))}
+                                      {section.lectures?.map(
+                                        (lecture, lecIdx) => (
+                                          <li
+                                            className="cursor-pointer"
+                                            onClick={() =>
+                                              isUserEnrolled
+                                                ? handleLectureSelect(
+                                                    section.id,
+                                                    lecture.id,
+                                                    lecture.videoUrl,
+                                                    lecture.title,
+                                                    secIdx,
+                                                    lecIdx
+                                                  )
+                                                : undefined
+                                            } // Only allow select if enrolled
+                                            key={lecture.id}
+                                          >
+                                            <span>
+                                              <i className="fas fa-file-alt" />{" "}
+                                              Lesson {lecIdx + 1}:{" "}
+                                              {lecture.title}
+                                            </span>
+                                            <span>
+                                              <i
+                                                className={
+                                                  !isUserEnrolled
+                                                    ? "far fa-lock"
+                                                    : completedSections.some(
+                                                        (cs) =>
+                                                          cs.lectureId.toString() ===
+                                                          lecture.id.toString()
+                                                      )
+                                                    ? "far fa-check-circle text-green-500"
+                                                    : "far fa-play-circle text-blue-500"
+                                                }
+                                              />
+                                              (
+                                              {formatDuration(lecture.duration)}
+                                              )
+                                            </span>
+                                          </li>
+                                        )
+                                      )}
                                     </ul>
                                   </Accordion.Body>
                                 </Accordion.Item>
@@ -918,6 +941,8 @@ const CoursesDetailsArea = ({
                           </div>
                         </div>
                       </div>
+
+                      {/* Instructors Tab */}
                       <div id="Instructors" className="tab-pane fade">
                         <div className="instructors-items">
                           <h3>Instructors</h3>
@@ -928,12 +953,16 @@ const CoursesDetailsArea = ({
                                   course.instructorImg ||
                                   "assets/img/courses/instructors-1.png"
                                 }
-                                alt={course.instructorName!.replace("|", " ")}
+                                alt={
+                                  course.instructorName?.replace("|", " ") ||
+                                  "Instructor"
+                                }
                               />
                             </div>
                             <div className="content">
                               <h4>
-                                {course.instructorName!.replace("|", " ")}
+                                {course.instructorName?.replace("|", " ") ||
+                                  "N/A"}
                               </h4>
                               <span>
                                 {course.instructorExpertise ||
@@ -964,6 +993,8 @@ const CoursesDetailsArea = ({
                           </div>
                         </div>
                       </div>
+
+                      {/* Reviews Tab */}
                       <div id="Reviews" className="tab-pane fade">
                         <div className="courses-reviews-items">
                           <h3>Course Reviews</h3>
@@ -972,24 +1003,22 @@ const CoursesDetailsArea = ({
                               <div className="reviews-box">
                                 <h2>
                                   <span className="count">
-                                    {course.reviews.toFixed(1)}
+                                    {course.reviews?.toFixed(1) || "0.0"}
                                   </span>
                                 </h2>
                                 <div className="star">
-                                  {renderStars(Math.round(course.reviews))}
+                                  {renderStars(course.reviews || 0)}
                                 </div>
-                                <p>{course.reviewsLenght}+ Reviews</p>
+                                <p>{course.reviewsLenght || 0}+ Reviews</p>
                               </div>
                               <div className="reviews-ratting-right">
-                                {[1, 2, 3, 4, 5].map((starValue) => {
+                                {[5, 4, 3, 2, 1].map((starValue) => {
                                   const countForThisStar =
-                                    course.ratingsCount[starValue - 1];
-                                  const progressStyleClass =
-                                    getProgressStyleClass(
-                                      starValue,
-                                      course.ratingsCount
-                                    );
-
+                                    course.ratingsCount?.[starValue - 1] || 0;
+                                  const progressStyle = getProgressStyleClass(
+                                    starValue,
+                                    course.ratingsCount
+                                  );
                                   return (
                                     <div
                                       className="reviews-ratting-item"
@@ -1000,7 +1029,7 @@ const CoursesDetailsArea = ({
                                       </div>
                                       <div className="progress">
                                         <div
-                                          className={`progress-value ${progressStyleClass}`}
+                                          className={`progress-value ${progressStyle}`}
                                           style={{
                                             width: `${calculatePercentage(
                                               countForThisStar
@@ -1014,18 +1043,12 @@ const CoursesDetailsArea = ({
                                 })}
                               </div>
                             </div>
-
-                            {
-                              /* Review Form */
-                              // Allowed to rate the course only if the participant has a progress >= 25%
-                            }
-
                             {isUserEnrolled && progress >= 25 && (
                               <ModernReviewForm
                                 onSubmit={handleSubmitReview}
-                                isSubmitting={isSubmitting}
-                                statusMessage={statusMessage}
-                                statusType={statusType}
+                                isSubmitting={isReviewSubmitting}
+                                statusMessage={reviewStatusMessage}
+                                statusType={reviewStatusType}
                               />
                             )}
                             <ReviewsList reviews={course.feedbacks || []} />
@@ -1036,56 +1059,39 @@ const CoursesDetailsArea = ({
                   </div>
                 </div>
               </div>
+
+              {/* Sidebar */}
               <div className="col-lg-4">
                 <div className="courses-sidebar-area sticky-style">
                   <div className="courses-items">
-                    <div
-                      className="courses-image"
-                      style={{
-                        backgroundColor: "#4B0082",
-                        padding: "10px",
-                        borderRadius: "10px",
-                      }}
-                    >
-                      <img
-                        src={
-                          course.thumbnailPreview || "assets/img/courses/22.jpg"
-                        }
-                        alt={course.title}
-                        style={{
-                          borderRadius: "10px",
-                          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-                        }}
-                      />
-                      <h3
-                        className="courses-title"
-                        style={{ color: "#AAAF00" }}
-                      >
-                        {course.category || "Not Specified!"}
-                      </h3>
-                      <h4 className="topic-title" style={{ color: "#AA00FF" }}>
-                        {course.title}
-                      </h4>
-                      <div className="arrow-items">
-                        {[...Array(6)].map((_, i) => (
-                          <div
-                            key={i}
-                            className={`GlidingArrow ${
-                              i > 0 ? `delay${i}` : ""
-                            }`}
-                          >
-                            <img
-                              src={`assets/img/courses/a${i + 1}.png`}
-                              alt="img"
-                              style={{ filter: "brightness(1.2)" }}
-                            />
+                    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-6 shadow-lg">
+                      <div className="absolute inset-0 bg-grid-white/10 bg-[size:20px_20px] [mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]"></div>
+                      <div className="relative z-10">
+                        <img
+                          src={
+                            course.thumbnailPreview ||
+                            "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
+                          }
+                          alt={course.title}
+                          className="w-full h-48 object-cover rounded-lg shadow-2xl transform hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="mt-4 space-y-2">
+                          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            {course.category || "Not Specified!"}
                           </div>
-                        ))}
+                          <h4 className="text-xl font-bold text-white mt-2">
+                            {course.title}
+                          </h4>
+                        </div>
                       </div>
+                      <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 opacity-20 blur-2xl"></div>
+                      <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 opacity-20 blur-2xl"></div>
                     </div>
+
                     {!isUserEnrolled ? (
-                      <div className="courses-content">
-                        <p
+                      <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
+                        
+                        <p className="text-gray-600 mb-4 line-clamp-2"
                           dangerouslySetInnerHTML={{
                             __html: course.description
                               ? course.description.substring(0, 80) + "..."
@@ -1093,54 +1099,52 @@ const CoursesDetailsArea = ({
                           }}
                         ></p>
 
-                        <h3>
-                          {appliedCoupon ? (
-                            <>
-                              <s>${course.price?.toFixed(2)}</s> $
-                              {(
-                                course.price *
-                                (1 - appliedCoupon.discountPercentage / 100)
-                              ).toFixed(2)}
-                            </>
-                          ) : (
-                            `$${course.price?.toFixed(2) || "XXXX"}`
-                          )}
-                        </h3>
-                        {/* Coupon Section */}
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="text-2xl font-bold text-gray-900">
+                            {appliedCoupon ? (
+                              <div className="flex items-center gap-2">
+                                <span className="line-through text-gray-400">
+                                  ${course.price?.toFixed(2)}
+                                </span>
+                                <span className="text-green-600">
+                                  $
+                                  {(
+                                    course.price *
+                                    (1 - appliedCoupon.discountPercentage / 100)
+                                  ).toFixed(2)}
+                                </span>
+                              </div>
+                            ) : (
+                              `$${course.price?.toFixed(2) || "XXXX"}`
+                            )}
+                          </div>
+                        </div>
+
                         <CouponInput onApplyCoupon={handleApplyCoupon} />
 
-                        {/* Buttons */}
-                        <div className="courses-btn">
+                        <div className="space-y-3 mt-6">
                           {cartChecking ? (
-                            <button className="theme-btn" disabled>
+                            <button
+                              className="w-full py-3 px-4 bg-gray-100 text-gray-500 rounded-lg font-medium\"
+                              disabled
+                            >
                               Checking Cart...
                             </button>
                           ) : (
                             <button
-                              className={`theme-btn ${
-                                isInCart ? "bg-danger border-danger" : ""
+                              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+                                isInCart
+                                  ? "bg-red-600 hover:bg-red-700 text-white"
+                                  : "bg-blue-600 hover:bg-blue-700 text-white"
                               }`}
                               onClick={handleCartAction}
                               disabled={cartLoading}
-                              style={
-                                isInCart
-                                  ? {
-                                      backgroundColor: "#dc3545",
-                                      borderColor: "#dc3545",
-                                      color: "white",
-                                    }
-                                  : {}
-                              }
                             >
                               {cartLoading ? (
-                                <>
-                                  <span
-                                    className="spinner-border spinner-border-sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                  ></span>
+                                <div className="flex items-center justify-center gap-2">
+                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                   {isInCart ? "Removing..." : "Adding..."}
-                                </>
+                                </div>
                               ) : isInCart ? (
                                 "Remove from Cart"
                               ) : (
@@ -1148,66 +1152,54 @@ const CoursesDetailsArea = ({
                               )}
                             </button>
                           )}
+
                           <button
-                            className="theme-btn style-2"
+                            className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
                             onClick={handleBuyNow}
                             disabled={buyNowLoading}
                           >
                             {buyNowLoading ? (
-                              <>
-                                <span
-                                  className="spinner-border spinner-border-sm"
-                                  role="status"
-                                  aria-hidden="true"
-                                ></span>
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                 Redirecting...
-                              </>
+                              </div>
                             ) : (
                               "Buy Course"
                             )}
                           </button>
                         </div>
-                        {/* Display cart error below buttons */}
+
                         {cartError && (
-                          <div
-                            className="alert alert-danger mt-3"
-                            role="alert"
-                            style={{
-                              borderRadius: "5px",
-                              padding: "10px",
-                              fontSize: "0.9rem",
-                            }}
-                          >
+                          <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                             {cartError}
                           </div>
                         )}
                       </div>
                     ) : (
-                      // For enrolled users
-                      <>
-                        <div className="enrolled-course-card">
+                      <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
+                        <div className="relative">
                           {completed && (
-                            <div className="completion-badge">
-                              <CheckCircle className="w-5 h-5" />
+                            <div className="absolute -top-3 -right-3">
+                              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                <CheckCircle className="w-5 h-5" />
+                              </div>
                             </div>
                           )}
 
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-4">
                             {completed ? (
-                              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 animate-pulse-slow">
-                                <CheckCircle className="w-6 h-6" />
+                              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                <CheckCircle className="w-7 h-7" />
                               </div>
                             ) : (
-                              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                <Play className="w-6 h-6" />
+                              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <Play className="w-7 h-7" />
                               </div>
                             )}
                             <div>
                               <h3
-                                className={`font-bold ${
-                                  completed
-                                    ? "text-emerald-800"
-                                    : "text-blue-800"
+                                className={`text-lg font-bold ${
+                                  completed ? "text-green-800" : "text-blue-800"
                                 }`}
                               >
                                 {completed
@@ -1216,9 +1208,7 @@ const CoursesDetailsArea = ({
                               </h3>
                               <p
                                 className={`text-sm ${
-                                  completed
-                                    ? "text-emerald-600"
-                                    : "text-blue-600"
+                                  completed ? "text-green-600" : "text-blue-600"
                                 }`}
                               >
                                 {completed
@@ -1228,39 +1218,40 @@ const CoursesDetailsArea = ({
                             </div>
                           </div>
 
-                          <div className="progress-container">
-                            <div className="progress-bar">
+                          <div className="mt-6">
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                               <div
                                 ref={progressRef}
-                                className="progress-fill"
-                                style={{
-                                  width: animate ? `${progress}%` : "0%",
-                                }}
+                                className={`h-full rounded-full transition-all duration-1000 ${
+                                  completed ? "bg-green-500" : "bg-blue-500"
+                                }`}
+                                style={{ width: `${progress}%` }}
                               />
                             </div>
-                            <div className="progress-stats">
-                              <div className="flex justify-between items-center">
-                                <span>{Math.round(progress)}% Complete</span>
-                                <span className="text-xs opacity-75">
-                                  Your Progress
-                                </span>
-                              </div>
+                            <div className="mt-2 flex justify-between text-sm">
+                              <span
+                                className={`font-medium ${
+                                  completed ? "text-green-600" : "text-blue-600"
+                                }`}
+                              >
+                                {Math.round(progress)}% Complete
+                              </span>
+                              <span className="text-gray-500">
+                                Your Progress
+                              </span>
                             </div>
                           </div>
 
-                          <div className="flex flex-col gap-3">
+                          <div className="mt-6 space-y-3">
                             {!completed && (
                               <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  if (videoPlayerRef.current) {
-                                    videoPlayerRef.current.scrollIntoView({
-                                      behavior: "smooth",
-                                      block: "center",
-                                    });
-                                  }
-                                }}
-                                className="continue-learning-btn"
+                                onClick={() =>
+                                  videoPlayerRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                  })
+                                }
+                                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                               >
                                 <Play className="w-4 h-4" />
                                 Continue Learning
@@ -1270,7 +1261,7 @@ const CoursesDetailsArea = ({
                             {completed && takeCertificate && (
                               <button
                                 onClick={GetCertificate}
-                                className="certificate-btn"
+                                className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                               >
                                 <Award className="w-5 h-5" />
                                 Get Certificate
@@ -1280,16 +1271,13 @@ const CoursesDetailsArea = ({
 
                             {completed && (
                               <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  if (videoPlayerRef.current) {
-                                    videoPlayerRef.current.scrollIntoView({
-                                      behavior: "smooth",
-                                      block: "center",
-                                    });
-                                  }
-                                }}
-                                className="w-full px-4 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                                onClick={() =>
+                                  videoPlayerRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                  })
+                                }
+                                className="w-full py-3 px-4 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-medium"
                               >
                                 <Play className="w-4 h-4" />
                                 Review Course
@@ -1298,87 +1286,101 @@ const CoursesDetailsArea = ({
                           </div>
 
                           {completed && (
-                            <div className="mt-4 flex justify-center">
+                            <div className="mt-6 flex justify-center">
                               <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
                                 🏆 Achievement Unlocked
                               </div>
                             </div>
                           )}
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
-                  <div className="courses-category-items">
-                    <h5>Course Includes:</h5>
-                    <ul>
-                      <li>
-                        <span>
-                          <i className="far fa-chalkboard-teacher"></i>{" "}
-                          Instructor
-                        </span>
-                        <span className="text">
+
+                  <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
+                    <h5 className="text-lg font-bold text-gray-900 mb-4">
+                      Course Includes:
+                    </h5>
+                    <ul className="space-y-4">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="far fa-chalkboard-teacher"></i>
+                          <span>Instructor</span>
+                        </div>
+                        <span className="text-gray-900 font-medium">
                           {course.instructorName!.replace("|", " ")}
                         </span>
                       </li>
-                      <li>
-                        <span>
-                          <i className="far fa-book-open"></i> Lessons
-                        </span>
-                        <span className="text">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="far fa-book-open"></i>
+                          <span>Lessons</span>
+                        </div>
+                        <span className="text-gray-900 font-medium">
                           {course.sections.reduce(
                             (total, section) => total + section.lectures.length,
                             0
                           )}
                         </span>
                       </li>
-                      <li>
-                        <span>
-                          <i className="far fa-clock"></i> Duration
-                        </span>
-                        <span className="text">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="far fa-clock"></i>
+                          <span>Duration</span>
+                        </div>
+                        <span className="text-gray-900 font-medium">
                           {formatDuration(course.duration)}
                         </span>
                       </li>
-                      <li>
-                        <span>
-                          <i className="far fa-user"></i> Students
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="far fa-user"></i>
+                          <span>Students</span>
+                        </div>
+                        <span className="text-gray-900 font-medium">
+                          {course.students}+
                         </span>
-                        <span className="text">{course.students}+</span>
                       </li>
-                      <li>
-                        <span>
-                          <i className="far fa-globe"></i> Language
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="far fa-globe"></i>
+                          <span>Language</span>
+                        </div>
+                        <span className="text-gray-900 font-medium">
+                          English
                         </span>
-                        <span className="text">English</span>
                       </li>
-                      <li>
-                        <span>
-                          <i className="far fa-calendar-alt"></i> Created
-                        </span>
-                        <span className="text">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="far fa-calendar-alt"></i>
+                          <span>Created</span>
+                        </div>
+                        <span className="text-gray-900 font-medium">
                           {new Date(course.createdAt).toLocaleDateString()}
                         </span>
                       </li>
-                      <li>
-                        <span>
-                          <i className="far fa-signal-alt"></i> Skill Level
-                        </span>
-                        <span className="text">{course.level}</span>
-                      </li>
-                      <li>
-                        <span>
-                          <i className="fal fa-medal"></i>
-                          Certifications
-                        </span>
-                        <div className="certificate-container">
-                          <span className="text">Yes</span>
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="far fa-signal-alt"></i>
+                          <span>Skill Level</span>
                         </div>
+                        <span className="text-gray-900 font-medium">
+                          {course.level}
+                        </span>
+                      </li>
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <i className="fal fa-medal"></i>
+                          <span>Certifications</span>
+                        </div>
+                        <span className="text-gray-900 font-medium">Yes</span>
                       </li>
                     </ul>
 
-                    <a href="#" className="share-btn">
-                      <i className="fas fa-share"></i> Share this course
-                    </a>
+                    <button className="mt-6 w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                      <i className="fas fa-share"></i>
+                      Share this course
+                    </button>
                   </div>
                 </div>
               </div>

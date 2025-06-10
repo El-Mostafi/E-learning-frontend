@@ -51,12 +51,9 @@ export interface Category {
 
 
 export const enrollmentService = {
-  enroll: async (courseId: string, userId: string) => {
+  enroll: async (courseId: string) => {
     return await axiosInstance.post<{ message: string }>(
-      `/courses/${courseId}/enroll`,
-      {
-        userId,
-      }
+      `/courses/${courseId}/enroll`
     );
   },
 

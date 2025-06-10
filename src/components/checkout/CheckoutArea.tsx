@@ -38,7 +38,7 @@ const CheckoutArea = () => {
 
     try {
       // Get cart details first
-      const cart = await cartService.getCart();
+      // const cart = await cartService.getCart();
 
       // Create payment intent with cart amount
       const response = await stripeService.createPaymentIntent();
@@ -69,9 +69,10 @@ const CheckoutArea = () => {
         setProcessing(false);
         return setError(confirmError.message!);
       }
-      
+
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 5000);
+      navigate("/courses");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
     }
