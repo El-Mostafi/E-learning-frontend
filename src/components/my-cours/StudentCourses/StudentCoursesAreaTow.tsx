@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 
 import {
-  courseData,
   enrollmentService,
 } from "../../../services/enrollmentService";
 import CourseCard from "./CourseCard";
@@ -12,39 +11,70 @@ import LoadingState from "./LoadingState";
 import ErrorState from "./ErrorState";
 import EmptyState from "./EmptyState";
 import Pagination from "./Pagination";
+import { 
+  EnrolledCoursesResponse,
+  EnrolledCoursesSortOption,
+  GetEnrolledCoursesOptions 
+} from "../../../services/interfaces/enrollment.interface";
 
 const sortOptions = [
-  { value: "default", text: "Sort by: Default" },
-  { value: "progress", text: "Sort by progress" },
-  { value: "rating", text: "Sort by rating" },
-  { value: "newest", text: "Sort by newest" },
-  { value: "title", text: "Sort by title" },
+  { value: "newest", text: "Sort by: Newest" },
+  { value: "title", text: "Sort by: Title" },
+  { value: "progress", text: "Sort by: Progress" },
+  { value: "rating", text: "Sort by: Rating" },
 ];
 
-const StudentCoursesAreaTow: React.FC = () => {
+const StudentCoursesAreaTwo: React.FC = () => {
   const navigate = useNavigate();
-  const [courses, setCourses] = useState<courseData[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<courseData[]>([]);
+  const [coursesData, setCoursesData] = useState<EnrolledCoursesResponse>({
+    courses: [],
+    totalPages: 0,
+    currentPage: 1,
+    totalCourses: 0
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [sortBy, setSortBy] = useState<string>("default");
+  const [sortBy, setSortBy] = useState<EnrolledCoursesSortOption>("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [searchDebounce, setSearchDebounce] = useState<string>("");
+  
   const coursesPerPage = 6;
 
-  // Navigate to course details
   const navigateToCourse = (courseId: string) => {
     navigate("/courses-details", { state: { courseId } });
   };
 
-  // Fetch courses on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounce(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchDebounce, sortBy]);
+
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
+      setError("");
+      
       try {
-        const fetchedCourses = await enrollmentService.getEnrolledCourses();
-        setCourses(fetchedCourses);
-        setFilteredCourses(fetchedCourses);
+        const options: GetEnrolledCoursesOptions = {
+          page: currentPage,
+          limit: coursesPerPage,
+          sort: sortBy,
+          ...(searchDebounce && { search: searchDebounce }),
+        };
+
+        const response = await enrollmentService.getEnrolledCourses(options);
+        setCoursesData(response);
+        console.log("Courses Data:", response);
       } catch (error) {
         console.error("Error fetching courses:", error);
         setError(
@@ -56,69 +86,22 @@ const StudentCoursesAreaTow: React.FC = () => {
     };
 
     fetchCourses();
-  }, []);
+  }, [currentPage, searchDebounce, sortBy]);
 
-  // Handle sorting and filtering
-  useEffect(() => {
-    if (courses.length === 0) return;
-
-    let result = [...courses];
-
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (course) =>
-          course.title.toLowerCase().includes(query) ||
-          course.category.toLowerCase().includes(query) ||
-          course.instructorName.toLowerCase().includes(query)
-      );
-    }
-    console.log("here");
-
-    // Apply sorting
-    switch (sortBy) {
-      case "progress":
-        result.sort((a, b) => b.progress - a.progress);
-        break;
-      case "rating":
-        result.sort((a, b) => b.reviews - a.reviews);
-        break;
-      case "newest":
-        result.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        break;
-      case "title":
-        result.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      default:
-        // Default sorting (could be by enrollment date or whatever makes sense)
-        break;
-    }
-
-    setFilteredCourses(result);
-    setCurrentPage(1); // Reset to first page when filtering changes
-  }, [courses, searchQuery, sortBy]);
-
-  // Calculate pagination
-  const indexOfLastCourse = currentPage * coursesPerPage;
-  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
-  const currentCourses = filteredCourses.slice(
-    indexOfFirstCourse,
-    indexOfLastCourse
-  );
-  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
-
-  // Handle page change
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    // Scroll to top of course section
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 300, behavior: "smooth" });
   };
 
-  if (loading) {
+  const handleSortChange = (value: string) => {
+    setSortBy(value as EnrolledCoursesSortOption);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  if (loading && coursesData.courses.length === 0) {
     return <LoadingState />;
   }
 
@@ -138,13 +121,15 @@ const StudentCoursesAreaTow: React.FC = () => {
             </h1>
             <p className="text-sm text-gray-600">
               Showing{" "}
-              <span className="font-medium">{filteredCourses.length}</span> of{" "}
-              <span className="font-medium">{courses.length}</span> courses
+              <span className="font-medium">{coursesData.courses.length}</span> of{" "}
+              <span className="font-medium">{coursesData.totalCourses}</span> courses
+              {searchDebounce && (
+                <span> matching "{searchDebounce}"</span>
+              )}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {/* Search input */}
             <div className="relative w-full sm:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search size={18} className="text-gray-400" />
@@ -153,23 +138,29 @@ const StudentCoursesAreaTow: React.FC = () => {
                 type="text"
                 placeholder="Search courses"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={handleSearchChange}
+                className="text-black w-full pl-10 pr-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            {/* Sort dropdown */}
             <CourseSorter
               options={sortOptions}
-              onChange={(value) => setSortBy(value)}
+              defaultValue={sortBy}
+              onChange={handleSortChange}
             />
           </div>
         </div>
 
-        {filteredCourses.length > 0 ? (
+        {loading && coursesData.courses.length > 0 && (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+
+        {coursesData.courses.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentCourses.map((course) => (
+              {coursesData.courses.map((course) => (
                 <CourseCard
                   key={course.id}
                   course={course}
@@ -178,10 +169,10 @@ const StudentCoursesAreaTow: React.FC = () => {
               ))}
             </div>
 
-            {totalPages > 1 && (
+            {coursesData.totalPages > 1 && (
               <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
+                currentPage={coursesData.currentPage}
+                totalPages={coursesData.totalPages}
                 onPageChange={handlePageChange}
               />
             )}
@@ -189,8 +180,8 @@ const StudentCoursesAreaTow: React.FC = () => {
         ) : (
           <EmptyState
             message={
-              searchQuery
-                ? `No results found for "${searchQuery}". Try a different search term.`
+              searchDebounce
+                ? `No results found for "${searchDebounce}". Try a different search term.`
                 : "You haven't enrolled in any courses yet."
             }
           />
@@ -200,4 +191,4 @@ const StudentCoursesAreaTow: React.FC = () => {
   );
 };
 
-export default StudentCoursesAreaTow;
+export default StudentCoursesAreaTwo;
