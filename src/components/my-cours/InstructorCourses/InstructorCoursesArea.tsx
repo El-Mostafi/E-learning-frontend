@@ -2,10 +2,22 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NiceSelect, { Option } from "../../../ui/NiceSelect";
 import { coursService, courseInstructor } from "../../../services/coursService";
-import { X, Star, AlertCircle } from "lucide-react";
+import { X, Star, AlertCircle, Search } from "lucide-react";
 import CreateCours from "../../profile/Create Cours/index";
+import {
+  FindAllInstructorCoursesOptions,
+  InstructorCoursesResponse,
+  InstructorCoursesSortOption,
+} from "../../../services/interfaces/course.interface";
+import LoadingState from "../StudentCourses/LoadingState";
+import ErrorState from "../StudentCourses/ErrorState";
 function InstructorCoursesArea() {
-  const [courses, setCourses] = useState<courseInstructor[]>([]);
+  const [coursesData, setCoursesData] = useState<InstructorCoursesResponse>({
+    courses: [],
+    totalPages: 0,
+    currentPage: 1,
+    totalCourses: 0,
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -14,20 +26,41 @@ function InstructorCoursesArea() {
     null
   );
   const [courseToEditId, setCourseToEditId] = useState<string>("");
-
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-
-  const [sortBy, setSortBy] = useState<string>("01");
-
+  const [sortBy, setSortBy] = useState<InstructorCoursesSortOption>("newest");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const coursesPerPage = 9;
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchDebounce, setSearchDebounce] = useState<string>("");
+  const coursesPerPage = 6;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounce(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchDebounce, sortBy]);
 
   useEffect(() => {
     const fetchInstructorCours = async () => {
+      setLoading(true);
+      setError("");
       try {
-        coursService.getInstructorCourses().then((response) => {
-          setCourses(response);
-        });
+        const options: FindAllInstructorCoursesOptions = {
+          page: currentPage,
+          limit: coursesPerPage,
+          sort: sortBy,
+          ...(searchDebounce && { search: searchDebounce }),
+        };
+        const response = await coursService.getInstructorCourses(options);
+        setCoursesData(response);
+        console.log("Courses Data:", response);
       } catch (err) {
         setError("Failed to load courses. Please try again later.");
         console.log(err);
@@ -37,15 +70,19 @@ function InstructorCoursesArea() {
     };
 
     fetchInstructorCours();
-  }, []);
-
-  const indexOfLastCourse = currentPage * coursesPerPage;
-  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
-  const currentCourses = courses.slice(indexOfFirstCourse, indexOfLastCourse);
-  const totalPages = Math.ceil(courses.length / coursesPerPage);
+  }, [currentPage, searchDebounce, sortBy]);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+    window.scrollTo({ top: 400, behavior: "smooth" });
+  };
+
+  const handleSortChange = (item: Option) => {
+    setSortBy(item.value as InstructorCoursesSortOption);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleDelete = (course: courseInstructor) => {
@@ -64,7 +101,12 @@ function InstructorCoursesArea() {
     try {
       const response = await coursService.deleteCours(courseToDelete.id);
       console.log(response.data);
-      setCourses(courses.filter((course) => course.id !== courseToDelete.id));
+      setCoursesData({
+        ...coursesData,
+        courses: coursesData.courses.filter(
+          (course) => course.id !== courseToDelete.id
+        ),
+      });
       setShowDeleteModal(false);
       setCourseToDelete(null);
     } catch (err) {
@@ -74,49 +116,18 @@ function InstructorCoursesArea() {
     setIsDeleting(false);
   };
 
-  const selectHandler = (item: Option) => {
-    setSortBy(item.value);
-    const sortedCourses = [...courses];
-    console.log(item, sortBy);
-    switch (item.value) {
-      case "02":
-        sortedCourses.sort((a, b) => b.students - a.students);
-        break;
-      case "03":
-        sortedCourses.sort((a, b) => b.reviews - a.reviews);
-        break;
-      case "04":
-        sortedCourses.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        break;
-      default:
-        sortedCourses.sort((a, b) => a.id.localeCompare(b.id));
-    }
+  const indexOfLastCourse = currentPage * coursesPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
 
-    setCourses(sortedCourses);
-    setCurrentPage(1);
-  };
-
-  if (loading) {
-    return (
-      <div className="container text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
+  if (loading && coursesData.courses.length === 0) {
+    return <LoadingState />;
   }
 
   if (error) {
     return (
-      <div className="container text-center py-5">
-        <div className="alert alert-danger">{error}</div>
-      </div>
+      <ErrorState message={error} onRetry={() => window.location.reload()} />
     );
   }
-
   return (
     <>
       <style>
@@ -187,35 +198,54 @@ function InstructorCoursesArea() {
 
       <section className="popular-courses-section fix section-padding">
         <div className="container">
-          <div className="coureses-notices-wrapper">
+          <div className="coureses-notices-wrapper ">
             <div className="courses-showing">
               <h5>
                 Showing{" "}
                 <span>
                   {indexOfFirstCourse + 1}-
-                  {Math.min(indexOfLastCourse, courses.length)}
+                  {Math.min(indexOfLastCourse, coursesData.totalCourses)}
                 </span>{" "}
-                Of <span>{courses.length}</span> Results
+                Of <span>{coursesData.totalCourses}</span> Results
               </h5>
             </div>
-            <div className="form-clt">
-              <NiceSelect
-                className="category"
-                options={[
-                  { value: "01", text: "Sort by : Default" },
-                  { value: "02", text: "Sort by popularity" },
-                  { value: "03", text: "Sort by average rating" },
-                  { value: "04", text: "Sort by latest" },
-                ]}
-                defaultCurrent={0}
-                onChange={selectHandler}
-                name=""
-                placeholder=""
-              />
+            <div className="flex flex-col sm:flex-row-reverse gap-3 w-full sm:flex-1">
+              <div className="form-clt">
+                <NiceSelect
+                  className="category"
+                  options={[
+                    { value: "title", text: "Sort by : Default" },
+                    { value: "popularity", text: "Sort by popularity" },
+                    { value: "rating", text: "Sort by average rating" },
+                    { value: "newest", text: "Sort by newest" },
+                  ]}
+                  defaultCurrent={0}
+                  onChange={handleSortChange}
+                  name=""
+                  placeholder=""
+                />
+              </div>
+              <div className="relative w-full max-w-sm  ">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={18} className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search courses"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="text-black w-full pl-10 pr-4 py-[18px]  text-sm text-gray-700 bg-white border rounded-[10px] box-shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
           </div>
+          {loading && coursesData.courses.length > 0 && (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          )}
           <div className="row">
-            {currentCourses.map((cours, index) => (
+            {coursesData.courses.map((cours, index) => (
               <div
                 key={cours.id}
                 className="col-xl-4 col-lg-6 col-md-6"
@@ -343,11 +373,11 @@ function InstructorCoursesArea() {
                 </li>
               )}
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
+              {Array.from({ length: coursesData.totalPages }, (_, i) => i + 1)
                 .filter((pageNum) => {
                   return (
                     pageNum <= 2 || // first 2
-                    pageNum > totalPages - 2 || // last 2
+                    pageNum > coursesData.totalPages - 2 || // last 2
                     (pageNum >= currentPage - 1 && pageNum <= currentPage + 1) // around current
                   );
                 })
@@ -381,7 +411,7 @@ function InstructorCoursesArea() {
                   </li>
                 ))}
 
-              {currentPage < totalPages && (
+              {currentPage < coursesData.totalPages && (
                 <li>
                   <a
                     title="Next"
