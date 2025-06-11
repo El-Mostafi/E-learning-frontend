@@ -9,7 +9,7 @@ import { authService } from "../services/authService";
 import Preloader from "../common/Preloader";
 
 // Define User type based on your API response structure
-interface User {
+export interface UserContext {
   userId: string;
   userName: string;
   email: string;
@@ -23,8 +23,8 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: UserContext | null;
+  setUser: (user: UserContext | null) => void;
   loading: boolean;
 }
 
@@ -35,7 +35,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserContext | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
