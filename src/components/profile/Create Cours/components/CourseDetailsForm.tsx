@@ -178,7 +178,8 @@ const CourseDetailsForm: React.FC<{ onContinue: () => void }> = ({
       if (courseDetails.imgPublicId) {
         const response = await cloudService.deleteFile(
           courseDetails.imgPublicId,
-          "image"
+          "image",
+          state.id!
         );
         if (response.status === 200) {
           dispatch({

@@ -9,6 +9,7 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import { GraduationCap as Graduation } from "lucide-react";
 import { courseToEdit, coursService } from "../../../services/coursService";
 import { CourseState } from "./types";
+import { useAuth } from "../../../context/AuthContext";
 
 interface CourseCreatorProps {
   mode?: "create" | "edit";
@@ -24,6 +25,7 @@ const CourseCreator: React.FC<CourseCreatorProps> = ({
   const [course, setCourse] = useState<courseToEdit>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const { user } = useAuth();
 
   useEffect(() => {
     if (mode === "edit" && courseId) {
@@ -47,7 +49,6 @@ const CourseCreator: React.FC<CourseCreatorProps> = ({
       };
 
       fetchCourse();
-      
     }
   }, [mode, courseId]);
   useEffect(() => {
@@ -79,21 +80,22 @@ const CourseCreator: React.FC<CourseCreatorProps> = ({
               duration: lecture.duration,
               title: lecture.title,
               description: lecture.description,
-            })) ,
-          })) ,
-          quizQuestions: course.quizQuestions?.map((question) => ({
-            id: question.id.toString(),
-            question: question.question,
-            options: question.options,
-            correctAnswer: question.correctAnswer,
-          })) ?? [],
+            })),
+          })),
+          quizQuestions:
+            course.quizQuestions?.map((question) => ({
+              id: question.id.toString(),
+              question: question.question,
+              options: question.options,
+              correctAnswer: question.correctAnswer,
+            })) ?? [],
           currentStep: 0,
           isPublished: false,
           pricing: {
             isFree: course.pricing.isFree,
             price: course.pricing.price,
           },
-          oldPrice:course.oldPrice,
+          oldPrice: course.oldPrice,
           coupons: course.coupons || [],
         };
         dispatch({ type: "INITIALIZE_COURSE", payload: mockCourseData });
@@ -109,7 +111,10 @@ const CourseCreator: React.FC<CourseCreatorProps> = ({
       type: "SET_CURRENT_STEP",
       payload: currentStep + 1,
     });
-    window.scrollTo({ top: 300, behavior: "smooth" });
+    window.scrollTo({
+      top: user?.role === "admin" ? 0 : 300,
+      behavior: "smooth",
+    });
   };
 
   const handleBack = () => {
@@ -117,7 +122,10 @@ const CourseCreator: React.FC<CourseCreatorProps> = ({
       type: "SET_CURRENT_STEP",
       payload: currentStep - 1,
     });
-    window.scrollTo({ top: 300, behavior: "smooth" });
+    window.scrollTo({
+      top: user?.role === "admin" ? 0 : 300,
+      behavior: "smooth",
+    });
   };
 
   const handleStepClick = (step: number) => {
@@ -126,7 +134,10 @@ const CourseCreator: React.FC<CourseCreatorProps> = ({
         type: "SET_CURRENT_STEP",
         payload: step,
       });
-      window.scrollTo({ top: 300, behavior: "smooth" });
+      window.scrollTo({
+        top: user?.role === "admin" ? 0 : 300,
+        behavior: "smooth",
+      });
     }
   };
 
