@@ -239,7 +239,7 @@ export const coursService = {
   },
   getQuiz: async (courseId: string) => {
     const response = await axiosInstance.get<QuizQuestion[]>(
-      `/courses/${courseId}/exams`,
+      `/courses/${courseId}/exams`
     );
     return response;
   },
@@ -256,8 +256,40 @@ export const coursService = {
     );
     return response.data;
   },
-  getGeneralDataCourses: async () => {
-    const response = await axiosInstance.get<courseDataGenerale[]>("/courses");
+  getGeneralDataCourses: async (
+    currentPage: number,
+    limit: number,
+    sortOption?: string,
+    filterParams?: {
+      ratings?: number[] | undefined;
+      instructors?: string[] | undefined;
+      price?: string | undefined;
+      levels?: string[] | undefined;
+      categories?: string[] | undefined;
+      search?: string | undefined;
+    }
+  ) => {
+    console.log("filterParams", filterParams);
+    if (filterParams?.levels && filterParams.levels.length > 0) {
+      filterParams.levels.map(level => {
+        if (level === "All Levels") {
+          delete filterParams.levels;
+        }
+      })
+    }
+    const response = await axiosInstance.get<{
+      courses: courseDataGenerale[];
+      totalCount: number;
+    }>("/courses", {
+      params: {
+        currentPage,
+        limit,
+        sortOption: sortOption,
+        filterParams: filterParams,
+      },
+    });
+
+    console.log("JJJJJJJJJJ", response.data.courses);
     return response.data;
   },
   deleteCours: async (courseId: string) => {
@@ -334,6 +366,11 @@ export const coursService = {
         category: category === "All" ? undefined : category,
       },
     });
+    return response.data;
+  },
+
+  getCoursesFilteringData: async () => {
+    const response = await axiosInstance.get<{categories: string[], levels: string[], instructors: {userName: string, id: string}[]}>("/categories");
     return response.data;
   },
 };

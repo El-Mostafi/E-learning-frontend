@@ -230,9 +230,6 @@ const PopularCoursesHomeOne = () => {
       try {
         const { data, totalCount } = await coursService.getPopularCourses(
           4.0,
-          currentPage,
-          pageSize,
-          selectedCategory
         );
         setCourses(data);
 
@@ -291,7 +288,7 @@ const PopularCoursesHomeOne = () => {
             <div className="section-title">
               <h6 className="wow fadeInUp">Popular Courses</h6>
               <h2 className="wow fadeInUp" data-wow-delay=".3S">
-              Explore Top Courses
+              Explore Top Popular Courses
               </h2>
             </div>
             <ul
