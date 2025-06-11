@@ -290,7 +290,7 @@ const PopularCoursesHomeOne = () => {
             <div className="section-title">
               <h6 className="wow fadeInUp">Popular Courses</h6>
               <h2 className="wow fadeInUp" data-wow-delay=".3S">
-                Explore Top Courses
+                Explore Trending Courses
               </h2>
             </div>
             <ul

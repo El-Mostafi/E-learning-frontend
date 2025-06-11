@@ -9,61 +9,56 @@ const CoursesArea = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortBy, setSortBy] = useState("01");
+  const [sortBy, setSortBy] = useState("latest");
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const coursesPerPage = 9;
+  const [totalCourses, setTotalCourses] = useState(0);
+
+  const fetchCourses = async (page: number, sortOption?: string) => {
+    console.log("Sort Option", sortOption);
+    try {
+      setLoading(true);
+      const { courses, totalCount } = await coursService.getGeneralDataCourses(
+        page,
+        coursesPerPage,
+        sortOption
+      );
+
+      console.log(courses);
+      setCourses(courses);
+      setTotalPages(Math.ceil(totalCount / coursesPerPage));
+      setTotalCourses(totalCount);
+    } catch (err) {
+      setError("Failed to load courses. Please try again later.");
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await coursService.getGeneralDataCourses();
-        setCourses(response);
-      } catch (err) {
-        setError("Failed to load courses. Please try again later.");
-        console.log(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
-
-  const indexOfLastCourse = currentPage * coursesPerPage;
-  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
-  const currentCourses = courses.slice(indexOfFirstCourse, indexOfLastCourse);
-  const totalPages = Math.ceil(courses.length / coursesPerPage);
+    fetchCourses(currentPage, sortBy);
+  }, [currentPage, sortBy]);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+    // The useEffect will automatically call fetchCourses when currentPage changes
   };
 
   const selectHandler = (item: Option) => {
     setSortBy(item.value);
-    const sortedCourses = [...courses];
-    console.log(item, sortBy);
-
-    switch (item.value) {
-      case "02":
-        sortedCourses.sort((a, b) => b.students - a.students);
-        break;
-      case "03":
-        sortedCourses.sort((a, b) => b.reviews - a.reviews);
-        break;
-      case "04":
-        sortedCourses.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        break;
-      default:
-        sortedCourses.sort((a, b) => a.id.localeCompare(b.id));
-    }
-
-    setCourses(sortedCourses);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page when sorting changes
+    // The useEffect will automatically call fetchCourses when sortBy changes
   };
+
+  // Remove client-side pagination since server handles it
+  const indexOfFirstCourse = (currentPage - 1) * coursesPerPage;
+  const indexOfLastCourse = Math.min(
+    indexOfFirstCourse + coursesPerPage,
+    totalCourses
+  );
 
   if (loading) {
     return (
@@ -138,30 +133,49 @@ const CoursesArea = () => {
           <div className="coureses-notices-wrapper">
             <div className="courses-showing">
               <div className="icon-items">
-                <Link to="/courses-grid">
+                <Link
+                  to="/courses-grid"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/courses-grid", {
+                      state: { courses: courses, currentPage: currentPage, sortBy: sortBy },
+                    });
+                  }}
+                >
                   <i className="fas fa-th"></i>
                 </Link>
-                <Link to="/courses-list">
+
+                <Link
+                  to="/courses-list"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/courses-list", {
+                      state: { courses: courses, currentPage: currentPage, sortBy: sortBy },
+                    });
+                  }}
+                >
                   <i className="fas fa-bars"></i>
                 </Link>
               </div>
               <h5>
                 Showing{" "}
                 <span>
-                  {indexOfFirstCourse + 1}-
-                  {Math.min(indexOfLastCourse, courses.length)}
+                  {indexOfFirstCourse + 1}-{indexOfLastCourse}
                 </span>{" "}
-                Of <span>{courses.length}</span> Results
+                Of <span>{totalCourses}</span> Results
               </h5>
             </div>
             <div className="form-clt">
               <NiceSelect
                 className="category"
                 options={[
-                  { value: "01", text: "Sort by : Default" },
-                  { value: "02", text: "Sort by popularity" },
-                  { value: "03", text: "Sort by average rating" },
-                  { value: "04", text: "Sort by latest" },
+                  { value: "latest", text: "Sort by latest" },
+                  { value: "popularity", text: "Sort by popularity" },
+                  { value: "rating", text: "Sort by average rating" },
+                  {
+                    value: "enrollmentCount",
+                    text: "Sort by : Enrolled Students",
+                  },
                 ]}
                 defaultCurrent={0}
                 onChange={selectHandler}
@@ -171,7 +185,7 @@ const CoursesArea = () => {
             </div>
           </div>
           <div className="row">
-            {currentCourses.map((course, index) => (
+            {courses.map((course, index) => (
               <div
                 key={course.id}
                 className="col-xl-4 col-lg-6 col-md-6"
