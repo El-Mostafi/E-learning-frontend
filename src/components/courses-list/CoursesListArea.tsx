@@ -291,7 +291,9 @@ function CoursesListArea() {
                               <input type="checkbox" checked={selectedInstructor.includes(instructor?.id!)} onChange={() => handleInstructorChange(instructor?.id!)} />
                               <span className="checkmark d-center"></span>
                             </span>
-                            <span className="text-color">{instructor?.userName!.replace("|", " ")}</span>
+                            <span className="text-color">
+                              {instructor!.replace("|", " ")==="Admin"?"Eduspace ":instructor!.replace("|", " ")}
+                            </span>
                           </span>
                         </label>
                       ))}
