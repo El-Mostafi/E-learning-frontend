@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {  useState } from "react";
 import { QuizQuestion } from "../../services/coursService";
 // import Certificate from "./certificate/Certificate";
 
@@ -54,7 +54,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
   const calculateScore = () => {
     let correctAnswers = 0;
     questions.forEach((question) => {
-      if (selectedAnswers[question.id] === question.correctAnswer) {
+      if (selectedAnswers[question._id] === question.correctAnswer) {
         correctAnswers++;
       }
     });
@@ -80,7 +80,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
     return selectedAnswers[questionId] !== undefined;
   };
 
-  const allQuestionsAnswered = questions.every((q) => isQuestionAnswered(q.id));
+  const allQuestionsAnswered = questions.every((q) => isQuestionAnswered(q._id));
 
   if (showResults) {
     const passed = quizScore >= 70; // Passing threshold is 70%
@@ -121,7 +121,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
 
           <div className="space-y-6">
             {questions.map((question, index) => (
-              <div key={question.id} className="border-b pb-4 last:border-b-0">
+              <div key={question._id} className="border-b pb-4 last:border-b-0">
                 <div className="flex items-start">
                   <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
                     {index + 1}
@@ -135,7 +135,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
                           className={`p-3 rounded-lg ${
                             key === question.correctAnswer
                               ? "bg-green-100 border-green-500"
-                              : selectedAnswers[question.id] === key
+                              : selectedAnswers[question._id] === key
                               ? "bg-red-100 border-red-500"
                               : "bg-gray-50"
                           }`}
@@ -193,9 +193,9 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
           {Object.entries(currentQuestion.options).map(([key, value]) => (
             <button
               key={key}
-              onClick={() => handleAnswerSelect(currentQuestion.id, key)}
+              onClick={() => handleAnswerSelect(currentQuestion._id, key)}
               className={`w-full p-4 text-left rounded-lg transition-all ${
-                selectedAnswers[currentQuestion.id] === key
+                selectedAnswers[currentQuestion._id] === key
                   ? "bg-blue-100 border-blue-500 border-2"
                   : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
               }`}
@@ -229,7 +229,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({
         ) : (
           <button
             onClick={handleNext}
-            disabled={!isQuestionAnswered(currentQuestion.id)}
+            disabled={!isQuestionAnswered(currentQuestion._id)}
             className="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next

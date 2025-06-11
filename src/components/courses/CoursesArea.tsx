@@ -251,7 +251,7 @@ const CoursesArea = () => {
                               course.instructorImg ||
                               "https://via.placeholder.com/40x40"
                             }
-                            alt={course.instructorName}
+                            alt={course.instructorName!.replace("|", " ")}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =
@@ -263,7 +263,7 @@ const CoursesArea = () => {
                           <Link
                             to={"/instructor-details/" + course.InstructorId}
                           >
-                            {course.instructorName!.replace("|", " ")}
+                            {course.instructorName!.replace("|", " ")==="Admin"?"Eduspace ":course.instructorName!.replace("|", " ")}
                           </Link>
                         </p>
                       </div>

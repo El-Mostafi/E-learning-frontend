@@ -417,7 +417,7 @@ function CoursesGridArea() {
                               <span className="checkmark d-center"></span>
                             </span>
                             <span className="text-color">
-                              {instructor!.replace("|", " ")}
+                              {instructor!.replace("|", " ")==="Admin"?"Eduspace ":instructor!.replace("|", " ")}
                             </span>
                           </span>
                         </label>

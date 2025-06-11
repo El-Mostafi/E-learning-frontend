@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Accordion, Button } from "react-bootstrap";
 import axios from "axios";
-import { X, Award, CheckCircle, Download, Play } from "lucide-react";
+import { X, Award, CheckCircle, Download, Play, FileQuestion } from "lucide-react";
 
 // Services
 import {
@@ -14,7 +14,6 @@ import {
 import axiosInstance from "../../services/api";
 import {
   enrollmentService,
-  completedSection,
 } from "../../services/enrollmentService";
 
 // Components
@@ -23,6 +22,7 @@ import CouponInput from "./CouponInput";
 import QuizComponent from "./QuizComponent";
 import ModernReviewForm from "./Review/ModernReviewForm";
 import ReviewsList from "./Review/ReviewsList";
+import { completedSection } from "../../services/interfaces/enrollment.interface";
 
 interface CoursesDetailsAreaProps {
   setBreadcrumbData: (data: courseData) => void;
@@ -102,7 +102,9 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         setCourse(response);
         setBreadcrumbData(response);
         console.log("Course data:", response.appliedCoupon);
-        setAppliedCoupon(response.appliedCoupon===undefined ? null : response.appliedCoupon);
+        setAppliedCoupon(
+          response.appliedCoupon === undefined ? null : response.appliedCoupon
+        );
 
         if (
           response.sections.length > 0 &&
@@ -372,33 +374,34 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     }
   };
   const handleApplyCoupon = async (code: string) => {
-  try {
-    if (!code || !courseId) {
-      return { success: false, error: "Please enter a coupon code" };
+    try {
+      if (!code || !courseId) {
+        return { success: false, error: "Please enter a coupon code" };
+      }
+
+      const discount = await coursService.verifyCoupon(courseId, code);
+      if (!discount) {
+        return { success: false, error: "Invalid or expired coupon code" };
+      }
+
+      setAppliedCoupon({
+        code: code,
+        discountPercentage: discount,
+      });
+
+      return { success: true };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        return {
+          success: false,
+          error: error.response?.data?.errors[0].message || "Coupon error",
+        };
+      } else {
+        return { success: false, error: "Invalid or expired coupon code" };
+      }
     }
-
-    const discount = await coursService.verifyCoupon(courseId, code);
-    if (!discount) {
-      return { success: false, error: "Invalid or expired coupon code" };
-    }
-
-    setAppliedCoupon({
-      code: code,
-      discountPercentage: discount,
-    });
-
-    return { success: true };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("API Error:", error.response?.data);
-      return { success: false, error: error.response?.data?.errors[0].message || "Coupon error" };
-    } else {
-      return { success: false, error: "Invalid or expired coupon code" };
-    }
-  }
-};
-
-  
+  };
 
   // Review methods
   const handleSubmitReview = async (reviewData: {
@@ -954,14 +957,14 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                                   "assets/img/courses/instructors-1.png"
                                 }
                                 alt={
-                                  course.instructorName?.replace("|", " ") ||
+                                  course.instructorName?.replace("|", " ")==="Admin"?"Eduspace":course.instructorName?.replace("|", " ") ||
                                   "Instructor"
                                 }
                               />
                             </div>
                             <div className="content">
                               <h4>
-                                {course.instructorName?.replace("|", " ") ||
+                                {course.instructorName?.replace("|", " ")==="Admin"?"Eduspace":course.instructorName?.replace("|", " ") ||
                                   "N/A"}
                               </h4>
                               <span>
@@ -1090,8 +1093,8 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
 
                     {!isUserEnrolled ? (
                       <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
-                        
-                        <p className="text-gray-600 mb-4 line-clamp-2"
+                        <p
+                          className="text-gray-600 mb-4 line-clamp-2"
                           dangerouslySetInnerHTML={{
                             __html: course.description
                               ? course.description.substring(0, 80) + "..."
@@ -1268,6 +1271,15 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                                 <Download className="w-4 h-4" />
                               </button>
                             )}
+                            {completed && !takeCertificate && (
+                              <button
+                                onClick={handleShowQuiz}
+                                className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                              >
+                                <FileQuestion className="w-5 h-5" />
+                                Take Final Quiz
+                              </button>
+                            )}
 
                             {completed && (
                               <button
@@ -1308,7 +1320,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                           <span>Instructor</span>
                         </div>
                         <span className="text-gray-900 font-medium">
-                          {course.instructorName!.replace("|", " ")}
+                          {course.instructorName!.replace("|", " ")==="Admin"? "Eduspace": course.instructorName!.replace("|", " ")}
                         </span>
                       </li>
                       <li className="flex items-center justify-between">
