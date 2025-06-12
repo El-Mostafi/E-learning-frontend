@@ -68,6 +68,7 @@ export const CouponModal = ({
         maxUses: "",
         expiryDate: "",
       });
+      setBackendError(null);
     }
   }, [isOpen, coupon]);
 
@@ -163,7 +164,13 @@ export const CouponModal = ({
           "An error occurred while saving the coupon. Please try again."
         );
       }
+      if(!backendError) {
+        setBackendError(
+          "An error occurred while saving the coupon. Please try again."
+        );
+      }
     } finally {
+      
       setLoading(false);
     }
   };

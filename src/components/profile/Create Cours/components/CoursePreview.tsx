@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useCourse } from "../context/CourseContext";
 import Button from "./common/Button";
 import {
@@ -38,6 +38,9 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
+  useEffect(() => {
+    console.log(" state :", state);
+  });
   const generateCouponCode = () => {
     const prefix = "COURSE";
     const randomChars = Math.random()
@@ -79,7 +82,10 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
 
   const handlePublish = () => {
     if (validateCourse()) {
-      window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+      window.scrollTo({
+        top: user?.role === "admin" ? 0 : 400,
+        behavior: "smooth",
+      });
       setShowConfirmation(true);
     }
   };
@@ -94,17 +100,24 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
       ) {
         setErrors([...errors, "Thumbnail is required"]);
         setShowConfirmation(false);
-        window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+        window.scrollTo({
+          top: user?.role === "admin" ? 0 : 400,
+          behavior: "smooth",
+        });
         return;
       }
       let securUrl: string = "";
       let publicId: string = "";
       if (!state.courseDetails.secureUrl && !state.courseDetails.imgPublicId) {
         const { data: signatureData } = await cloudService.getSignatureImage();
+        console.log(" signatureData :", signatureData);
         if (!signatureData) {
           setErrors([...errors, "An error occurred"]);
           setShowConfirmation(false);
-          window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+          window.scrollTo({
+            top: user?.role === "admin" ? 0 : 400,
+            behavior: "smooth",
+          });
           return;
         }
 
@@ -115,16 +128,20 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
         );
         securUrl = uploadData.secure_url;
         publicId = uploadData.public_id;
-        console.log("Uploaded asset:", uploadData);
+        console.log("Uploaded asset:", uploadData,securUrl,publicId);
         if (!uploadData.secure_url) {
-          setErrors([...errors, "test"]);
+          setErrors([...errors, "error occured"]);
           setShowConfirmation(false);
-          window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+          window.scrollTo({
+            top: user?.role === "admin" ? 0 : 400,
+            behavior: "smooth",
+          });
           return;
         }
         dispatch({
           type: "SET_COURSE_DETAILS",
           payload: {
+            ...state.courseDetails,
             secureUrl: uploadData.secure_url,
             imgPublicId: uploadData.public_id,
           },
@@ -208,8 +225,8 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
           publicIds
         );
         console.log("Course updated:", publishResponse.data);
-        if (user?.role === "instructor") {
-          navigate("/my-courses");
+        if (user?.role.trim() === "instructor") {
+          window.location.reload();
         } else {
           setShowConfirmation(false);
           setSuccessMessage("Course updated successfully");
@@ -219,15 +236,19 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("API Error:", error.response?.data);
-        setErrors([...errors, "An error occurred Try again later"]);
+        setErrors([...errors,"An error occurred Try again later"]);
       } else {
         console.error("Unexpected error:", error);
         setErrors([...errors, "An error occurred Try again later"]);
       }
       setShowConfirmation(false);
-      window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+      window.scrollTo({
+        top: user?.role === "admin" ? 0 : 400,
+        behavior: "smooth",
+      });
+    }finally {
+      setIsUpdating(false);
     }
-    setIsUpdating(false);
   };
   const confirmPublish = async () => {
     setIsPublishing(true);
@@ -235,7 +256,10 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
       if (!state.courseDetails.thumbnail) {
         setErrors([...errors, "Thumbnail is required"]);
         setShowConfirmation(false);
-        window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+        window.scrollTo({
+          top: user?.role === "admin" ? 0 : 400,
+          behavior: "smooth",
+        });
         return;
       }
       let securUrl: string = "";
@@ -245,7 +269,10 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
         if (!signatureData) {
           setErrors([...errors, "An error occurred"]);
           setShowConfirmation(false);
-          window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+          window.scrollTo({
+            top: user?.role === "admin" ? 0 : 400,
+            behavior: "smooth",
+          });
           return;
         }
 
@@ -260,7 +287,10 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
         if (!uploadData.secure_url) {
           setErrors([...errors, "error occured"]);
           setShowConfirmation(false);
-          window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+          window.scrollTo({
+            top: user?.role === "admin" ? 0 : 400,
+            behavior: "smooth",
+          });
           return;
         }
         dispatch({
@@ -369,7 +399,10 @@ const CoursePreview: React.FC<{ onBack: () => void; mode: string }> = ({
         setErrors([...errors, "An error occurred Try again later"]);
       }
       setShowConfirmation(false);
-      window.scrollTo({ top: user?.role === "admin" ? 0 : 400, behavior: "smooth" });
+      window.scrollTo({
+        top: user?.role === "admin" ? 0 : 400,
+        behavior: "smooth",
+      });
     }
 
     setIsPublishing(false);

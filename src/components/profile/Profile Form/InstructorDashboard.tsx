@@ -152,7 +152,7 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
   const [filters, setFilters] = useState<CouponFilters>({
     status: "all",
     searchTerm: "",
-    sortBy: "expiry",
+    sortBy: "course",
     sortOrder: "asc",
     discountRange: { min: 0, max: 100 },
   });
@@ -291,6 +291,39 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
   };
 
   const getFilteredAndSortedCoupons = () => {
+    if (
+      filters.status === "all" &&
+      filters.searchTerm === "" &&
+      filters.sortBy === "course" &&
+      filters.sortOrder === "asc" &&
+      filters.discountRange.min === 0 &&
+      filters.discountRange.max === 100
+    ) {
+      return coursesWithCoupons;
+    }else if (
+      filters.status === "all" &&
+      filters.searchTerm !== "" &&
+      filters.sortBy === "course" &&
+      filters.sortOrder === "asc" &&
+      filters.discountRange.min === 0 &&
+      filters.discountRange.max === 100
+    ) {
+      return coursesWithCoupons.filter((course) => {
+        if(course.coupons.length !== 0){
+          return course.coupons.some((coupon) => {
+            const searchLower = filters.searchTerm.toLowerCase();
+            return (
+              coupon.code.toLowerCase().includes(searchLower) ||
+              course.courseTitle.toLowerCase().includes(searchLower)
+            );
+          });
+        }
+        else{
+          return (
+            course.courseTitle.toLowerCase().includes(filters.searchTerm.toLowerCase()))
+        }
+      })
+    }
     const filteredCourses = coursesWithCoupons
       .map((course) => {
         const filteredCoupons = course.coupons.filter((coupon) => {
@@ -366,7 +399,7 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
     setFilters({
       status: "all",
       searchTerm: "",
-      sortBy: "expiry",
+      sortBy: "course",
       sortOrder: "asc",
       discountRange: { min: 0, max: 100 },
     });
@@ -685,9 +718,13 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
             <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
               Coupon Management
             </h3>
-            {totalFilteredCoupons !== allCoupons.length && (
+            {totalFilteredCoupons !== allCoupons.length ? (
               <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                {totalFilteredCoupons} of {allCoupons.length}
+                {totalFilteredCoupons} of {allCoupons.length} (Coupons)
+              </span>
+            ) : (
+              <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                {totalFilteredCoupons} of {allCoupons.length} (Coupons)
               </span>
             )}
           </div>
@@ -913,7 +950,7 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
                     </div>
                     <button
                       onClick={() =>
-                        handleCreateCoupon(course.courseId, course.courseTitle)
+                        handleCreateCoupon(course.courseId.toString(), course.courseTitle)
                       }
                       className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base w-full sm:w-auto"
                     >
@@ -923,6 +960,7 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
                   </div>
 
                   {/* Coupons Grid - Mobile Optimized */}
+                  {course.coupons.length > 0 ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                     {course.coupons.map((coupon) => {
                       const status = couponService.getCouponStatus(coupon);
@@ -1009,6 +1047,20 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
                       );
                     })}
                   </div>
+                  ): (
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <Tag className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                    <p className="text-sm sm:text-base">No coupons created for this course yet.</p>
+                    <button
+                      onClick={() =>
+                        handleCreateCoupon(course.courseId.toString(), course.courseTitle)
+                      }
+                      className="mt-2 text-orange-600 hover:text-orange-700 font-medium text-sm sm:text-base"
+                    >
+                      Create your first coupon
+                    </button>
+                  </div>
+                )}
                 </div>
               ))
             ) : (
