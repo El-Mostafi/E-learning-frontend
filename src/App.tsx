@@ -9,7 +9,6 @@ import HomeFour from "./components/homes/home-4";
 import HomeFive from "./components/homes/home-5";
 import Courses from "./components/courses";
 import CoursesGrid from "./components/courses-grid";
-import CoursesList from "./components/courses-list";
 import CoursesDetails from "./components/courses-details";
 import CoursesDetailsTwo from "./components/courses-details-2";
 import Event from "./components/event";
@@ -65,7 +64,6 @@ const router = createBrowserRouter([
     children: [
       { path: "/courses", element: <Courses /> },
       { path: "/courses-grid", element: <CoursesGrid /> },
-      { path: "/courses-list", element: <CoursesList /> },
       { path: "/courses-details", element: <CoursesDetails /> },
       { path: "/courses-details-2", element: <CoursesDetailsTwo /> },
       { path: "/event", element: <Event /> },
