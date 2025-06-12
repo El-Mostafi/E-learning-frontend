@@ -58,26 +58,7 @@ const HeaderOne = () => {
                     <img src="/assets/img/logo/black-logo.svg" alt="logo-img" />
                   </Link>
                 </div>
-                <div className="category-oneadjust">
-                  <div className="dot">
-                    <img src="/assets/img/logo/dot.png" alt="img" />
-                  </div>
-
-                  <NiceSelect
-                    className="category"
-                    options={[
-                      { value: "01", text: "Category" },
-                      { value: "02", text: "Web Design" },
-                      { value: "03", text: "Web Development" },
-                      { value: "04", text: "Graphic Design" },
-                      { value: "05", text: "Software Eng" },
-                    ]}
-                    defaultCurrent={0}
-                    onChange={selectHandler}
-                    name=""
-                    placeholder=""
-                  />
-                </div>
+                
               </div>
               <div className="header-right d-flex justify-content-end align-items-center">
                 <div className="mean__menu-wrapper">

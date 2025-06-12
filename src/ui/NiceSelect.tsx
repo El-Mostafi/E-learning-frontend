@@ -1,5 +1,5 @@
-'use client'
-import { useState, useCallback, useRef, FC } from "react";
+"use client";
+import { useState, useCallback, useRef, FC, useEffect } from "react";
 import { useClickAway } from "react-use";
 
 export interface Option {
@@ -14,7 +14,8 @@ type NiceSelectProps = {
   className?: string;
   onChange: (item: Option, name: string) => void;
   name: string;
-}
+  value?: string;
+};
 
 const NiceSelect: FC<NiceSelectProps> = ({
   options,
@@ -23,6 +24,7 @@ const NiceSelect: FC<NiceSelectProps> = ({
   className,
   onChange,
   name,
+  value,
 }) => {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<Option>(options[defaultCurrent]);
@@ -32,6 +34,14 @@ const NiceSelect: FC<NiceSelectProps> = ({
   const ref = useRef<HTMLDivElement | null>(null);
 
   useClickAway(ref, onClose);
+  useEffect(() => {
+    if (value) {
+      const matched = options.find((opt) => opt.value === value);
+      if (matched && matched.value !== current.value) {
+        setCurrent(matched);
+      }
+    }
+  }, [value, options]);
 
   const currentHandler = (item: Option) => {
     setCurrent(item);
@@ -41,7 +51,9 @@ const NiceSelect: FC<NiceSelectProps> = ({
 
   return (
     <div
-      className={`nice-select form-select-lg ${className || ""} ${open ? "open" : ""}`}
+      className={`nice-select form-select-lg ${className || ""} ${
+        open ? "open" : ""
+      }`}
       role="button"
       tabIndex={0}
       onClick={() => setOpen((prev) => !prev)}
@@ -62,7 +74,7 @@ const NiceSelect: FC<NiceSelectProps> = ({
             className={`option ${
               item.value === current?.value ? "selected focus" : ""
             }`}
-            style={{fontSize: '14px'}}
+            style={{ fontSize: "14px" }}
             role="menuitem"
             onClick={() => currentHandler(item)}
             onKeyDown={(e) => e}
@@ -76,6 +88,3 @@ const NiceSelect: FC<NiceSelectProps> = ({
 };
 
 export default NiceSelect;
-
-
- 
