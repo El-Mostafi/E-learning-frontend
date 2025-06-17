@@ -3,8 +3,7 @@ import Preloader from "../../common/Preloader";
 import ScrollTop from "../../common/ScrollTop";
 import FooterOne from "../../layouts/footers/FooterOne";
 import HeaderOne from "../../layouts/headers/HeaderOne";
-import CoursesGridArea from "./CoursesGridArea";
-
+import CoursesContainer from "./CoursesContainer";
  
 
 const CoursesGrid = () => {
@@ -13,7 +12,7 @@ const CoursesGrid = () => {
     <Preloader />
     <HeaderOne />
     <BreadcrumbCourses title="Courses - Grid Style" subtitle="Courses Grid" />
-    <CoursesGridArea /> 
+    <CoursesContainer /> 
     <FooterOne />  
     <ScrollTop />    
     </>

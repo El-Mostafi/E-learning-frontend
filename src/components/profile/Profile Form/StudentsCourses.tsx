@@ -2,37 +2,19 @@ import React, { useEffect, useState } from "react";
 import { ChevronRight, BookOpen } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  courseData,
   enrollmentService,
-} from "../../services/enrollmentService";
+} from "../../../services/enrollmentService";
+import { courseStudentTable } from "../../../services/interfaces/enrollment.interface";
 
-// interface Course {
-//   id: string;
-//   title: string;
-//   progress: number;
-//   completed: boolean;
-//   completedAt: Date | null;
-//   startedAt: Date;
-//   thumbnailPreview: string;
-//   sections: {
-//     id: string;
-//     title: string;
-//     lectures: {
-//       id: string;
-//       title: string;
-//       duration: number;
-//     }[];
-//   }[];
-// }
+
 
 const CourseTable: React.FC = () => {
-  const [courses, setCourses] = useState<courseData[]>([]);
+  const [courses, setCourses] = useState<courseStudentTable[]>([]);
   const navigate = useNavigate();
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const courses = await enrollmentService.getEnrolledCourses();
-        console.log("Enrolled courses", courses)
+        const courses = await enrollmentService.getEnrolledCoursesOverview();
         setCourses(courses);
       } catch (error) {
         console.error("Error fetching courses:", error);

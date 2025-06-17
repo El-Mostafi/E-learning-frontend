@@ -1,9 +1,9 @@
 import React from "react";
 import { Calendar, Clock, BookOpen, Award, ChevronRight } from "lucide-react";
-import { courseData } from "../../../services/enrollmentService";
+import { EnrolledCourse } from "../../../services/interfaces/enrollment.interface";
 
 interface CourseCardProps {
-  course: courseData;
+  course: EnrolledCourse;
   navigateToCourse: (courseId: string) => void;
 }
 
@@ -98,7 +98,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-100">
             <img
               src={course.instructorImg || "https://via.placeholder.com/40x40"}
-              alt={course.instructorName}
+              alt={course.instructorName.replace("|", " ")}
               className="w-full h-full object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).src =
@@ -106,7 +106,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
               }}
             />
           </div>
-          <span className="text-sm text-gray-700">{course.instructorName}</span>
+          <span className="text-sm text-gray-700">{course.instructorName.replace("|", " ")}</span>
         </div>
 
         {/* Course stats */}

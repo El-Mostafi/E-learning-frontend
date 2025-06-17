@@ -1,6 +1,7 @@
 import axiosInstance from "./api";
 import { CourseState } from "../components/profile/Create Cours/types";
 import { Coupon } from "../components/profile/Create Cours/types/index";
+import { FindAllInstructorCoursesOptions, InstructorCoursesResponse } from "./interfaces/course.interface";
 
 // interface PaginatedResponse<T> {
 //   data: T[];
@@ -55,7 +56,7 @@ export interface QuizPayload {
   correctAnswer: "A" | "B" | "C" | "D";
 }
 export interface QuizQuestion extends QuizPayload {
-  id: string;
+  _id: string;
 }
 interface SectionPayload {
   id?: string;
@@ -154,6 +155,34 @@ export interface courseToEdit extends CreateCoursePayload {
   sections: SectionToEdit[];
   quizQuestions: QuizToEdit[];
 }
+export interface Course {
+  id: string;
+  title: string;
+  numberOfSections: number;
+  category: string;
+  instructor: string;
+  numberOfStudents: number;
+  averageRating: number;
+  revenue: number;
+  status: 'Published' | 'Draft';
+  createdAt: string;
+}
+
+export interface GetAllCoursesResponse {
+  courses: Course[];
+  totalPages: number;
+  currentPage: number;
+  totalCourses: number;
+}
+interface options {
+  page: number;
+  limit: number;
+  status: string | undefined;
+  search: string | undefined;
+  category: string | undefined;
+  level: string | undefined;
+  language: string | undefined;
+}
 
 export const coursService = {
   createCours: async (courseState: CourseState) => {
@@ -250,9 +279,17 @@ export const coursService = {
     );
     return response;
   },
-  getInstructorCourses: async () => {
-    const response = await axiosInstance.get<courseInstructor[]>(
-      "/courses/instructor/my-courses"
+  getInstructorCourses: async (options :FindAllInstructorCoursesOptions) => {
+    const response = await axiosInstance.get<InstructorCoursesResponse>(
+      "/courses/instructor/my-courses",
+      {
+        params: {
+          page: options.page,
+          limit: options.limit,
+          sort: options.sort,
+          ...(options.search && { search: options.search }),
+        },
+      }
     );
     return response.data;
   },
@@ -368,7 +405,32 @@ export const coursService = {
     });
     return response.data;
   },
-
+  getAllCategories: async () => {
+    const response = await axiosInstance.get<string[]>("/courses/categories");
+    return response.data;
+  },
+  getAllCourses: async (options: options): Promise<GetAllCoursesResponse> => {
+    const response = await axiosInstance.get<GetAllCoursesResponse>("/courses/overview", {
+      params: {
+        page: options.page,
+        limit: options.limit,
+        status: options.status,
+        search: options.search,
+        category: options.category,
+        level: options.level,
+        language: options.language
+      },
+    });
+    return response.data;
+  },
+  togglePublishCourse: async (courseId: string) => {
+    const response = await axiosInstance.put(`/courses/${courseId}/toggle-publish`);
+    return response.data;
+  },
+  getAllLanguages: async () => {
+    const response = await axiosInstance.get<string[]>("/courses/languages");
+    return response.data;
+  },
   getCoursesFilteringData: async () => {
     const response = await axiosInstance.get<{categories: string[], levels: string[], instructors: {userName: string, id: string}[]}>("/categories");
     return response.data;

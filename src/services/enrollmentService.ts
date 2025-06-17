@@ -1,54 +1,5 @@
 import axiosInstance from "./api";
-
-
-
-interface Enrollment {
-  course: string;
-  participant: string;
-  completedSections: completedSection[]; 
-  progress: number;
-  completed: boolean;
-  completedAt: Date | null;
-  startedAt: Date;
-  hasPassedQuizze: boolean;
-  QuizzeScore: number;
-}
-export interface completedSection {
-  sectionId: string;
-  lectureId: string;
-  completedAt: Date;
-}
-
-
-
-export interface courseData {
-  id: string;
-  title: string;
-  thumbnailPreview: string;
-  category: string;
-  level: string;
-  language: string;
-  reviews: number;
-  students: number;
-  instructorName: string;
-  instructorImg: string;
-  createdAt: Date;
-  completedSections: number;
-  lectureTotal: number; 
-  description: string;
-  price: number;
-  duration: number;
-  progress: number;
-  completed: boolean;
-  completedAt: Date | null;
-  startedAt: Date;
-}
-
-export interface Category {
-  name: string;
-}
-
-
+import { courseStudentTable, EnrolledCoursesResponse, Enrollment, GetEnrolledCoursesOptions } from "./interfaces/enrollment.interface";
 
 export const enrollmentService = {
   enroll: async (courseId: string) => {
@@ -57,12 +8,28 @@ export const enrollmentService = {
     );
   },
 
-  getEnrolledCourses: async () => {
-    const response = await axiosInstance.get<courseData[]>(
-      "/my-courses/enrolled"
+  getEnrolledCoursesOverview: async () => {
+    const response = await axiosInstance.get<courseStudentTable[]>(
+      "/my-courses/overview"
     );
-    const courses: courseData[] = response.data;
+    const courses: courseStudentTable[] = response.data;
     return courses;
+  },
+  getEnrolledCourses: async (
+    options: GetEnrolledCoursesOptions
+  ): Promise<EnrolledCoursesResponse> => {
+    const response = await axiosInstance.get<EnrolledCoursesResponse>(
+      "/my-courses/enrolled",
+      {
+        params: {
+          page: options.page,
+          limit: options.limit,
+          sort: options.sort,
+          ...(options.search && { search: options.search }),
+        },
+      }
+    );
+    return response.data;
   },
 
   getEnrolledCourseById: async (courseId: string) => {
@@ -78,7 +45,11 @@ export const enrollmentService = {
     );
   },
 
-  updateProgress: async (courseId: string, sectionId: string, lectureId: string) => {
+  updateProgress: async (
+    courseId: string,
+    sectionId: string,
+    lectureId: string
+  ) => {
     const response = await axiosInstance.put<Enrollment>(
       `/my-courses/enrolled/${courseId}/update-progress/${sectionId}/${lectureId}`
     );

@@ -134,11 +134,11 @@ const CoursesArea = () => {
             <div className="courses-showing">
               <div className="icon-items">
                 <Link
-                  to="/courses-grid"
+                  to="#"
                   onClick={(e) => {
                     e.preventDefault();
                     navigate("/courses-grid", {
-                      state: { courses: courses, currentPage: currentPage, sortBy: sortBy },
+                      state: { viewType: "grid", currentPage: currentPage, sortBy: sortBy },
                     });
                   }}
                 >
@@ -146,11 +146,11 @@ const CoursesArea = () => {
                 </Link>
 
                 <Link
-                  to="/courses-list"
+                  to="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate("/courses-list", {
-                      state: { courses: courses, currentPage: currentPage, sortBy: sortBy },
+                    navigate("/courses-grid", {
+                      state: { viewType: "list", currentPage: currentPage, sortBy: sortBy },
                     });
                   }}
                 >
@@ -178,6 +178,7 @@ const CoursesArea = () => {
                   },
                 ]}
                 defaultCurrent={0}
+                value={sortBy}
                 onChange={selectHandler}
                 name=""
                 placeholder=""
@@ -265,7 +266,7 @@ const CoursesArea = () => {
                               course.instructorImg ||
                               "https://via.placeholder.com/40x40"
                             }
-                            alt={course.instructorName}
+                            alt={course.instructorName!.replace("|", " ")}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =
@@ -277,7 +278,7 @@ const CoursesArea = () => {
                           <Link
                             to={"/instructor-details/" + course.InstructorId}
                           >
-                            {course.instructorName!.replace("|", " ")}
+                            {course.instructorName!.replace("|", " ")==="Admin"?"Eduspace ":course.instructorName!.replace("|", " ")}
                           </Link>
                         </p>
                       </div>

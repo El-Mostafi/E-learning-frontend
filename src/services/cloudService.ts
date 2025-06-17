@@ -1,17 +1,8 @@
 import axiosInstance from "./api";
 import axios from "axios";
+import { CloudinaryUploadResponse, SignatureData } from "./interfaces/cloud.interface";
 // import { VideoFile } from "../components/profile/Create Cours/types/index";
-interface SignatureData {
-  timestamp: number;
-  signature: string;
-  apiKey: string;
-}
-interface CloudinaryUploadResponse {
-  public_id: string;
-  secure_url: string;
-  format: string;
-  bytes: number;
-}
+
 const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL as string;
 
 export const cloudService = {

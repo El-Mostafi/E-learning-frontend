@@ -1,11 +1,6 @@
  
 
-import demo_img_1 from "../../public/assets/img/header/home-1.jpg";
-import demo_img_2 from "../../public/assets/img/header/home-2.jpg";
-import demo_img_3 from "../../public/assets/img/header/home-3.jpg";
-import demo_img_4 from "../../public/assets/img/header/home-4.jpg";
-import demo_img_5 from "../../public/assets/img/header/home-5.jpg";
-import demo_img_6 from "../../public/assets/img/header/home-6.jpg"; 
+
  
 
  
@@ -37,19 +32,9 @@ const menu_data:DataType[] = [
 	{
 		id: 1,
 		title: "Home",
-		link: "#",
+		link: "/",
     icon: "fas fa-home-lg",
-		img_dropdown: true,
-		sub_menus: [
-			{ link: "/", demo_img: demo_img_1, title: "Education", title2: "Education" },
-			{ link: "/home-2", demo_img: demo_img_2, title: "Online Course", title2: "Online Course" },
-			{ link: "/home-3", demo_img: demo_img_3, title: "University", title2: "University" },
-			{ link: "/home-4", demo_img: demo_img_4, title: "Kindergarten", title2: "Kindergarten" },
-			{ link: "/home-5", demo_img: demo_img_5, title: "Business Coach", title2: "Business Coach" },
-			{ link: "#", demo_img: demo_img_6, title2: "Coming Soon" },
-			{ link: "#", demo_img: demo_img_6, title2: "Coming Soon" },
-			{ link: "#", demo_img: demo_img_6, title2: "Coming Soon" },
-		],
+		img_dropdown: false,
 	},
 	{
 		id: 2,
@@ -60,9 +45,6 @@ const menu_data:DataType[] = [
 		sub_menus: [
 			{ link: "/courses", title: "Courses" },
 			{ link: "/courses-grid", title: "Courses Grid" },
-			{ link: "/courses-list", title: "Courses List" },
-			{ link: "/courses-details", title: "Courses Details 01" },
-			{ link: "/courses-details-2", title: "Courses Details 02" },
 		],
 	},
 	{
@@ -83,11 +65,6 @@ const menu_data:DataType[] = [
     icon: "fas fa-shopping-bag",
 		has_dropdown: true,
 		sub_menus: [
-			{ link: "/shop-grid", title: "Shop Grid" },
-			{ link: "/shop-list", title: "Shop List" },
-			{ link: "/shop-left-sidebar", title: "Shop - Left Sidebar" },
-			{ link: "/shop-right-sidebar", title: "Shop -  Right Sidebar" },
-			{ link: "/shop-details", title: "Product Details" },
 			{ link: "/shop-cart", title: "Shop Cart" },
 			{ link: "/checkout", title: "Checkout" },
 		],
@@ -98,27 +75,12 @@ const menu_data:DataType[] = [
 		link: "#",
     icon: "fas fa-file-alt",
 		has_dropdown: true,
-		has_dropdown_inner: true,
+		has_dropdown_inner: false,
 		sub_menus: [
 			{ link: "/about", title: "About" },
 			{ link: "/instructor", title: "Instructor" },
-			{ link: "/instructor-details", title: "Instructor Details" },
-			{ link: "/program", title: "Program" },
-			{ link: "/program-details", title: "Program Details" },
-			{
-				inner_menu: true,
-				title: "Blog",
-				inner_menus: [
-					{ link: "/news", title: "Blog" },
-					{ link: "/news-details", title: "Blog Details" },
-				]
-			},
-			{ link: "/gallery", title: "Gallery" },
-			{ link: "/pricing", title: "Pricing Plan" },
-			{ link: "/faq", title: "Faqs" },
 			{ link: "/sign-in", title: "Sign In" },
 			{ link: "/register", title: "register" },
-			{ link: "/404", title: "404 Error" },
 		],
 	},
 	{
