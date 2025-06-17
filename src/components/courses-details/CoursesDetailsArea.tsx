@@ -23,6 +23,7 @@ import CouponInput from "./CouponInput";
 import QuizComponent from "./QuizComponent";
 import ModernReviewForm from "./Review/ModernReviewForm";
 import ReviewsList from "./Review/ReviewsList";
+import CertificatePreview from "./CertificatePreview";
 
 interface CoursesDetailsAreaProps {
   setBreadcrumbData: (data: courseData) => void;
@@ -61,7 +62,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     code: string;
     discountPercentage: number;
   } | null>(null);
-  // Removed couponError state as it was not read. CouponInput can handle display based on onApplyCoupon's return.
   const [cartLoading, setCartLoading] = useState(false);
   const [buyNowLoading, setBuyNowLoading] = useState(false);
   const [cartError, setCartError] = useState("");
@@ -71,18 +71,20 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   // Quiz state
   const [showQuiz, setShowQuiz] = useState<boolean>(false);
   const [takeCertificate, setTakeCertificate] = useState<boolean>(false);
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]); // Renamed from quizzeQuestions
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
 
   // Review state
-  const [isReviewSubmitting, setIsReviewSubmitting] = useState<boolean>(false); // Renamed from isSubmitting
-  const [reviewStatusMessage, setReviewStatusMessage] = useState<string>(""); // Renamed from statusMessage
-  const [reviewStatusType, setReviewStatusType] = useState<string>("success"); // Renamed from statusType
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState<boolean>(false);
+  const [reviewStatusMessage, setReviewStatusMessage] = useState<string>("");
+  const [reviewStatusType, setReviewStatusType] = useState<string>("success");
+
+  // Certificate state
+  const [showCertificatePreview, setShowCertificatePreview] = useState<boolean>(false);
 
   // Refs and constants
   const videoPlayerRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null); // This ref is assigned but not directly manipulated in this component beyond being a ref target.
-  // Removed 'animate' state as it was always true and its setter unused.
+  const progressRef = useRef<HTMLDivElement>(null);
   const styleSuffixes = ["one", "two", "three", "four", "five"];
 
   const location = useLocation();
@@ -93,7 +95,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   useEffect(() => {
     const fetchCourse = async () => {
       if (!courseId) {
-        setError("Course ID is missing"); // Changed from setCartError to setError for general errors
+        setError("Course ID is missing");
         setLoading(false);
         return;
       }
@@ -102,7 +104,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         setCourse(response);
         setBreadcrumbData(response);
         console.log("Course data:", response.appliedCoupon);
-        setAppliedCoupon(response.appliedCoupon===undefined ? null : response.appliedCoupon);
+        setAppliedCoupon(response.appliedCoupon === undefined ? null : response.appliedCoupon);
 
         if (
           response.sections.length > 0 &&
@@ -119,11 +121,10 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
 
           if (response.isUserEnrolled) {
             setCurrentVideoUrl(firstLecture.videoUrl || "");
-            setProgress(response.progress ?? 0); // Use nullish coalescing
-            setCompleted(response.completed ?? false); // Use nullish coalescing
+            setProgress(response.progress ?? 0);
+            setCompleted(response.completed ?? false);
           }
         } else {
-          // Handle case where course has no sections or lectures
           setError("Course content is not available.");
         }
 
@@ -164,7 +165,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         setIsInCart(inCart);
       } catch (err) {
         console.error("Error checking cart status:", err);
-        // Optionally set a specific error for cart checking if needed
       } finally {
         setCartChecking(false);
       }
@@ -175,7 +175,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   // Fetch enrollment data
   useEffect(() => {
     const fetchEnrollment = async () => {
-      if (!courseId || !isUserEnrolled) return; // Only fetch if enrolled
+      if (!courseId || !isUserEnrolled) return;
 
       try {
         const response = await enrollmentService.getEnrolledCourseById(
@@ -192,15 +192,14 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         setError(
           (prevError) =>
             prevError || message || "Failed to fetch enrollment data"
-        ); // Set error only if not already set
+        );
       }
     };
 
     if (isUserEnrolled) {
-      // Ensure isUserEnrolled is true before fetching
       fetchEnrollment();
     }
-  }, [courseId, isUserEnrolled]); // Added isUserEnrolled as a dependency
+  }, [courseId, isUserEnrolled]);
 
   // Course navigation methods
   const markLectureComplete = async () => {
@@ -230,7 +229,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         nextLecIdx = 0;
       }
 
-      // Only update lecture if not completed or not the last lecture
       if (
         !result.completed ||
         nextSecIdx !== currentSectionIndex ||
@@ -261,7 +259,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     let prevLectureIndex = currentLectureIndex - 1;
 
     if (isFirstLectureInCurrentSection) {
-      if (currentSectionIndex === 0) return; // Already at the very first lecture
+      if (currentSectionIndex === 0) return;
       prevSectionIndex = currentSectionIndex - 1;
       prevLectureIndex = course.sections[prevSectionIndex].lectures.length - 1;
     }
@@ -284,8 +282,8 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     lectureId: string,
     videoUrl: string,
     title: string,
-    sectionIndex: number, // Removed default value, should always be provided
-    lectureIndex: number // Removed default value
+    sectionIndex: number,
+    lectureIndex: number
   ) => {
     setCurrentSectionId(sectionId);
     setCurrentLectureId(lectureId);
@@ -318,14 +316,12 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         }
       }
       setIsInCart(!isInCart);
-      // Consider using a toast notification instead of alert
-      // alert(`Course ${isInCart ? "removed from" : "added to"} cart successfully!`);
     } catch (err) {
       console.error("Cart action error:", err);
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message
         : `Failed to ${isInCart ? "remove" : "add"} course.`;
-      setCartError(message || `An unexpected error occurred.`);
+      setCartError(message || "An unexpected error occurred.");
     } finally {
       setCartLoading(false);
     }
@@ -340,11 +336,9 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         throw new Error("Course ID is missing");
       }
 
-      // Add to cart if not already added
       if (!isInCart) {
         await axiosInstance.post("/cart/add", { courseId });
 
-        // Apply coupon if exists
         if (appliedCoupon) {
           await axiosInstance.post("/cart/apply-coupon", {
             courseId,
@@ -355,7 +349,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         setIsInCart(true);
       }
 
-      // Redirect to cart page
       navigate("/shop-cart");
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -371,34 +364,33 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
       setAppliedCoupon(null);
     }
   };
+
   const handleApplyCoupon = async (code: string) => {
-  try {
-    if (!code || !courseId) {
-      return { success: false, error: "Please enter a coupon code" };
+    try {
+      if (!code || !courseId) {
+        return { success: false, error: "Please enter a coupon code" };
+      }
+
+      const discount = await coursService.verifyCoupon(courseId, code);
+      if (!discount) {
+        return { success: false, error: "Invalid or expired coupon code" };
+      }
+
+      setAppliedCoupon({
+        code: code,
+        discountPercentage: discount,
+      });
+
+      return { success: true };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API Error:", error.response?.data);
+        return { success: false, error: error.response?.data?.errors[0].message || "Coupon error" };
+      } else {
+        return { success: false, error: "Invalid or expired coupon code" };
+      }
     }
-
-    const discount = await coursService.verifyCoupon(courseId, code);
-    if (!discount) {
-      return { success: false, error: "Invalid or expired coupon code" };
-    }
-
-    setAppliedCoupon({
-      code: code,
-      discountPercentage: discount,
-    });
-
-    return { success: true };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("API Error:", error.response?.data);
-      return { success: false, error: error.response?.data?.errors[0].message || "Coupon error" };
-    } else {
-      return { success: false, error: "Invalid or expired coupon code" };
-    }
-  }
-};
-
-  
+  };
 
   // Review methods
   const handleSubmitReview = async (reviewData: {
@@ -425,7 +417,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
       );
       setReviewStatusType("success");
 
-      const updatedCourse = await coursService.getCourseDetails(courseId); // Re-fetch to update reviews
+      const updatedCourse = await coursService.getCourseDetails(courseId);
       setCourse(updatedCourse);
     } catch (err) {
       console.error("Review submission error:", err);
@@ -449,12 +441,9 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
           score
         );
         setTakeCertificate(response.hasPassedQuizze);
-      } else {
-        // Optionally inform user they didn't pass
       }
     } catch (err) {
       console.error("Failed to save quiz results:", err);
-      // Optionally set an error state for this action
     }
   };
 
@@ -468,11 +457,15 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
         setQuizQuestions(response.data);
       } catch (err) {
         console.error("Error fetching quiz:", err);
-        // Optionally set an error for quiz fetching
       } finally {
         setLoadingQuiz(false);
       }
     }
+  };
+
+  // Certificate methods
+  const handleShowCertificate = () => {
+    setShowCertificatePreview(true);
   };
 
   // Utility methods
@@ -504,7 +497,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0) parts.push(`${minutes}min`);
     if (hours === 0 && (seconds > 0 || totalSeconds === 0 || minutes === 0)) {
-      // Show seconds if no hours/minutes or if total is 0
       parts.push(`${seconds}s`);
     }
     return parts.length > 0 ? parts.join(" ") : "0s";
@@ -515,7 +507,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     ratingsCounts: number[] | undefined
   ) => {
     if (!ratingsCounts || ratingsCounts.length !== 5) {
-      return `style-${styleSuffixes[2]}`; // Default
+      return `style-${styleSuffixes[2]}`;
     }
     const ratingsWithDetails = ratingsCounts.map((count, index) => ({
       stars: index + 1,
@@ -529,14 +521,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     return rank !== -1 && rank < styleSuffixes.length
       ? `style-${styleSuffixes[rank]}`
       : `style-${styleSuffixes[2]}`;
-  };
-
-  const GetCertificate = () => {
-    // Implement actual certificate download/navigation logic here
-    if (takeCertificate) {
-      // e.g., navigate(`/certificate/${courseId}`);
-      alert("Certificate functionality to be implemented.");
-    }
   };
 
   const scrollToVideoPlayer = () => {
@@ -626,9 +610,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   }
 
   const currentCourseSection = course.sections[currentSectionIndex];
-  // const currentCourseLecture = currentCourseSection?.lectures[currentLectureIndex]; // Not explicitly needed here
 
-  // Logic for Next/Complete button
   const isLastLectureInCourse =
     currentSectionIndex === course.sections.length - 1 &&
     currentLectureIndex === currentCourseSection?.lectures.length - 1;
@@ -654,8 +636,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
           .thumb img {
             border-radius: 50% !important;
           }
-          
-
         `}
       </style>
 
@@ -685,7 +665,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                   </div>
 
                   {isUserEnrolled &&
-                    currentCourseSection && ( // Ensure currentCourseSection exists
+                    currentCourseSection && (
                       <>
                         <div className="video-navigation mt-3 mb-4 d-flex justify-content-between">
                           <Button
@@ -710,7 +690,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                           </div>
 
                           <Button
-                            className="btn d-flex align-items-center" // Removed btn-primary, variant handles it
+                            className="btn d-flex align-items-center"
                             variant={nextButtonVariant}
                             disabled={nextButtonDisabled}
                             onClick={markLectureComplete}
@@ -759,7 +739,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
 
                   <div className="courses-details-content">
                     <ul className="nav">
-                      {/* Tab navigation links */}
                       <li
                         className="nav-item wow fadeInUp"
                         data-wow-delay=".3s"
@@ -811,7 +790,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                     </ul>
 
                     <div className="tab-content">
-                      {/* Course Info Tab */}
                       <div id="Course" className="tab-pane fade show active">
                         <div className="description-content">
                           <h3>Description</h3>
@@ -864,7 +842,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                         </div>
                       </div>
 
-                      {/* Curriculum Tab */}
                       <div id="Curriculum" className="tab-pane fade">
                         <div className="course-curriculum-items">
                           <h3>Course Curriculum</h3>
@@ -904,7 +881,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                                                     lecIdx
                                                   )
                                                 : undefined
-                                            } // Only allow select if enrolled
+                                            }
                                             key={lecture.id}
                                           >
                                             <span>
@@ -942,7 +919,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                         </div>
                       </div>
 
-                      {/* Instructors Tab */}
                       <div id="Instructors" className="tab-pane fade">
                         <div className="instructors-items">
                           <h3>Instructors</h3>
@@ -994,7 +970,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                         </div>
                       </div>
 
-                      {/* Reviews Tab */}
                       <div id="Reviews" className="tab-pane fade">
                         <div className="courses-reviews-items">
                           <h3>Course Reviews</h3>
@@ -1060,7 +1035,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                 </div>
               </div>
 
-              {/* Sidebar */}
               <div className="col-lg-4">
                 <div className="courses-sidebar-area sticky-style">
                   <div className="courses-items">
@@ -1090,7 +1064,6 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
 
                     {!isUserEnrolled ? (
                       <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
-                        
                         <p className="text-gray-600 mb-4 line-clamp-2"
                           dangerouslySetInnerHTML={{
                             __html: course.description
@@ -1125,7 +1098,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                         <div className="space-y-3 mt-6">
                           {cartChecking ? (
                             <button
-                              className="w-full py-3 px-4 bg-gray-100 text-gray-500 rounded-lg font-medium\"
+                              className="w-full py-3 px-4 bg-gray-100 text-gray-500 rounded-lg font-medium"
                               disabled
                             >
                               Checking Cart...
@@ -1260,7 +1233,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
 
                             {completed && takeCertificate && (
                               <button
-                                onClick={GetCertificate}
+                                onClick={handleShowCertificate}
                                 className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                               >
                                 <Award className="w-5 h-5" />
@@ -1388,6 +1361,18 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Certificate Preview Modal */}
+      {showCertificatePreview && course && (
+        <CertificatePreview
+          isOpen={showCertificatePreview}
+          onClose={() => setShowCertificatePreview(false)}
+          courseId={courseId}
+          courseTitle={course.title}
+          instructorName={course.instructorName || "Instructor"}
+          completionDate={new Date()}
+        />
+      )}
     </>
   );
 };

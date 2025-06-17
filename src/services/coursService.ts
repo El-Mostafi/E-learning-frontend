@@ -373,4 +373,74 @@ export const coursService = {
     const response = await axiosInstance.get<{categories: string[], levels: string[], instructors: {userName: string, id: string}[]}>("/categories");
     return response.data;
   },
+
+async downloadCertificate(courseId: string) {
+  try {
+    const response = await axiosInstance.get(`/generate-certificate/${courseId}`, {
+      responseType: 'blob',
+    });
+    const blob = response.data as Blob;
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    // Use filename from Content-Disposition header if available
+    const disposition = response.headers['content-disposition'];
+    let filename = 'certificate.pdf';
+    if (disposition && disposition.indexOf('filename=') !== -1) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) {
+        filename = match[1];
+      }
+    }
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading certificate:', error);
+  }
+},
+
+fetchCertificatePdf : async (
+  courseId: string,
+  courseTitle: string
+): Promise<CertificateData> => {
+  try {
+    const response = await axiosInstance.get(`/generate-certificate/${courseId}`, {
+      responseType: 'blob',
+    });
+
+    // Validate the response from the server
+    if (!(response.data instanceof Blob) || response.data.type !== 'application/pdf') {
+      throw new Error('Server did not return a valid PDF file.');
+    }
+
+    const blob = response.data;
+    
+    // Default filename in case the header is missing
+    let filename = `${courseTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_certificate.pdf`;
+
+    // Try to get filename from the 'content-disposition' header
+    const disposition = response.headers['content-disposition'];
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) {
+        filename = match[1];
+      }
+    }
+
+    return { blob, filename };
+    
+  } catch (error) {
+    console.error(`Failed to fetch certificate PDF for course ${courseId}:`, error);
+    // Re-throw the error so the component can handle it
+    throw error;
+  }
+},
+
 };
+
+
+export interface CertificateData {
+  blob: Blob;
+  filename: string;
+}

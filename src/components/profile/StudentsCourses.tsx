@@ -32,6 +32,7 @@ const CourseTable: React.FC = () => {
     const fetchCourses = async () => {
       try {
         const courses = await enrollmentService.getEnrolledCourses();
+        console.log("Enrolled courses", courses)
         setCourses(courses);
       } catch (error) {
         console.error("Error fetching courses:", error);

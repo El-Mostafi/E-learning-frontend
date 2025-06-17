@@ -9853,7 +9853,7 @@ p {
 }
 .courses-card-main-items .courses-card-items-hover {
   margin-top: 30px;
-  padding: 30px;
+  padding: 20px;
   background-color: var(--theme-blue);
   border-radius: 7px;
   border: 1px solid var(--theme-blue);
@@ -10022,7 +10022,7 @@ p {
 
 .live-courses-main-items {
   border: 1px solid rgba(3, 31, 66, 0.1);
-  background-color: #F4F9FF;
+  background-color: #f4f9ff;
   border-radius: 7px;
   margin-top: 30px;
   padding: 5px;
@@ -10142,8 +10142,8 @@ p {
 
 .popular-courses-items {
   margin-top: 30px;
-  background-color: #FFEFF0;
-  border: 1px solid #FFCCCF;
+  background-color: #ffeff0;
+  border: 1px solid #ffcccf;
   border-radius: 7px;
   padding: 25px 40px;
 }
@@ -10195,9 +10195,9 @@ p {
   color: var(--theme-red);
 }
 .popular-courses-items .content .star {
-  color: #FD8F21;
+  color: #fd8f21;
   margin-top: 15px;
-  border-bottom: 1px solid #FFCCCF;
+  border-bottom: 1px solid #ffcccf;
   padding-bottom: 30px;
 }
 .popular-courses-items .content .star span {
@@ -10222,14 +10222,14 @@ p {
   color: var(--theme-red);
 }
 .popular-courses-items.bg-2 {
-  background-color: #FFF9E3;
-  border: 1px solid #F0DE9C;
+  background-color: #fff9e3;
+  border: 1px solid #f0de9c;
 }
 .popular-courses-items.bg-2 .content .star {
-  border-bottom: 1px solid #F0DE9C;
+  border-bottom: 1px solid #f0de9c;
 }
 .popular-courses-items.bg-3 {
-  background-color: #E0FEC6;
+  background-color: #e0fec6;
   border: 1px solid rgba(9, 34, 75, 0.1);
 }
 .popular-courses-items.bg-3 .content .star {
@@ -10312,7 +10312,7 @@ p {
 .quality-coureses-content .theme-btn {
   background-color: transparent;
   border-radius: 10px;
-  border: 1px solid #E6EFFF;
+  border: 1px solid #e6efff;
   padding: 16px 32px;
   font-size: 16px;
   font-weight: 600;
@@ -10339,7 +10339,7 @@ p {
   padding: 13px 25px;
   border-radius: 8px;
   border: 1px solid rgba(9, 34, 75, 0.1);
-  background: #FFF1E0;
+  background: #fff1e0;
   line-height: 1;
   color: var(--header);
   font-weight: 600;
@@ -10411,7 +10411,7 @@ p {
 }
 .popular-program-box-items .content .star {
   font-size: 14px;
-  color: #FD8F21;
+  color: #fd8f21;
   margin-bottom: 15px;
 }
 .popular-program-box-items .content .star span {
@@ -10448,7 +10448,7 @@ p {
   width: 100%;
   font-size: 14px;
   font-weight: 600;
-  background-color: #F8F2EC;
+  background-color: #f8f2ec;
   border-radius: 8px;
   border: 1px solid rgba(16, 47, 37, 0.1);
   text-align: center;
@@ -10577,7 +10577,7 @@ p {
   margin-bottom: 10px;
 }
 .business-courses-main-items .business-courses-items .courses-content .star i {
-  color: #FD8F21;
+  color: #fd8f21;
   font-size: 14px;
 }
 .business-courses-main-items .business-courses-items .courses-content .star span {
@@ -10742,7 +10742,7 @@ p {
 .courses-main-sidebar-area .courses-main-sidebar {
   border-radius: 7px;
   border: 1px solid var(--border);
-  background: #F4F9FF;
+  background: #f4f9ff;
   padding: 30px;
   margin-bottom: 20px;
 }
@@ -10834,7 +10834,7 @@ p {
   font-size: 14px;
 }
 .courses-main-sidebar-area .courses-main-sidebar .courses-sidebar-items .courses-list .checkbox-single .text-color .star {
-  color: #FD8F21;
+  color: #fd8f21;
   margin-right: 5px;
 }
 .courses-main-sidebar-area .courses-main-sidebar .courses-sidebar-items .courses-list .checkbox-single .text-color .star i.color-2 {
@@ -10970,7 +10970,7 @@ p {
 }
 .courses-list-items .content .post-cat li i {
   font-size: 14px;
-  color: #FFAE5D;
+  color: #ffae5d;
   transition: all 0.4s ease-in-out;
 }
 .courses-list-items .content .post-cat li a {
@@ -11131,7 +11131,7 @@ p {
   color: var(--header);
 }
 .courses-details-wrapper .courses-details-items .breadcrumb-content .courses-breadcrumb-items .client-image-items .client-content .star {
-  color: #FFAE5D;
+  color: #ffae5d;
 }
 .courses-details-wrapper .courses-details-items .breadcrumb-content .courses-breadcrumb-items .client-image-items .client-content .star b {
   font-size: 16px;
@@ -11148,6 +11148,11 @@ p {
   width: 100%;
   height: 100%;
   border-radius: 10px;
+}
+.courses-details-wrapper .courses-details-items .courses-image video {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
 }
 .courses-details-wrapper .courses-details-items .courses-image .video-btn {
   width: 80px;
@@ -11264,7 +11269,7 @@ p {
   padding: 20px 30px;
   font-family: "Sora", system-ui;
   color: var(--header);
-  background-color: #F4F9FF;
+  background-color: #f4f9ff;
   border-bottom: 1px solid var(--border);
   border-radius: 7px;
 }
@@ -11334,7 +11339,7 @@ p {
   padding: 40px 50px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background-color: #F4F9FF;
+  background-color: #f4f9ff;
   display: flex;
   align-items: center;
   gap: 40px;
@@ -11419,7 +11424,7 @@ p {
   line-height: 1;
 }
 .courses-details-wrapper .courses-details-items .courses-details-content .courses-reviews-items .courses-reviews-box-items .courses-reviews-box .reviews-box .star {
-  color: #FFAE5D;
+  color: #ffae5d;
   margin-bottom: 10px;
 }
 .courses-details-wrapper .courses-details-items .courses-details-content .courses-reviews-items .courses-reviews-box-items .reviews-ratting-right {
@@ -11441,7 +11446,7 @@ p {
   margin-bottom: 15px;
 }
 .courses-details-wrapper .courses-details-items .courses-details-content .courses-reviews-items .courses-reviews-box-items .reviews-ratting-right .reviews-ratting-item .star {
-  color: #FFAE5D;
+  color: #ffae5d;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -11467,7 +11472,7 @@ p {
 .courses-details-wrapper .courses-details-items .courses-details-content .courses-reviews-items .courses-reviews-box-items .reviews-ratting-right .reviews-ratting-item .progress-value {
   animation: load 3s normal forwards;
   border-radius: 0;
-  background: #FFAE5D;
+  background: #ffae5d;
   height: 5px;
   width: 0;
 }
@@ -11547,7 +11552,7 @@ p {
   margin-top: 15px;
 }
 .courses-details-wrapper .courses-details-items .courses-details-content .courses-reviews-items .instructors-box-items .content .star {
-  color: #FFAE5D;
+  color: #ffae5d;
   margin-top: 15px;
 }
 .courses-details-wrapper .courses-sidebar-area {
@@ -12025,7 +12030,7 @@ p {
   text-transform: capitalize;
   border-radius: 0;
   background-color: transparent;
-  border: 1px solid #E6EFFF;
+  border: 1px solid #e6efff;
   border-radius: 10px;
   box-shadow: 10px 4px 30px 0px rgba(175, 175, 175, 0.2);
   width: initial;

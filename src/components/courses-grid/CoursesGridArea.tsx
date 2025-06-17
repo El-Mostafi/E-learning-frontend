@@ -60,6 +60,7 @@ function CoursesGridArea() {
         setLevels(filteringData.levels);
         setInstructors(filteringData.instructors)
       } catch (err) {
+        
         console.error("Failed to fetch categories:", err);
       }
     };
