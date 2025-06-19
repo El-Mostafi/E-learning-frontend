@@ -954,7 +954,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                               <img
                                 src={
                                   course.instructorImg ||
-                                  "assets/img/courses/instructors-1.png"
+                                  "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                                 }
                                 alt={
                                   course.instructorName?.replace("|", " ")==="Admin"?"Eduspace":course.instructorName?.replace("|", " ") ||

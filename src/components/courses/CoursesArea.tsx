@@ -194,7 +194,7 @@ const CoursesArea = () => {
               >
                 <div className="courses-card-main-items">
                   <div className="courses-card-items style-2">
-                    <div className="courses-image">
+                    <div className="courses-image min-h-[268px]">
                       <img
                         src={
                           course.thumbnailPreview ||
@@ -202,7 +202,7 @@ const CoursesArea = () => {
                         }
                         alt="img"
                       />
-                      <h3 className="courses-title">{course.title}</h3>
+                      <h3 className="courses-title px-2">{course.title}</h3>
                       <h4 className="topic-title">{course.level}</h4>
                       <div className="arrow-items">
                         <div className="GlidingArrow">
@@ -264,14 +264,11 @@ const CoursesArea = () => {
                           <img
                             src={
                               course.instructorImg ||
-                              "https://via.placeholder.com/40x40"
+                              "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                             }
                             alt={course.instructorName!.replace("|", " ")}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                "https://via.placeholder.com/40x40";
-                            }}
+                            
                           />
                         </div>
                         <p>

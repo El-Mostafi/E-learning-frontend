@@ -13,6 +13,7 @@ import {
   Eye,
   AlertCircle,
   RefreshCw,
+  BookOpen,
 } from "lucide-react";
 import { FilterOptions } from "../types";
 import axios from "axios";
@@ -310,41 +311,45 @@ const CourseManagement: React.FC<CourseManagementProps> = ({ coursesData }) => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Course Management
-            </h2>
-            <p className="text-gray-600 mt-1">
-              Manage and monitor all platform courses
-            </p>
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl">
+              <BookOpen className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Course Management
+              </h2>
+              <p className="text-gray-600 mt-1">
+                Manage and monitor all platform courses
+              </p>
+            </div>
           </div>
           <div className="flex space-x-4">
             <button
-            onClick={() => {
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              setShowAddModal(true);
-            }}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Course
-          </button>
-          <button
-            onClick={() => {
-              filterCourses(searchTerm, filters, currentPage);
-            }}
-            disabled={isLoadingCourses}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${
-                isLoadingCourses ? "animate-spin" : ""
-              }`}
-            />
-            Refresh
-          </button>
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                setShowAddModal(true);
+              }}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Course
+            </button>
+            <button
+              onClick={() => {
+                filterCourses(searchTerm, filters, currentPage);
+              }}
+              disabled={isLoadingCourses}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${
+                  isLoadingCourses ? "animate-spin" : ""
+                }`}
+              />
+              Refresh
+            </button>
           </div>
-          
         </div>
 
         {/* Controls */}
@@ -360,7 +365,7 @@ const CourseManagement: React.FC<CourseManagementProps> = ({ coursesData }) => {
                   placeholder="Search courses..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <select
