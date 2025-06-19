@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Search,
   Download,
@@ -11,6 +11,9 @@ import {
   ShieldOff,
   AlertCircle,
   RefreshCw,
+  Users,
+  Camera,
+  X,
 } from "lucide-react";
 import { FilterOptions, CreateUserDto } from "../types";
 import usersService, {
@@ -20,11 +23,14 @@ import usersService, {
   UserToEdit,
 } from "../../../../services/usersService";
 import axios from "axios";
+import ImageCropDialog from "../ImageCropDialog";
+import { cloudService } from "../../../../services/cloudService";
 
 interface UserManagementProps {
   usersData: UsersResponse;
 }
-
+const DEFAULT_AVATAR =
+  "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif";
 
 const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
   const [filteredUsers, setFilteredUsers] = useState<User[]>(usersData.users);
@@ -61,6 +67,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
     try {
       setIsLoadingUsers(true);
       setUserError(null);
+      console.log("Filter Options:", filterOptions, "Current Page:", currentPage, "Search:", search);
       const response = await usersService.getAllUsers({
         page: currentPage,
         limit: 8,
@@ -208,6 +215,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
     console.log(filteredUsers);
     try {
       const response = await usersService.getUserById(userId);
+      console.log(" User Data:", response);
+      if (response.role === "student") {
+        response.biography = undefined;
+        response.yearsOfExperience = undefined;
+        response.expertise = undefined;
+      } else if (response.role === "instructor") {
+        response.educationLevel = undefined;
+        response.fieldOfStudy = undefined;
+      }
       setSelectedUser(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -227,7 +243,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const UserModal = ({ user, onClose, title }: any) => {
     const [formData, setFormData] = useState<
-      CreateUserDto & { id?: number; status?: string; emailConfirmed?: boolean }
+      CreateUserDto & {
+        id?: number;
+        status?: string;
+        emailConfirmed?: boolean;
+        profileImg?: string;
+        publicId?: string;
+      }
     >(
       user || {
         email: "",
@@ -245,7 +267,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [createError, setCreateError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [showImageCrop, setShowImageCrop] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [croppedImage, setCroppedImage] = useState<File | null>(null);
+    const [selectedImageName, setSelectedImageName] = useState<string | null>(
+      null
+    );
+    useEffect(() => {
+      setErrors({});
+      setCreateError(null);
+      setEditError(null);
+    }, []);
     const validateForm = () => {
       const newErrors: Record<string, string> = {};
 
@@ -257,9 +290,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
 
       if (!formData.userName) {
         newErrors.userName = "Username is required";
-      } else if (!/^[a-zA-Z]+[|][a-zA-Z]+$/.test(formData.userName)) {
-        newErrors.userName =
-          "Username must be in the format: firstName|lastName";
+      } else if (
+        formData.userName.length < 3 &&
+        formData.userName.length > 20
+      ) {
+        newErrors.userName = "Username must be between 3 and 20 characters";
       }
       if (!user && !formData.password) {
         if (!formData.password.trim()) {
@@ -280,6 +315,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
         }
         newErrors.password = "Password is required";
       }
+      if (!formData.profileImg)
+        newErrors.profileImg = "Profile image is required";
 
       // Role-specific validation
       if (formData.role === "student") {
@@ -305,8 +342,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
 
     const handleEditUser = async (user: UserToEdit) => {
       setEditError(null);
-      setIsSubmitting(true);
       try {
+        console.log("User to update: ", user);
+        if (user.role === "student") {
+          user.biography = undefined;
+          user.yearsOfExperience = undefined;
+          user.expertise = undefined;
+        } else if (user.role === "instructor") {
+          user.educationLevel = undefined;
+          user.fieldOfStudy = undefined;
+        }
         const response = await usersService.updateUser(user.id, user);
         console.log(response);
         setFilteredUsers(
@@ -329,11 +374,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
         }
       } finally {
         setIsSubmitting(false);
+        if (!editError && Object.keys(errors).length === 0) {
+          onClose();
+        }
       }
     };
     const handleAddUser = async (user: CreateUserDto) => {
       setCreateError(null);
-      setIsSubmitting(true);
       try {
         const response = await usersService.createUser(user);
         console.log(response);
@@ -350,24 +397,69 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
         }
       } finally {
         setIsSubmitting(false);
+        if (!createError && Object.keys(errors).length === 0) {
+          onClose();
+        }
       }
     };
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
       if (validateForm()) {
+        setIsSubmitting(true);
         if (title === "Edit User") {
+          let updatedProfileImg = formData.profileImg;
+          let updatedPublicId = formData.publicId;
+
+          try {
+            if (
+              DEFAULT_AVATAR !== formData.profileImg &&
+              user!.profileImg !== formData.profileImg
+            ) {
+              const { data: signatureData } =
+                await cloudService.getSignatureImage();
+              if (!signatureData) return console.error("Signature is missing.");
+              if (!croppedImage) return console.error("Image is missing.");
+
+              const { data: uploadData } = await cloudService.uploadFile(
+                croppedImage,
+                signatureData,
+                "images_preset"
+              );
+
+              console.log("Uploaded asset:", uploadData);
+
+              // Update local variables with new values
+              updatedProfileImg = uploadData.secure_url;
+              updatedPublicId = uploadData.public_id;
+
+              // Still update state for UI purposes
+              setFormData((prev) => ({
+                ...prev,
+                profileImg: uploadData.secure_url,
+                publicId: uploadData.public_id,
+              }));
+            }
+          } catch (error) {
+            console.error("Error updating profile image:", error);
+            setIsSubmitting(false);
+            return;
+          }
+
+          // Use the updated variables
           handleEditUser({
             id: user.id,
             email: formData.email,
             userName: formData.userName,
+            profileImg: updatedProfileImg || user.profileImg,
+            publicId: updatedPublicId || user.publicId,
             role: formData.role,
-            status: user.status || "active", // Default to active if no status
+            status: user.status || "active",
             educationLevel: formData.educationLevel || "",
             fieldOfStudy: formData.fieldOfStudy || "",
             expertise: formData.expertise || "",
             yearsOfExperience: formData.yearsOfExperience || 0,
             biography: formData.biography || "",
           });
-        } else {
+        } else if (title === "Add User") {
           handleAddUser({
             email: formData.email,
             password: formData.password,
@@ -379,10 +471,43 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
             yearsOfExperience: formData.yearsOfExperience || 0,
             biography: formData.biography || "",
           });
+
+        }else{
+          setIsSubmitting(false);
         }
-        if (!editError || !createError) {
-          onClose();
-        }
+      }
+    };
+    const resetProfileImage = () => {
+      setFormData((prev) => ({ ...prev, profileImage: DEFAULT_AVATAR }));
+    };
+    const handleImageClick = async () => {
+      fileInputRef.current?.click();
+    };
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setSelectedImageName(file.name);
+          setSelectedImage(reader.result as string);
+          setShowImageCrop(true);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const handleCroppedImage = async (
+      croppedImage: File,
+      previewUrl: string
+    ) => {
+      try {
+        setCroppedImage(croppedImage);
+        setFormData((prev) => ({ ...prev, profileImg: previewUrl }));
+        setShowImageCrop(false);
+        setSelectedImage(null);
+        setSelectedImageName(null);
+      } catch (error) {
+        console.error("Error uploading image:", error);
       }
     };
 
@@ -410,302 +535,358 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
                   <div>⚠️ {createError}</div>
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 {/* Basic Information */}
                 <div className="md:col-span-2">
                   <h4 className="text-md font-medium text-gray-900 mb-3">
                     Basic Information
                   </h4>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
-                  </label>
-                  <input
-                    title="Email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                  )}
-                </div>
+                <div className="flex justify-center">
+                  <div className="relative group mb-4 ">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-100">
+                      <img
+                        src={formData.profileImg || DEFAULT_AVATAR}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Username *
-                  </label>
-                  <input
-                    title="Username"
-                    type="text"
-                    value={formData.userName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, userName: e.target.value })
-                    }
-                    className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.userName ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.userName && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:!opacity-100 transition-opacity">
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full"></div>
+                      <div className="relative z-10 flex flex-col items-center space-y-1">
+                        <button
+                          aria-label="Change profile image"
+                          onClick={handleImageClick}
+                          className="p-1 bg-white rounded-full text-gray-700 hover:!text-blue-600 transition-colors"
+                        >
+                          <Camera className="w-5 h-5" />
+                        </button>
+                        {formData.profileImg !== DEFAULT_AVATAR && (
+                          <button
+                            aria-label="Reset profile image"
+                            onClick={resetProfileImage}
+                            className="p-1 bg-white rounded-full text-gray-700 hover:!text-red-600 transition-colors"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <input
+                      type="file"
+                      id="file-upload"
+                      ref={fileInputRef}
+                      onChange={handleImageChange}
+                      accept="image/*"
+                      hidden
+                    />
+                  </div>
+                  {errors.profileImg && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.userName}
+                      {errors.profileImg}
                     </p>
                   )}
                 </div>
-
-                {!user && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Password *
+                      Email *
                     </label>
-                    <div className="relative">
-                      <input
-                        title="Password"
-                        type={showPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, password: e.target.value })
-                        }
-                        className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 ${
-                          errors.password ? "border-red-500" : "border-gray-300"
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                    {errors.password && (
+                    <input
+                      title="Email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                    {errors.email && (
                       <p className="text-red-500 text-xs mt-1">
-                        {errors.password}
+                        {errors.email}
                       </p>
                     )}
                   </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Role *
-                  </label>
-                  <select
-                    title="Role"
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        role: e.target.value as UserRole,
-                      })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="student">Student</option>
-                    <option value="instructor">Instructor</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                {user && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
+                      Username *
+                    </label>
+                    <input
+                      title="Username"
+                      type="text"
+                      value={formData.userName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, userName: e.target.value })
+                      }
+                      className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        errors.userName ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                    {errors.userName && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.userName}
+                      </p>
+                    )}
+                  </div>
+
+                  {!user && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Password *
+                      </label>
+                      <div className="relative">
+                        <input
+                          title="Password"
+                          type={showPassword ? "text" : "password"}
+                          value={formData.password}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              password: e.target.value,
+                            })
+                          }
+                          className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 ${
+                            errors.password
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                      {errors.password && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.password}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Role *
                     </label>
                     <select
-                      title="Status"
-                      value={formData.status || "active"}
+                      title="Role"
+                      value={formData.role}
                       onChange={(e) =>
-                        setFormData({ ...formData, status: e.target.value })
+                        setFormData({
+                          ...formData,
+                          role: e.target.value as UserRole,
+                        })
                       }
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="active">Active</option>
-                      <option value="blocked">Blocked</option>
+                      <option value="student">Student</option>
+                      <option value="instructor">Instructor</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </div>
-                )}
 
-                {/* Student-specific fields */}
-                {formData.role === "student" && (
-                  <>
-                    <div className="md:col-span-2">
-                      <h4 className="text-md font-medium text-gray-900 mb-3 mt-4">
-                        Student Information
-                      </h4>
-                    </div>
-
+                  {user && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Education Level *
+                        Status
                       </label>
                       <select
-                        title="Education Level"
-                        value={formData.educationLevel}
+                        title="Status"
+                        value={formData.status || "active"}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            educationLevel: e.target.value,
-                          })
+                          setFormData({ ...formData, status: e.target.value })
                         }
-                        className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.educationLevel
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
-                        <option value="">Select Education Level</option>
-                        <option value="high_school">High School</option>
-                        <option value="associate">Associate Degree</option>
-                        <option value="bachelor">Bachelor's Degree</option>
-                        <option value="master">Master's Degree</option>
-                        <option value="doctorate">Doctorate</option>
-                        <option value="other">Other</option>
+                        <option value="active">Active</option>
+                        <option value="blocked">Blocked</option>
                       </select>
-                      {errors.educationLevel && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.educationLevel}
-                        </p>
-                      )}
                     </div>
+                  )}
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Field of Study *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.fieldOfStudy}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            fieldOfStudy: e.target.value,
-                          })
-                        }
-                        className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.fieldOfStudy
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="e.g., Computer Science, Business, etc."
-                      />
-                      {errors.fieldOfStudy && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.fieldOfStudy}
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
+                  {/* Student-specific fields */}
+                  {formData.role === "student" && (
+                    <>
+                      <div className="md:col-span-2">
+                        <h4 className="text-md font-medium text-gray-900 mb-3 mt-4">
+                          Student Information
+                        </h4>
+                      </div>
 
-                {/* Instructor-specific fields */}
-                {formData.role === "instructor" && (
-                  <>
-                    <div className="md:col-span-2">
-                      <h4 className="text-md font-medium text-gray-900 mb-3 mt-4">
-                        Instructor Information
-                      </h4>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expertise *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.expertise}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            expertise: e.target.value,
-                          })
-                        }
-                        className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.expertise
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="e.g., Web Development, Data Science, etc."
-                      />
-                      {errors.expertise && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.expertise}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Years of Experience *
-                      </label>
-                      <input
-                        title="Years of Experience"
-                        type="number"
-                        min="0"
-                        value={formData.yearsOfExperience}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            yearsOfExperience: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.yearsOfExperience
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      {errors.yearsOfExperience && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.yearsOfExperience}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Biography * (max 500 characters)
-                      </label>
-                      <textarea
-                        value={formData.biography}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            biography: e.target.value,
-                          })
-                        }
-                        rows={4}
-                        maxLength={500}
-                        className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.biography
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="Tell us about your background and teaching experience..."
-                      />
-                      <div className="flex justify-between items-center mt-1">
-                        {errors.biography && (
-                          <p className="text-red-500 text-xs">
-                            {errors.biography}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Education Level *
+                        </label>
+                        <select
+                          title="Education Level"
+                          value={formData.educationLevel}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              educationLevel: e.target.value,
+                            })
+                          }
+                          className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.educationLevel
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          <option value="">Select Education Level</option>
+                          <option value="high_school">High School</option>
+                          <option value="associate">Associate Degree</option>
+                          <option value="bachelor">Bachelor's Degree</option>
+                          <option value="master">Master's Degree</option>
+                          <option value="doctorate">Doctorate</option>
+                          <option value="other">Other</option>
+                        </select>
+                        {errors.educationLevel && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.educationLevel}
                           </p>
                         )}
-                        <p className="text-gray-500 text-xs ml-auto">
-                          {formData.biography?.length || 0}/500
-                        </p>
                       </div>
-                    </div>
-                  </>
-                )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Field of Study *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.fieldOfStudy}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              fieldOfStudy: e.target.value,
+                            })
+                          }
+                          className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.fieldOfStudy
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          placeholder="e.g., Computer Science, Business, etc."
+                        />
+                        {errors.fieldOfStudy && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.fieldOfStudy}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Instructor-specific fields */}
+                  {formData.role === "instructor" && (
+                    <>
+                      <div className="md:col-span-2">
+                        <h4 className="text-md font-medium text-gray-900 mb-3 mt-4">
+                          Instructor Information
+                        </h4>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Expertise *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.expertise}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              expertise: e.target.value,
+                            })
+                          }
+                          className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.expertise
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          placeholder="e.g., Web Development, Data Science, etc."
+                        />
+                        {errors.expertise && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.expertise}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Years of Experience *
+                        </label>
+                        <input
+                          title="Years of Experience"
+                          type="number"
+                          min="0"
+                          value={formData.yearsOfExperience}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              yearsOfExperience: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.yearsOfExperience
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        />
+                        {errors.yearsOfExperience && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.yearsOfExperience}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Biography * (max 500 characters)
+                        </label>
+                        <textarea
+                          value={formData.biography}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              biography: e.target.value,
+                            })
+                          }
+                          rows={4}
+                          maxLength={500}
+                          className={`text-black w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.biography
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          placeholder="Tell us about your background and teaching experience..."
+                        />
+                        <div className="flex justify-between items-center mt-1">
+                          {errors.biography && (
+                            <p className="text-red-500 text-xs">
+                              {errors.biography}
+                            </p>
+                          )}
+                          <p className="text-gray-500 text-xs ml-auto">
+                            {formData.biography?.length || 0}/500
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">
@@ -725,6 +906,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
             </>
           )}
         </div>
+        {showImageCrop && selectedImage && selectedImageName && (
+          <ImageCropDialog
+            imageName={selectedImageName}
+            imageUrl={selectedImage}
+            onClose={() => {
+              setShowImageCrop(false);
+              setSelectedImage(null);
+              setSelectedImageName(null);
+            }}
+            onSave={handleCroppedImage}
+          />
+        )}
       </div>
     );
   };
@@ -780,32 +973,39 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-          <p className="text-gray-600 mt-1">
-            Manage and monitor all platform users
-          </p>
+        <div className="flex items-center space-x-3">
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl">
+            <Users className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              User Management
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Manage and monitor all platform users
+            </p>
+          </div>
         </div>
         <div className="flex space-x-4">
           <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add User
-        </button>
-        <button
-          onClick={() => {
-            filterUsers(searchTerm, filters, currentPage);
-          }}
-          disabled={isLoadingUsers}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw
-            className={`w-4 h-4 mr-2 ${isLoadingUsers ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </button>
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add User
+          </button>
+          <button
+            onClick={() => {
+              filterUsers(searchTerm, filters, currentPage);
+            }}
+            disabled={isLoadingUsers}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${isLoadingUsers ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </button>
         </div>
       </div>
 
