@@ -97,13 +97,9 @@ const CourseCard: React.FC<CourseCardProps> = ({
         <div className="flex items-center mb-4">
           <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-100">
             <img
-              src={course.instructorImg || "https://via.placeholder.com/40x40"}
+              src={course.instructorImg || "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"}
               alt={course.instructorName.replace("|", " ")}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  "https://via.placeholder.com/40x40";
-              }}
             />
           </div>
           <span className="text-sm text-gray-700">{course.instructorName.replace("|", " ")}</span>

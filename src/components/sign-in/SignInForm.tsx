@@ -18,12 +18,12 @@ interface Errors extends ParentFormData {
 
 const SignInForm = () => {
   const { setUser } = useAuth();
-    const Navigate = useNavigate();
+  const Navigate = useNavigate();
   
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
-    RememberMe: false, 
+    RememberMe: false,
   });
 
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -65,7 +65,6 @@ const SignInForm = () => {
   useEffect(() => {
     setUser(null);
     authService.signout();
-
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,8 +107,8 @@ const SignInForm = () => {
         window.location.href = "/";
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          console.error("Signin failed:", error.response?.data);
-          setErrors({ ...errors, apiErrors: error.response?.data.errors });
+          console.error("Signin failed:", error);
+          setErrors({ ...errors, apiErrors: error.response?.data.errors || ["error occured while signing in"] });
         } else {
           console.error("Unexpected error:", error);
         }
@@ -120,8 +119,10 @@ const SignInForm = () => {
   };
   useEffect(() => {
     const handleResendEmail = async () => {
-      if(!errors.apiErrors) return
-      const emailError = errors.apiErrors.find(error => error.message === "Email is not confirmed");
+      if (!errors.apiErrors) return;
+      const emailError = errors.apiErrors.find(
+        (error) => error.message === "Email is not confirmed"
+      );
 
       if (emailError) {
         console.log("Email is not confirmed");

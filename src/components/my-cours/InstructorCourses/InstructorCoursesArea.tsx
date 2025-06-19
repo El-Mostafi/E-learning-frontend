@@ -311,7 +311,7 @@ function InstructorCoursesArea() {
                             <img
                               src={
                                 cours.instructorImg ||
-                                "assets/img/courses/c1.jpg"
+                                "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                               }
                               alt="img"
                             />
