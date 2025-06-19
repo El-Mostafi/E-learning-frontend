@@ -22,8 +22,7 @@ import { QuickStats } from '.';
 interface SidebarProps {
   profile: {
     profileImage: string;
-    firstName: string;
-    lastName: string;
+    UserName: string;
     email: string;
     role: 'student' | 'instructor' | 'admin';
     socialLinks: {
@@ -118,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <h2 className="text-xl font-bold text-gray-800">
-          {profile.firstName} {profile.lastName}
+          {profile.UserName.replace("|", " ")} 
         </h2>
         <p className="text-sm text-gray-600">{profile.email}</p>
         <div className="mt-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">

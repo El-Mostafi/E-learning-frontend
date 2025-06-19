@@ -91,7 +91,7 @@ function CourseList({ courses }: CourseListProps) {
                       <img
                         src={
                           course.instructorImg ||
-                          "https://via.placeholder.com/40x40"
+                          "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                         }
                         alt={
                           course.instructorName!.replace("|", " ") === "Admin"
@@ -101,7 +101,7 @@ function CourseList({ courses }: CourseListProps) {
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
-                            "https://via.placeholder.com/40x40";
+                            "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif";
                         }}
                       />
                     </div>

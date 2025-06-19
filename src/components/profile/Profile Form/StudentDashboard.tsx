@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Clock, Trophy, BookOpen } from "lucide-react";
+import { Clock, Trophy, BookOpen, Award } from "lucide-react";
 import Count from "../../../common/Count";
 import { ResponsiveContainer } from "recharts";
 import Chart from "react-apexcharts";
@@ -202,7 +202,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           Learning Dashboard
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl">
             <div className="flex items-center mb-2">
               <Clock className="w-5 h-5 text-blue-600 mr-2" />
@@ -247,6 +247,17 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
               </span>
             </p>
             <p className="text-sm text-gray-600">Courses in progress</p>
+          </div>
+          {/* Coupons Card */}
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center mb-3">
+              <Award className="w-6 h-6 text-orange-600 mr-3" />
+              <h3 className="text-lg font-semibold text-gray-800">Certificates</h3>
+            </div>
+            <p className="text-3xl font-bold text-orange-600 mb-1">
+              <Count number={data.certificatesIssued || 0} text="" />
+            </p>
+            <p className="text-sm text-gray-600">Certificates Issued</p>
           </div>
         </div>
 

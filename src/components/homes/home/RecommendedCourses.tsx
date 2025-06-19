@@ -1,8 +1,9 @@
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { coursService } from "../../../services/coursService";
 import { courseDataGenerale } from "../../../services/coursService";
+import ModelService from "../../../services/modelService";
+import { useAuth } from "../../../context/AuthContext";
 
 const styles = `
   
@@ -77,21 +78,27 @@ const formatDuration = (totalSeconds: number) => {
   }
 };
 
-const PopularCoursesHomeOne = () => {
+const RecommendedCourses = () => {
+  const { user } = useAuth();
+
   const [courses, setCourses] = useState<courseDataGenerale[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
   const categories = Array.from(
     new Set(courses.map((course) => course.category))
   );
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
     const fetchCourses = async () => {
       try {
-        const data = await coursService.getGeneralDataCourses();
-        setCourses(data);
+        const data = await ModelService.getRecommendedCourses(user.userId, 8);
+        setCourses(data.data);
       } catch (err) {
         setError("Failed to load courses. Please try again later.");
         console.error(err);
@@ -102,6 +109,9 @@ const PopularCoursesHomeOne = () => {
 
     fetchCourses();
   }, []);
+  if (!user) {
+    return null;
+  }
 
   const filteredCourses =
     selectedCategory === "All"
@@ -132,34 +142,48 @@ const PopularCoursesHomeOne = () => {
 
       <section className="popular-courses-section fix section-padding section-bg">
         <div className="container">
-          <div className="section-title-area align-items-end">
+          <div className="section-title-area align-items-end flex flex-wrap">
             <div className="section-title">
-              <h6 className="wow fadeInUp">Popular Courses</h6>
+              <h6 className="wow fadeInUp">Recommended Courses</h6>
               <h2 className="wow fadeInUp" data-wow-delay=".3S">
-                Explore Top Courses
+                Explore Recommended Courses
               </h2>
             </div>
-            <ul className="nav">
+            <ul
+              className="nav category-tabs mt-3 mt-md-0"
+              style={{ paddingLeft: "2rem", paddingRight: "2rem" }}
+            >
               {["All", ...categories].map((category, index) => (
-                <li
-                  key={index}
-                  className={`nav-item wow fadeInUp ${
-                    selectedCategory === category ? "active" : ""
-                  }`}
-                  data-wow-delay={`${0.2 * (index + 1)}s`}
+              <li
+                key={index}
+                className="nav-item wow fadeInUp"
+                data-wow-delay={`${0.2 * (index + 1)}s`}
+              >
+                <button
+                type="button"
+                className={`category-tab-btn px-5 py-2 rounded-lg font-semibold border transition-colors duration-200
+                ${
+                selectedCategory === category
+                  ? "bg-blue-500 border-blue-600 text-white shadow-md"
+                  : "bg-white border-gray-300 text-gray-700 hover:bg-blue-100"
+                }
+              `}
+                style={{
+                  outline:
+                  selectedCategory === category
+                    ? "2px solid #3b82f6"
+                    : "none",
+                  outlineOffset: "2px",
+                  zIndex: selectedCategory === category ? 1 : undefined,
+                  position: "relative",
+                }}
+                onClick={() => {
+                  setSelectedCategory(category);
+                }}
                 >
-                  <a
-                    href="#"
-                    data-bs-toggle="tab"
-                    className="nav-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSelectedCategory(category);
-                    }}
-                  >
-                    {category}
-                  </a>
-                </li>
+                {category}
+                </button>
+              </li>
               ))}
             </ul>
           </div>
@@ -223,6 +247,7 @@ const PopularCoursesHomeOne = () => {
                           <h5>
                             <Link
                               to="/courses-details"
+                              className="line-clamp-2 min-h-[51px]"
                               onClick={(e) => {
                                 e.preventDefault();
                                 navigate("/courses-details", {
@@ -231,17 +256,23 @@ const PopularCoursesHomeOne = () => {
                               }}
                             >
                               <div className="course-title">
-                                Learn With {course.level} {course.title} Course
+                                {course.title} 
                               </div>
                             </Link>
                           </h5>
+                          <span
+                            className="mb-3 line-clamp-2 min-h-[60px]"
+                            
+                          >
+                            {course.description.replace(/<\/?[^>]+(>|$)/g, "")}
+                          </span>
                           <div className="client-items">
                             <div className="icon-items">
                               <i>
                                 <img
                                   src={
                                     course.instructorImg ||
-                                    "assets/img/courses/c1.jpg"
+                                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                                   }
                                   alt="img"
                                 />
@@ -251,7 +282,7 @@ const PopularCoursesHomeOne = () => {
                               <Link
                                 to={`/instructor-details/${course.InstructorId}`}
                               >
-                                {course.instructorName.replace("|", " ")}
+                                {course.instructorName?.replace("|", " ")}
                               </Link>
                             </p>
                           </div>
@@ -302,8 +333,8 @@ const PopularCoursesHomeOne = () => {
                             </Link>
                           </h5>
                           <h4>${course.price}</h4>
-                          <span>
-                            Education is only empowers people to pursue career
+                          <span  className="line-clamp-3">
+                            {course.description.replace(/<\/?[^>]+(>|$)/g, "")}
                           </span>
                           <div className="client-items">
                             <div className="client-img bg-cover">
@@ -311,7 +342,7 @@ const PopularCoursesHomeOne = () => {
                                 <img
                                   src={
                                     course.instructorImg ||
-                                    "assets/img/courses/c1.jpg"
+                                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                                   }
                                   alt="img"
                                 />
@@ -321,7 +352,7 @@ const PopularCoursesHomeOne = () => {
                               to={"/instructor-details/" + course.InstructorId}
                               className={"text-white"}
                             >
-                              {course.instructorName.replace("|", " ")}
+                              {course.instructorName?.replace("|", " ")}
                             </Link>
                           </div>
                           <ul className="post-class">
@@ -360,4 +391,4 @@ const PopularCoursesHomeOne = () => {
   );
 };
 
-export default PopularCoursesHomeOne;
+export default RecommendedCourses;

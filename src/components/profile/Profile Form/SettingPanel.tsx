@@ -38,27 +38,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     (name: string, value: string): string => {
       let error = "";
 
-      if (name === "firstName") {
+      if (name === "UserName") {
         if (!value.trim()) {
-          error = "First Name is required.";
+          error = "User Name is required.";
         } else if (value.length < 3) {
-          error = "First Name must be at least 3 characters.";
+          error = "User Name must be at least 3 characters.";
         } else if (value.length > 20) {
-          error = "First Name must be less than 20 characters.";
+          error = "User Name must be less than 20 characters.";
         } else if (/[|]/.test(value)) {
-          error = "First Name must not contain the '|' character.";
-        }
-      }
-
-      if (name === "lastName") {
-        if (!value.trim()) {
-          error = "Last Name is required.";
-        } else if (value.length < 3) {
-          error = "Last Name must be at least 3 characters.";
-        } else if (value.length > 20) {
-          error = "Last Name must be less than 20 characters.";
-        } else if (/[|]/.test(value)) {
-          error = "Last Name must not contain the '|' character.";
+          error = "User Name must not contain the '|' character.";
         }
       }
       if (name === "newPassword") {
@@ -145,15 +133,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const newErrors: Partial<Errors> = {};
 
     // Common validations
-    const firstNameError = getValidationError("firstName", profile.firstName);
+    const firstNameError = getValidationError("UserName", profile.UserName);
     if (firstNameError) {
-      newErrors.firstName = firstNameError;
+      newErrors.UserName = firstNameError;
     }
 
-    const lastNameError = getValidationError("lastName", profile.lastName);
-    if (lastNameError) {
-      newErrors.lastName = lastNameError;
-    }
 
     // Password validations (only if changing password)
     if (isChangingPassword) {
@@ -225,7 +209,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
     try {
       const updatePayload = {
-        userName: `${profile.firstName}|${profile.lastName}`,
+        userName: `${profile.UserName} `,
         profileImg: profile.profileImage,
         publicId: "",
         ...(profile.role === "student" && {
@@ -343,40 +327,21 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label
-                  htmlFor="firstName"
+                  htmlFor="UserName"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  First Name
+                  User Name
                 </label>
                 <input
-                  id="firstName"
+                  id="UserName"
                   type="text"
-                  name="firstName"
-                  value={profile.firstName}
+                  name="UserName"
+                  value={profile.UserName}
                   onChange={handleChange}
                   className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
                 />
-                {errors.firstName && (
-                  <p className="text-danger">{errors.firstName}</p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="lastName"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  type="text"
-                  name="lastName"
-                  value={profile.lastName}
-                  onChange={handleChange}
-                  className="w-full text-black px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
-                />
-                {errors.lastName && (
-                  <p className="text-danger">{errors.lastName}</p>
+                {errors.UserName && (
+                  <p className="text-danger">{errors.UserName}</p>
                 )}
               </div>
               <div>
