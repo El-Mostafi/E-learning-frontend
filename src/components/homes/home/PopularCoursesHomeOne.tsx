@@ -403,7 +403,7 @@ const PopularCoursesHomeOne = () => {
                                 <img
                                   src={
                                     course.instructorImg ||
-                                    "https://randomuser.me/api/portraits/men/1.jpg"
+                                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                                   }
                                   alt="instructor"
                                 />
@@ -473,7 +473,7 @@ const PopularCoursesHomeOne = () => {
                                 <img
                                   src={
                                     course.instructorImg ||
-                                    "https://randomuser.me/api/portraits/men/1.jpg"
+                                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                                   }
                                   alt="instructor"
                                 />
