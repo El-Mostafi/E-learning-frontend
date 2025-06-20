@@ -2,11 +2,13 @@ import BreadcrumbEvent from "../../common/breadcrumb/BreadcrumbEvent";
 import MarqueeOne from "../../common/MarqueeOne";
 import Preloader from "../../common/Preloader";
 import ScrollTop from "../../common/ScrollTop";
+import { useAuth } from "../../context/AuthContext";
 import FooterOne from "../../layouts/footers/FooterOne";
 import HeaderOne from "../../layouts/headers/HeaderOne";
 import TeamHomeFive from "../homes/home-5/TeamHomeFive";
 import BrandsHomeOne from "../homes/home/BrandsHomeOne";
 import NewsletterHomeOne from "../homes/home/NewsletterHomeOne";
+import TeamHomeOne from "../homes/home/TeamHomeOne";
 import TestimonialHomeOne from "../homes/home/TestimonialHomeOne";
 import AboutArea from "./AboutArea";
 import AboutCounter from "./AboutCounter";
@@ -15,6 +17,8 @@ import FeatureArea from "./FeatureArea";
  
 
 const About = () => {
+
+	const { user } = useAuth();
 	return (
 		<>
 		<Preloader />
@@ -22,13 +26,15 @@ const About = () => {
 			<BreadcrumbEvent title="About" subtitle="About" />
       <AboutArea />
       <FeatureArea />
-      <TeamHomeFive style_2={true} />
+      <TeamHomeOne />
+	  <br />
+	  <br />
       <AboutCounter />
       <TestimonialHomeOne />
-			<BrandsHomeOne />
-      <NewsletterHomeOne />
+			{/* <BrandsHomeOne /> */}
+      {!user && <NewsletterHomeOne />}
 			<MarqueeOne style_2={true} />
-			<FooterOne />
+			<FooterOne user={user} />
 			<ScrollTop />
 		</>
 	);

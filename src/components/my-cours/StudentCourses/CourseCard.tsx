@@ -125,7 +125,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         <div className="mt-auto">
           <div className="flex justify-between items-center mb-1">
             <span className="text-xs font-medium text-gray-700">
-              {course.progress}% Complete
+              {Math.round(course.progress)}% Complete
             </span>
             {course.completed && (
               <span className="flex items-center text-xs font-medium text-green-600">
@@ -139,7 +139,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
               className={`h-2 rounded-full transition-all duration-1000 ease-out ${
                 course.completed ? "bg-green-500" : "bg-blue-500"
               }`}
-              style={{ width: `${course.progress}%` }}
+              style={{ width: `${Math.round(course.progress)}%` }}
             />
           </div>
 

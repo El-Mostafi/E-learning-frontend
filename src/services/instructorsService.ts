@@ -18,6 +18,11 @@ const InstructorService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
       const response = await axiosInstance.get<DashboardStats>('/instructors/dashboard');
       return response.data; 
+  },
+
+  getTopInstructors: async (): Promise<Instructor[]> => {
+      const response = await axiosInstance.get<Instructor[]>("/top-instructors");
+      return response.data; 
   }
 };
 

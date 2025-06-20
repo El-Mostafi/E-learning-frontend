@@ -1,103 +1,138 @@
 import { Link } from "react-router-dom";
+import React from 'react';
 
- 
+// --- Data Configuration ---
+const socialLinks = [
+  { icon: 'fab fa-facebook-f', href: '#' },
+  { icon: 'fab fa-instagram', href: '#' },
+  { icon: 'fab fa-linkedin-in', href: '#' },
+  { icon: 'fab fa-twitter', href: '#' },
+];
 
-const FooterOne = ({style_2} : any) => {
+const exploreLinks = [
+  { text: 'All Courses', to: '/courses' },
+  { text: 'My Dashboard', to: '/profile' },
+  { text: 'Our Instructors', to: '/instructor' },
+  { text: 'Contact', to: '/contact' },
+];
+
+const quickLinks = [
+  { text: 'Privacy Policy', to: '/privacy-policy' },
+  { text: 'Terms of Service', to: '/terms' },
+  { text: 'Edit Profile', to: '/profile/edit' },
+  { text: 'Contact Support', to: '/contact' },
+];
+
+const contactInfo = {
+  address: '55 Main Street, 2nd block, Malborne, Australia',
+  email: 'info@eduspace.com',
+  phone: '+000 (123) 88 99',
+};
+
+// --- Component Props & Types ---
+interface User {
+  userName: string;
+}
+
+interface FooterOneProps {
+  user: User | null;
+}
+
+const FooterOne: React.FC<FooterOneProps> = ({ user }) => {
   return (
     <>
-       <footer className={`footer-section fix ${style_2 ? "" : "footer-bg"}`}>
-            <div className="container">
-                <div className={`footer-widget-wrapper ${style_2 ? "style-4" : ""}`}>
-                    <div className="row">
-                        <div className="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".2s">
-                            <div className="single-footer-widget">
-                                <div className="widget-head">
-                                    <Link to="/">
-                                        {style_2 ? <img src="/assets/img/logo/black-logo-2.svg" alt="img" /> 
-                                        :                                        
-                                        <img src="/assets/img/logo/white-logo.svg" alt="img" />
-                                        }
-                                    </Link>
-                                </div>
-                                <div className="footer-content">
-                                    <p>
-                                        Education the foundation personal and societal growth, empowering individuals with knowledge.
-                                    </p>
-                                    <div className="social-icon">
-                                        <a href="#"><i className="fab fa-facebook-f"></i></a>
-                                        <a href="#"><i className="fab fa-instagram"></i></a>
-                                        <a href="#"><i className="fab fa-dribbble"></i></a>
-                                        <a href="#"><i className="fab fa-behance"></i></a>
-                                        <a href="#"><i className="fab fa-linkedin-in"></i></a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".4s">
-                            <div className="single-footer-widget">
-                                <div className="widget-head">
-                                   <h3>Online Platform</h3>
-                                </div>
-                                <ul className="list-area">
-                                    <li><Link to="/courses">Coursera</Link></li>
-                                    <li><Link to="/courses">MasterClass</Link></li>
-                                    <li><Link to="/courses">Skillshare</Link></li>
-                                    <li><Link to="/courses">LinkedIn Learning</Link></li>
-                                    <li><Link to="/courses">FutureLearn</Link></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".6s">
-                            <div className="single-footer-widget">
-                                <div className="widget-head">
-                                   <h3>Quick Link</h3>
-                                </div>
-                                <ul className="list-area">
-                                    <li><Link to="/about">About Eduspace</Link></li>
-                                    <li><Link to="/instructor">Instructors</Link></li>
-                                    <li><Link to="/courses">Best Courses</Link></li>
-                                    <li><Link to="/contact">Student Reviews</Link></li>
-                                    <li><Link to="/faq">FAQs</Link></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="col-xl-3 col-lg-4 col-md-6 ps-xl-5 wow fadeInUp" data-wow-delay=".8s">
-                            <div className="single-footer-widget">
-                                <div className="widget-head">
-                                   <h3>Contact Us</h3>
-                                </div>
-                                <div className="footer-content">
-                                    <ul className="contact-info">
-                                        <li>
-                                            55 Main Street, 2nd block
-                                            Malborne, Australia
-                                        </li>
-                                        <li>
-                                            55 Main Street, 2nd block
-                                            Malborne, Australia
-                                        </li>
-                                        <li>
-                                            <a href="mailto:info@example.com" className="link">info@example.com</a>
-                                        </li>
-                                        <li>
-                                            <a href="tel:+0001238899">+000 (123) 88 99</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+      <footer className="footer-section fix footer-bg">
+        {/* Decorative elements */}
+        <div className="big-circle"><img src="/assets/img/footer/big-circle.png" alt="" /></div>
+        <div className="circle-shape-2"><img src="/assets/img/footer/circle-2.png" alt="" /></div>
+        <div className="Vector-shape-2"><img src="/assets/img/footer/Vector-2.png" alt="" /></div>
+        
+        <div className="container">
+          {/* Personalized Banners */}
+          <div className="footer-banner-items">
+            <div className="row g-4">
+              {/* Welcome Back Banner */}
+              <div className="col-lg-6">
+                <div className="footer-banner">
+                  <div className="content">
+                    <h3 className="wow fadeInUp">
+                      {user ? (
+                        <>
+                          Welcome back, <span style={{ color: "#FFF", fontWeight: 600 }}>{user.userName}</span>!
+                        </>
+                      ) : (
+                        "Your Learning Journey"
+                      )}
+                    </h3>
+                    <p className="wow fadeInUp" data-wow-delay=".3s">Ready to jump back in? Continue where you left off and achieve your goals.</p>
+                    <Link to="/profile" className="theme-btn wow fadeInUp" data-wow-delay=".5s">Go to Your Profile</Link>
+                  </div>
+                  <div className="thumb"><img src="/assets/img/boy-img-2.png" alt="Illustration of a person learning" className="wow fadeInUp" data-wow-delay="0.7s" /></div>
                 </div>
-                <div className={`footer-bottom wow fadeInUp ${style_2 ? "style-4" : ""}`} data-wow-delay=".3s">
-                    <p>Copyright © <Link to="/">Eduspace</Link>, all rights reserved.</p>
+              </div>
+              {/* Discover Banner */}
+              <div className="col-lg-6">
+                <div className="footer-banner style-2">
+                  <div className="content">
+                    <h3 className="wow fadeInUp">Discover Something New</h3>
+                    <p className="wow fadeInUp" data-wow-delay=".3s">Our catalog is always growing. Explore new topics and find your next passion.</p>
+                    <Link to="/courses" className="theme-btn wow fadeInUp" data-wow-delay=".5s">Browse All Courses</Link>
+                  </div>
+                  <div className="thumb"><img src="/assets/img/boy-img-3.png" alt="Illustration of a person exploring" className="wow img-custom-anim-left" data-wow-duration="1.5s" data-wow-delay="0.3s" /></div>
                 </div>
+              </div>
             </div>
-            <div className={`footer-name ${style_2 ? "style-2" : ""}`}>
-                <h2>
-                    Eduspace
-                </h2>
+          </div>
+
+          {/* Data-Driven Link Section */}
+          <div className="footer-widget-wrapper">
+            <div className="row">
+              {/* Column 1: Brand/Social */}
+              <div className="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".2s">{/* ... content as before ... */}</div>
+
+              {/* === THE CORRECTED COLUMNS START HERE === */}
+              
+              {/* Column 2: Explore */}
+              <div className="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".4s">
+                <div className="single-footer-widget">
+                  <div className="widget-head"><h3>Explore</h3></div>
+                  <nav aria-label="Explore Eduspace">
+                    <ul className="list-area">{exploreLinks.map((link, index) => <li key={index}><Link to={link.to}>{link.text}</Link></li>)}</ul>
+                  </nav>
+                </div> {/* <-- This closing div was missing */}
+              </div>
+
+              {/* Column 3: Quick Links */}
+              <div className="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".6s">
+                <div className="single-footer-widget">
+                  <div className="widget-head"><h3>Quick Links</h3></div>
+                  <nav aria-label="Quick Links">
+                    <ul className="list-area">{quickLinks.map((link, index) => <li key={index}><Link to={link.to}>{link.text}</Link></li>)}</ul>
+                  </nav>
+                </div> {/* <-- This closing div was missing */}
+              </div>
+
+              {/* Column 4: Contact Us */}
+              <div className="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".8s">
+                <div className="single-footer-widget">
+                  <div className="widget-head"><h3>Contact Us</h3></div>
+                  <address className="footer-content">
+                    <ul className="contact-info">
+                      <li><i className="fas fa-map-marker-alt"></i>{contactInfo.address}</li>
+                      <li><i className="fas fa-envelope"></i><a href={`mailto:${contactInfo.email}`} className="link">{contactInfo.email}</a></li>
+                      <li><i className="fas fa-phone-alt"></i><a href={`tel:${contactInfo.phone.replace(/\s/g, '')}`} className="link">{contactInfo.phone}</a></li>
+                    </ul>
+                  </address>
+                </div> {/* <-- This closing div was missing */}
+              </div>
             </div>
-        </footer>
+          </div>
+          
+          <div className="footer-bottom style-2">
+            <p>Copyright © {new Date().getFullYear()} <Link to="/">Eduspace</Link>. All Rights Reserved.</p>
+          </div>
+        </div>
+      </footer>
     </>
   );
 };

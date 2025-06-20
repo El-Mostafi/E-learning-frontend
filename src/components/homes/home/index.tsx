@@ -29,7 +29,7 @@ const HomeOne = () => {
       <HeroHomeOne />
       <FeatureHomeOne />
       <TopCategoryHomeOne />
-      <AboutHomeOne />
+      {/* <AboutHomeOne /> */}
       <PopularCoursesHomeOne />
       <TrendingCourses />
       <MarqueeOne />
@@ -37,10 +37,10 @@ const HomeOne = () => {
       <TeamHomeOne />
       <NewsletterHomeOne />
       <TestimonialHomeOne />
-      <BrandsHomeOne />
-      <BlogHomeOne />
+      {/* <BrandsHomeOne /> */}
+      {/* <BlogHomeOne /> */}
       <MarqueeOne />
-      {user!==null ? <FooterOne /> : <FooterTwo />}
+      {user!==null ? <FooterOne user={user} /> : <FooterTwo />}
       <ScrollTop />
     </>
   );

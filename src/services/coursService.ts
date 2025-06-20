@@ -147,6 +147,7 @@ export interface Review {
   userName?: string;
   userImg?: string;
   createdAt: Date;
+  course?: string;
 }
 
 export interface courseToEdit extends CreateCoursePayload {
@@ -435,17 +436,20 @@ export const coursService = {
     const response = await axiosInstance.get<{categories: string[], levels: string[], instructors: {userName: string, id: string}[]}>("/categories");
     return response.data;
   },
-
-async downloadCertificate(courseId: string) {
-  try {
-    const response = await axiosInstance.get(`/generate-certificate/${courseId}`, {
-      responseType: 'blob',
-    });
-    const blob = response.data as Blob;
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    // Use filename from Content-Disposition header if available
+  getCoursesCount: async () => {
+    const response = await axiosInstance.get<{ count: number }>("/courses/published/count");
+    return response.data;
+  },
+  downloadCertificate: async (courseId: string) => {
+    try {
+      const response = await axiosInstance.get(`/generate-certificate/${courseId}`, {
+        responseType: 'blob',
+      });
+      const blob = response.data as Blob;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      // Use filename from Content-Disposition header if available
     const disposition = response.headers['content-disposition'];
     let filename = 'certificate.pdf';
     if (disposition && disposition.indexOf('filename=') !== -1) {
