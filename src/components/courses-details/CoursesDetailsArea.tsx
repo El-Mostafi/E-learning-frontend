@@ -169,7 +169,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   // Check cart status
   useEffect(() => {
     const checkCartStatus = async () => {
-      if (!courseId) return;
+      if (!courseId || !user || !isTokenValid()) return;
       try {
         const response = await axiosInstance.get("/cart");
         const cartItems = response.data.courses;
@@ -184,7 +184,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
       }
     };
     checkCartStatus();
-  }, [courseId]);
+  }, [courseId, user]);
 
   // Fetch enrollment data
   useEffect(() => {
