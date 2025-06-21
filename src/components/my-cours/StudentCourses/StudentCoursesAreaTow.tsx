@@ -2,19 +2,17 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 
-import {
-  enrollmentService,
-} from "../../../services/enrollmentService";
+import { enrollmentService } from "../../../services/enrollmentService";
 import CourseCard from "./CourseCard";
 import CourseSorter from "./CourseSorter";
 import LoadingState from "./LoadingState";
 import ErrorState from "./ErrorState";
 import EmptyState from "./EmptyState";
 import Pagination from "./Pagination";
-import { 
+import {
   EnrolledCoursesResponse,
   EnrolledCoursesSortOption,
-  GetEnrolledCoursesOptions 
+  GetEnrolledCoursesOptions,
 } from "../../../services/interfaces/enrollment.interface";
 
 const sortOptions = [
@@ -30,7 +28,7 @@ const StudentCoursesAreaTwo: React.FC = () => {
     courses: [],
     totalPages: 0,
     currentPage: 1,
-    totalCourses: 0
+    totalCourses: 0,
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -38,11 +36,11 @@ const StudentCoursesAreaTwo: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [searchDebounce, setSearchDebounce] = useState<string>("");
-  
+
   const coursesPerPage = 6;
 
   const navigateToCourse = (courseId: string) => {
-    navigate("/courses-details", { state: { courseId } });
+    navigate("/course-details", { state: { courseId } });
   };
 
   useEffect(() => {
@@ -63,7 +61,7 @@ const StudentCoursesAreaTwo: React.FC = () => {
     const fetchCourses = async () => {
       setLoading(true);
       setError("");
-      
+
       try {
         const options: GetEnrolledCoursesOptions = {
           page: currentPage,
@@ -121,11 +119,10 @@ const StudentCoursesAreaTwo: React.FC = () => {
             </h1>
             <p className="text-sm text-gray-600">
               Showing{" "}
-              <span className="font-medium">{coursesData.courses.length}</span> of{" "}
-              <span className="font-medium">{coursesData.totalCourses}</span> courses
-              {searchDebounce && (
-                <span> matching "{searchDebounce}"</span>
-              )}
+              <span className="font-medium">{coursesData.courses.length}</span>{" "}
+              of <span className="font-medium">{coursesData.totalCourses}</span>{" "}
+              courses
+              {searchDebounce && <span> matching "{searchDebounce}"</span>}
             </p>
           </div>
 

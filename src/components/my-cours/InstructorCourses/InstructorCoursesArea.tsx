@@ -303,7 +303,7 @@ function InstructorCoursesArea() {
                         </li>
                       </ul>
                       <h3>
-                        <Link to="/courses-details">{cours.title}</Link>
+                        <Link to="/course-details">{cours.title}</Link>
                       </h3>
                       <div className="client-items">
                         <div className="icon-items">

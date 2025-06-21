@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { ChevronRight, BookOpen } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  enrollmentService,
-} from "../../../services/enrollmentService";
+import { enrollmentService } from "../../../services/enrollmentService";
 import { courseStudentTable } from "../../../services/interfaces/enrollment.interface";
-
-
 
 const CourseTable: React.FC = () => {
   const [courses, setCourses] = useState<courseStudentTable[]>([]);
@@ -59,7 +55,7 @@ const CourseTable: React.FC = () => {
             {courses.map((course, index) => (
               <tr
                 onClick={() => {
-                  navigate("/courses-details", {
+                  navigate("/course-details", {
                     state: { courseId: course.id },
                   });
                 }}
@@ -93,7 +89,7 @@ const CourseTable: React.FC = () => {
                         />
                       </div>
                       <span className="text-sm text-gray-500 min-w-[40px]">
-                        {course.progress}%
+                        {course.progress.toFixed(0)}%
                       </span>
                     </div>
                   </div>

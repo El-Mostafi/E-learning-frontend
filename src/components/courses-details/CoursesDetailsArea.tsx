@@ -2,7 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Accordion, Button } from "react-bootstrap";
 import axios from "axios";
-import { X, Award, CheckCircle, Download, Play, FileQuestion } from "lucide-react";
+import {
+  X,
+  Award,
+  CheckCircle,
+  Download,
+  Play,
+  FileQuestion,
+  GraduationCap,
+} from "lucide-react";
 
 // Services
 import {
@@ -12,9 +20,7 @@ import {
   courseData,
 } from "../../services/coursService";
 import axiosInstance from "../../services/api";
-import {
-  enrollmentService,
-} from "../../services/enrollmentService";
+import { enrollmentService } from "../../services/enrollmentService";
 
 // Components
 import VideoPlayer from "./VideoPlayer/VideoPlayer";
@@ -24,6 +30,8 @@ import ModernReviewForm from "./Review/ModernReviewForm";
 import ReviewsList from "./Review/ReviewsList";
 import CertificatePreview from "./CertificatePreview";
 import { completedSection } from "../../services/interfaces/enrollment.interface";
+import { useAuth } from "../../context/AuthContext";
+import { isTokenValid } from "../../utils/ProtectedRoutes";
 
 interface CoursesDetailsAreaProps {
   setBreadcrumbData: (data: courseData) => void;
@@ -34,6 +42,7 @@ const QUIZ_PASS_THRESHOLD = 70;
 const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   setBreadcrumbData,
 }) => {
+  const { user } = useAuth();
   // Core state
   const [course, setCourse] = useState<courseData>();
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,7 +89,8 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   const [reviewStatusType, setReviewStatusType] = useState<string>("success");
 
   // Certificate state
-  const [showCertificatePreview, setShowCertificatePreview] = useState<boolean>(false);
+  const [showCertificatePreview, setShowCertificatePreview] =
+    useState<boolean>(false);
 
   // Refs and constants
   const videoPlayerRef = useRef<HTMLDivElement>(null);
@@ -95,15 +105,17 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
   useEffect(() => {
     const fetchCourse = async () => {
       if (!courseId) {
-        setError("Course ID is missing");
-        setLoading(false);
+        navigate("/");
         return;
       }
       try {
-        const response = await coursService.getCourseDetails(courseId);
+        const response = await coursService.getCourseDetails(
+          courseId,
+          user && user.role === "student" ? user.userId : undefined
+        );
         setCourse(response);
         setBreadcrumbData(response);
-        console.log("Course data:", response.appliedCoupon);
+        console.log("Course data:", response);
         setAppliedCoupon(
           response.appliedCoupon === undefined ? null : response.appliedCoupon
         );
@@ -152,7 +164,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     };
 
     fetchCourse();
-  }, [courseId, setBreadcrumbData]);
+  }, [courseId, setBreadcrumbData, navigate, user]);
 
   // Check cart status
   useEffect(() => {
@@ -387,7 +399,10 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("API Error:", error.response?.data);
-        return { success: false, error: error.response?.data?.errors[0].message || "Coupon error" };
+        return {
+          success: false,
+          error: error.response?.data?.errors[0].message || "Coupon error",
+        };
       } else {
         return { success: false, error: "Invalid or expired coupon code" };
       }
@@ -574,8 +589,15 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                 <p className="text-center text-gray-600">Loading quiz...</p>
               ) : (
                 <QuizComponent
+                  isOpen={showQuiz}
+                  onClose={() => setShowQuiz(false)}
                   questions={quizQuestions}
                   onComplete={handleQuizComplete}
+                  handleGetCertificate={() => {
+                    setShowQuiz(false);
+                    setShowCertificatePreview(true);
+                  }}
+                  courseName={course?.title}
                 />
               )}
             </div>
@@ -666,76 +688,74 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                     />
                   </div>
 
-                  {isUserEnrolled &&
-                    currentCourseSection && (
-                      <>
-                        <div className="video-navigation mt-3 mb-4 d-flex justify-content-between">
-                          <Button
-                            className="btn btn-outline-primary d-flex align-items-center"
-                            variant="outline-secondary"
-                            disabled={
-                              currentSectionIndex === 0 &&
-                              currentLectureIndex === 0
-                            }
-                            onClick={handlePreviousLecture}
-                          >
-                            <i className="fas fa-arrow-left me-2" />
-                            Previous Lecture
-                          </Button>
+                  {isUserEnrolled && currentCourseSection && (
+                    <>
+                      <div className="video-navigation mt-3 mb-4 d-flex justify-content-between">
+                        <Button
+                          className="btn btn-outline-primary d-flex align-items-center"
+                          variant="outline-secondary"
+                          disabled={
+                            currentSectionIndex === 0 &&
+                            currentLectureIndex === 0
+                          }
+                          onClick={handlePreviousLecture}
+                        >
+                          <i className="fas fa-arrow-left me-2" />
+                          Previous Lecture
+                        </Button>
 
-                          <div className="d-flex align-items-center">
-                            <span className="mx-3 text-muted">
-                              Lecture {currentLectureIndex + 1} /{" "}
-                              {currentCourseSection.lectures.length} (Section{" "}
-                              {currentSectionIndex + 1})
-                            </span>
-                          </div>
-
-                          <Button
-                            className="btn d-flex align-items-center"
-                            variant={nextButtonVariant}
-                            disabled={nextButtonDisabled}
-                            onClick={markLectureComplete}
-                          >
-                            {nextButtonText}
-                          </Button>
+                        <div className="d-flex align-items-center">
+                          <span className="mx-3 text-muted">
+                            Lecture {currentLectureIndex + 1} /{" "}
+                            {currentCourseSection.lectures.length} (Section{" "}
+                            {currentSectionIndex + 1})
+                          </span>
                         </div>
 
-                        <div className="course-progress mb-4">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h5 className="m-0">Course Progress</h5>
-                            <span className="progress-percentage">
-                              {progress.toFixed(0)}%
-                            </span>
-                          </div>
+                        <Button
+                          className="btn d-flex align-items-center"
+                          variant={nextButtonVariant}
+                          disabled={nextButtonDisabled}
+                          onClick={markLectureComplete}
+                        >
+                          {nextButtonText}
+                        </Button>
+                      </div>
+
+                      <div className="course-progress mb-4">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h5 className="m-0">Course Progress</h5>
+                          <span className="progress-percentage">
+                            {progress.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div
+                          className="progress"
+                          style={{ height: "7px", borderRadius: "5px" }}
+                        >
                           <div
-                            className="progress"
-                            style={{ height: "7px", borderRadius: "5px" }}
-                          >
-                            <div
-                              className="progress-bar progress-bar-striped progress-bar-animated"
-                              role="progressbar"
-                              style={{
-                                width: `${progress}%`,
-                                background:
-                                  "linear-gradient( #4481eb, #04befe)",
-                                borderRadius: "5px",
-                                height: "7px",
-                              }}
-                              aria-valuenow={progress}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            />
-                          </div>
-                          <div className="d-flex justify-content-between mt-2 text-muted">
-                            <small>
-                              Completed: {lectureCountCompleted} lectures
-                            </small>
-                            <small>Total: {lectureCount} lectures</small>
-                          </div>
+                            className="progress-bar progress-bar-striped progress-bar-animated"
+                            role="progressbar"
+                            style={{
+                              width: `${progress}%`,
+                              background: "linear-gradient( #4481eb, #04befe)",
+                              borderRadius: "5px",
+                              height: "7px",
+                            }}
+                            aria-valuenow={progress}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                          />
                         </div>
-                      </>
-                    )}
+                        <div className="d-flex justify-content-between mt-2 text-muted">
+                          <small>
+                            Completed: {lectureCountCompleted} lectures
+                          </small>
+                          <small>Total: {lectureCount} lectures</small>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {renderQuizSection()}
 
@@ -932,15 +952,23 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                                   "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                                 }
                                 alt={
-                                  course.instructorName?.replace("|", " ")==="Admin"?"Eduspace":course.instructorName?.replace("|", " ") ||
-                                  "Instructor"
+                                  course.instructorName?.replace("|", " ") ===
+                                  "Admin"
+                                    ? "Eduspace"
+                                    : course.instructorName?.replace(
+                                        "|",
+                                        " "
+                                      ) || "Instructor"
                                 }
                               />
                             </div>
                             <div className="content">
                               <h4>
-                                {course.instructorName?.replace("|", " ")==="Admin"?"Eduspace":course.instructorName?.replace("|", " ") ||
-                                  "N/A"}
+                                {course.instructorName?.replace("|", " ") ===
+                                "Admin"
+                                  ? "Eduspace"
+                                  : course.instructorName?.replace("|", " ") ||
+                                    "N/A"}
                               </h4>
                               <span>
                                 {course.instructorExpertise ||
@@ -1064,7 +1092,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                       <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 opacity-20 blur-2xl"></div>
                     </div>
 
-                    {!isUserEnrolled ? (
+                    {!isUserEnrolled && user && user.role === "student" ? (
                       <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
                         <p
                           className="text-gray-600 mb-4 line-clamp-2"
@@ -1151,7 +1179,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                           </div>
                         )}
                       </div>
-                    ) : (
+                    ) : isUserEnrolled && user && user.role === "student" ? (
                       <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
                         <div className="relative">
                           {completed && (
@@ -1279,6 +1307,35 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                           )}
                         </div>
                       </div>
+                    ) : (
+                      (!user || !isTokenValid()) && (
+                        <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
+                          <p
+                            className="text-gray-600 mb-4 line-clamp-2"
+                            dangerouslySetInnerHTML={{
+                              __html: course.description
+                                ? course.description.substring(0, 80) + "..."
+                                : "",
+                            }}
+                          ></p>
+
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="text-2xl font-bold text-gray-900">
+                              {`$${course.price?.toFixed(2) || "XXXX"}`}
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 mt-6">
+                            <button
+                              onClick={() => navigate("/sign-in")}
+                              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                              <GraduationCap className="w-4 h-4" />
+                              Start Learning
+                            </button>
+                          </div>
+                        </div>
+                      )
                     )}
                   </div>
 
@@ -1293,7 +1350,9 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                           <span>Instructor</span>
                         </div>
                         <span className="text-gray-900 font-medium">
-                          {course.instructorName!.replace("|", " ")==="Admin"? "Eduspace": course.instructorName!.replace("|", " ")}
+                          {course.instructorName!.replace("|", " ") === "Admin"
+                            ? "Eduspace"
+                            : course.instructorName!.replace("|", " ")}
                         </span>
                       </li>
                       <li className="flex items-center justify-between">

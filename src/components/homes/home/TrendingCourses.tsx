@@ -6,6 +6,12 @@ import {
   coursService,
 } from "../../../services/coursService";
 import Pagination from "../../pagination/Pagination";
+import axios from "axios";
+import axiosInstance from "../../../services/api";
+import { cartService } from "../../../services/cartService";
+import { enrollmentService } from "../../../services/enrollmentService";
+import { useAuth } from "../../../context/AuthContext";
+import { cartDetails } from "../../../services/interfaces/cart.interface";
 
 const styles = `
   .icon-items {
@@ -287,6 +293,15 @@ const styles = `
   .post-class i {
     font-size: 0.75rem;
   }
+  .cart-icon-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
 `;
 
 const formatDuration = (totalSeconds: number) => {
@@ -318,19 +333,19 @@ const formatDuration = (totalSeconds: number) => {
 const truncateDescription = (text: string, maxLength: number = 120): string => {
   // Remove HTML tags first
   const cleanText = text.replace(/<\/?[^>]+(>|$)/g, "");
-  
+
   if (cleanText.length <= maxLength) {
     return cleanText;
   }
-  
+
   // Find the last complete word within the limit
   const truncated = cleanText.substring(0, maxLength);
-  const lastSpaceIndex = truncated.lastIndexOf(' ');
-  
+  const lastSpaceIndex = truncated.lastIndexOf(" ");
+
   if (lastSpaceIndex > maxLength * 0.8) {
     return truncated.substring(0, lastSpaceIndex) + "...";
   }
-  
+
   return truncated + "...";
 };
 
@@ -343,6 +358,14 @@ const PopularCoursesHomeOne = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState<string[]>([]);
+
+  const [cartError, setCartError] = useState("");
+  const [coursesInCart, setCoursesInCart] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [cart, setCart] = useState<cartDetails | null>(null);
+  const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
+  const [myEnrollments, setMyEnrollments] = useState<string[]>([]);
+  const { user } = useAuth();
   const pageSize = 8;
 
   useEffect(() => {
@@ -373,6 +396,78 @@ const PopularCoursesHomeOne = () => {
 
     fetchCourses();
   }, [currentPage, selectedCategory, pageSize]);
+
+  const fetchMyEnrollments = async () => {
+    if (user !== null && user.role === "student") {
+      setLoading(true);
+      try {
+        const response = await enrollmentService.getMyEnrollmentsIds();
+        setMyEnrollments(response);
+        console.log("My Enrollments:", response);
+      } catch (err) {
+        setError("Failed to load courses. Please try again later.");
+        console.error("Failed to fetch my enrollments:", err);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setMyEnrollments([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyEnrollments();
+  }, []);
+  const fetchCart = async () => {
+    const cartData = await cartService.getCart();
+    setCart(cartData);
+
+    const map: string[] = [];
+    cartData.courses.forEach((item) => {
+      map.push(item._id);
+    });
+
+    setCoursesInCart(map);
+    console.log("Cart data:", cartData);
+  };
+  useEffect(() => {
+    if (user !== null && user.role === "student") {
+      fetchCart();
+    } else {
+      setCart(null);
+    }
+  }, [user]);
+  const handleAddToCart = async (courseId: string) => {
+    if (!courseId) {
+      setCartError("Course ID is missing");
+      return;
+    }
+    setUpdatingCourseId(courseId);
+    setCartError("");
+    try {
+      if (coursesInCart.includes(courseId)) {
+        await axiosInstance.delete("/cart/remove", { data: { courseId } });
+      } else {
+        await axiosInstance.post("/cart/add", { courseId });
+      }
+      fetchCart();
+      // setIsInCart((prevIsInCart) => {
+      //   const newIsInCart = new Map(prevIsInCart);
+      //   newIsInCart.set(courseId, !newIsInCart.get(courseId));
+      //   return newIsInCart;
+      // });
+    } catch (err) {
+      console.error("Cart action error:", err);
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message
+        : `Failed to ${
+            coursesInCart.includes(courseId) ? "remove" : "add"
+          } course.`;
+      setCartError(message || "An unexpected error occurred.");
+    } finally {
+      setUpdatingCourseId(null);
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -511,13 +606,13 @@ const PopularCoursesHomeOne = () => {
                               ))}
                             </li>
                           </ul>
-                          
+
                           <h5>
                             <Link
-                              to="/courses-details"
+                              to="/course-details"
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate("/courses-details", {
+                                navigate("/course-details", {
                                   state: { courseId: course.id },
                                 });
                               }}
@@ -552,7 +647,7 @@ const PopularCoursesHomeOne = () => {
                               </Link>
                             </p>
                           </div>
-                          
+
                           <ul className="post-class">
                             <li>
                               <i className="far fa-books"></i>
@@ -563,6 +658,11 @@ const PopularCoursesHomeOne = () => {
                               {course.students} Students
                             </li>
                           </ul>
+                          {cartError && (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                              {cartError}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -587,10 +687,10 @@ const PopularCoursesHomeOne = () => {
                           </ul>
                           <h5>
                             <Link
-                              to="/courses-details"
+                              to="/course-details"
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate("/courses-details", {
+                                navigate("/course-details", {
                                   state: { courseId: course.id },
                                 });
                               }}
@@ -637,18 +737,62 @@ const PopularCoursesHomeOne = () => {
                               {course.students} Students
                             </li>
                           </ul>
-                          <Link
-                            to="/courses-details"
-                            className="theme-btn yellow-btn"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              navigate("/courses-details", {
-                                state: { courseId: course.id },
-                              });
-                            }}
-                          >
-                            Enroll Now
-                          </Link>
+                          <ul className="post-class">
+                            <li>
+                              <Link
+                                to="/course-details"
+                                className="theme-btn yellow-btn"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  navigate("/course-details", {
+                                    state: { courseId: course.id },
+                                  });
+                                }}
+                              >
+                                {user && user.role === "student"
+                                  ? myEnrollments.includes(course.id)
+                                    ? "Continue Learning"
+                                    : "Enroll Now"
+                                  : user === null
+                                  ? "Enroll Now"
+                                  : "See Details"}
+                              </Link>
+                            </li>
+                            <li>
+                              {user &&
+                                user.role === "student" &&
+                                !myEnrollments.includes(course.id) && (
+                                  <button
+                                    onClick={() => handleAddToCart(course.id)}
+                                    className={`theme-btn cart-icon-btn ${
+                                      coursesInCart.includes(course.id)
+                                        ? "red-btn"
+                                        : ""
+                                    }`}
+                                    disabled={updatingCourseId === course.id}
+                                    title={
+                                      updatingCourseId === course.id
+                                        ? coursesInCart.includes(course.id)
+                                          ? "Removing from cart..."
+                                          : "Adding to cart..."
+                                        : coursesInCart.includes(course.id)
+                                        ? "Remove from cart"
+                                        : "Add to cart"
+                                    }
+                                  >
+                                    <i
+                                      className={`far ${
+                                        updatingCourseId === course.id
+                                          ? "fa-spinner fa-spin"
+                                          : coursesInCart.includes(course.id)
+                                          ? "fa-times"
+                                          : "fa-shopping-basket"
+                                      }`}
+                                    ></i>
+                                  </button>
+                                )}
+                            </li>
+                          </ul>
                         </div>
                       </div>
                     </div>

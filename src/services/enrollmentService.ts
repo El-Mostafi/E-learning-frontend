@@ -62,4 +62,13 @@ export const enrollmentService = {
     );
     return response.data;
   },
+  getMyEnrollmentsIds: async () => {
+    const response = await axiosInstance.get<{
+      success : true,
+      courses: string[]
+    }>(
+      "/my-courses/enrolled/ids"
+    );
+    return response.data.courses;
+  },
 };

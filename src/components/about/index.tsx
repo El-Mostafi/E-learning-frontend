@@ -4,7 +4,7 @@ import Preloader from "../../common/Preloader";
 import ScrollTop from "../../common/ScrollTop";
 import FooterOne from "../../layouts/footers/FooterOne";
 import HeaderOne from "../../layouts/headers/HeaderOne";
-import TeamHomeFive from "../homes/home-5/TeamHomeFive";
+import TeamHomeFive from "./TeamHomeFive";
 import BrandsHomeOne from "../homes/home/BrandsHomeOne";
 import NewsletterHomeOne from "../homes/home/NewsletterHomeOne";
 import TestimonialHomeOne from "../homes/home/TestimonialHomeOne";

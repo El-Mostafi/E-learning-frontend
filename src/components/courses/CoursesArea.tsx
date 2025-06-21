@@ -3,6 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import NiceSelect, { Option } from "../../ui/NiceSelect";
 import { coursService, courseDataGenerale } from "../../services/coursService";
 import { Star } from "lucide-react";
+import axiosInstance from "../../services/api";
+import { cartService } from "../../services/cartService";
+import { cartDetails } from "../../services/interfaces/cart.interface";
+import { useAuth } from "../../context/AuthContext";
+import axios from "axios";
+import { enrollmentService } from "../../services/enrollmentService";
+import { isTokenValid } from "../../utils/ProtectedRoutes";
 
 const CoursesArea = () => {
   const [courses, setCourses] = useState<courseDataGenerale[]>([]);
@@ -15,6 +22,14 @@ const CoursesArea = () => {
   const [totalPages, setTotalPages] = useState(1);
   const coursesPerPage = 9;
   const [totalCourses, setTotalCourses] = useState(0);
+
+  const [cartError, setCartError] = useState("");
+  const [coursesInCart, setCoursesInCart] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [cart, setCart] = useState<cartDetails | null>(null);
+  const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
+  const [myEnrollments, setMyEnrollments] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const fetchCourses = async (page: number, sortOption?: string) => {
     console.log("Sort Option", sortOption);
@@ -42,6 +57,28 @@ const CoursesArea = () => {
     fetchCourses(currentPage, sortBy);
   }, [currentPage, sortBy]);
 
+  const fetchMyEnrollments = async () => {
+    if (user !== null && user.role === "student" && isTokenValid() ) {
+      setLoading(true);
+      try {
+        const response = await enrollmentService.getMyEnrollmentsIds();
+        setMyEnrollments(response);
+        console.log("My Enrollments:", response);
+      } catch (err) {
+        setError("Failed to load courses. Please try again later.");
+        console.error("Failed to fetch my enrollments:", err);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setMyEnrollments([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyEnrollments();
+  }, []);
+
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     // The useEffect will automatically call fetchCourses when currentPage changes
@@ -50,7 +87,56 @@ const CoursesArea = () => {
   const selectHandler = (item: Option) => {
     setSortBy(item.value);
     setCurrentPage(1); // Reset to first page when sorting changes
-    // The useEffect will automatically call fetchCourses when sortBy changes
+  };
+  const fetchCart = async () => {
+    const cartData = await cartService.getCart();
+    setCart(cartData);
+
+    const map: string[] = [];
+    cartData.courses.forEach((item) => {
+      map.push(item._id);
+    });
+
+    setCoursesInCart(map);
+    console.log("Cart data:", cartData);
+  };
+  useEffect(() => {
+    if (user !== null && user.role === "student" && isTokenValid() ) {
+      fetchCart();
+    } else {
+      setCart(null);
+    }
+  }, [user]);
+  const handleAddToCart = async (courseId: string) => {
+    if (!courseId) {
+      setCartError("Course ID is missing");
+      return;
+    }
+    setUpdatingCourseId(courseId);
+    setCartError("");
+    try {
+      if (coursesInCart.includes(courseId)) {
+        await axiosInstance.delete("/cart/remove", { data: { courseId } });
+      } else {
+        await axiosInstance.post("/cart/add", { courseId });
+      }
+      fetchCart();
+      // setIsInCart((prevIsInCart) => {
+      //   const newIsInCart = new Map(prevIsInCart);
+      //   newIsInCart.set(courseId, !newIsInCart.get(courseId));
+      //   return newIsInCart;
+      // });
+    } catch (err) {
+      console.error("Cart action error:", err);
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message
+        : `Failed to ${
+            coursesInCart.includes(courseId) ? "remove" : "add"
+          } course.`;
+      setCartError(message || "An unexpected error occurred.");
+    } finally {
+      setUpdatingCourseId(null);
+    }
   };
 
   // Remove client-side pagination since server handles it
@@ -138,7 +224,11 @@ const CoursesArea = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     navigate("/courses-grid", {
-                      state: { viewType: "grid", currentPage: currentPage, sortBy: sortBy },
+                      state: {
+                        viewType: "grid",
+                        currentPage: currentPage,
+                        sortBy: sortBy,
+                      },
                     });
                   }}
                 >
@@ -150,7 +240,11 @@ const CoursesArea = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     navigate("/courses-grid", {
-                      state: { viewType: "list", currentPage: currentPage, sortBy: sortBy },
+                      state: {
+                        viewType: "list",
+                        currentPage: currentPage,
+                        sortBy: sortBy,
+                      },
                     });
                   }}
                 >
@@ -245,10 +339,10 @@ const CoursesArea = () => {
                       </ul>
                       <h3>
                         <Link
-                          to="/courses-details"
+                          to="/course-details"
                           onClick={(e) => {
                             e.preventDefault();
-                            navigate("/courses-details", {
+                            navigate("/course-details", {
                               state: { courseId: course.id },
                             });
                           }}
@@ -268,41 +362,75 @@ const CoursesArea = () => {
                             }
                             alt={course.instructorName!.replace("|", " ")}
                             className="w-full h-full object-cover"
-                            
                           />
                         </div>
                         <p>
                           <Link
                             to={"/instructor-details/" + course.InstructorId}
                           >
-                            {course.instructorName!.replace("|", " ")==="Admin"?"Eduspace ":course.instructorName!.replace("|", " ")}
+                            {course.instructorName!.replace("|", " ") ===
+                            "Admin"
+                              ? "Eduspace "
+                              : course.instructorName!.replace("|", " ")}
                           </Link>
                         </p>
                       </div>
                       <ul className="post-class">
                         <li>
-                          <i className="far fa-books"></i>
-                          Lessons
-                        </li>
-                        <li>
                           <i className="far fa-user"></i>
                           {course.students} Students
                         </li>
                         <li>
+                          {user && isTokenValid() &&
+                          user.role === "student" &&
+                          !myEnrollments.includes(course.id) ? (
+                            <button
+                              onClick={() => handleAddToCart(course.id)}
+                              className={`theme-btn `}
+                              disabled={updatingCourseId === course.id}
+                            >
+                              <i className="far fa-shopping-basket"></i>{" "}
+                              {updatingCourseId === course.id
+                                ? coursesInCart.includes(course.id)
+                                  ? "Removing..."
+                                  : "Adding..."
+                                : coursesInCart.includes(course.id)
+                                ? "In Cart"
+                                : "Add to Cart"}
+                            </button>
+                          ) : (
+                            <li>
+                              <i className="far fa-books"></i>
+                              lessons
+                            </li>
+                          )}
+                        </li>
+                        <li>
                           <Link
-                            to="/courses-details"
+                            to="/course-details"
                             className="theme-btn"
                             onClick={(e) => {
                               e.preventDefault();
-                              navigate("/courses-details", {
+                              navigate("/course-details", {
                                 state: { courseId: course.id },
                               });
                             }}
                           >
-                            Enroll Now
+                            {user && user.role === "student" && isTokenValid() 
+                              ? myEnrollments.includes(course.id)
+                                ? "Continue Learning"
+                                : "Enroll"
+                              : user === null
+                              ? "Enroll Now"
+                              : "See Details"}
                           </Link>
                         </li>
                       </ul>
+                      {cartError && (
+                        <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                          {cartError}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -10,6 +10,12 @@ import NiceSelect, { Option } from "../../ui/NiceSelect";
 import { coursService, courseDataGenerale } from "../../services/coursService";
 import CourseGrid from "./CourseGrid";
 import CourseList from "./CourseList";
+import { cartDetails } from "../../services/interfaces/cart.interface";
+import { useAuth } from "../../context/AuthContext";
+import { enrollmentService } from "../../services/enrollmentService";
+import { cartService } from "../../services/cartService";
+import axiosInstance from "../../services/api";
+import axios from "axios";
 
 interface CoursesContainerProps {
   initialViewType?: "grid" | "list";
@@ -18,7 +24,9 @@ interface CoursesContainerProps {
 function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
   const location = useLocation();
   const [courses, setCourses] = useState<courseDataGenerale[]>([]);
-  const [viewType, setViewType] = useState<"grid" | "list">(location.state?.viewType || initialViewType);
+  const [viewType, setViewType] = useState<"grid" | "list">(
+    location.state?.viewType || initialViewType
+  );
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -33,9 +41,11 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
   const [selectedRating, setSelectedRating] = useState<number[]>([]);
 
   const [currentPage, setCurrentPage] = useState(
-    location.state?.viewType ?
-    location.state?.viewType === "list" ? Math.ceil((((location.state?.currentPage*9)-8)/5)) :
-    location.state?.currentPage || 1 : 1
+    location.state?.viewType
+      ? location.state?.viewType === "list"
+        ? Math.ceil((location.state?.currentPage * 9 - 8) / 5)
+        : location.state?.currentPage || 1
+      : 1
   );
   const [totalPages, setTotalPages] = useState(1);
   const [totalCourses, setTotalCourses] = useState(0);
@@ -51,6 +61,14 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
   const categoryListRef = useRef<HTMLDivElement>(null);
   const scrollPositionRef = useRef<number>(0);
 
+  const [cartError, setCartError] = useState("");
+  const [coursesInCart, setCoursesInCart] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [cart, setCart] = useState<cartDetails | null>(null);
+  const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
+  const [myEnrollments, setMyEnrollments] = useState<string[]>([]);
+  const { user } = useAuth();
+
   useEffect(() => {
     const fetchFilteringData = async () => {
       try {
@@ -59,7 +77,6 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
         setLevels(filteringData.levels);
         setInstructors(filteringData.instructors);
       } catch (err) {
-        
         console.error("Failed to fetch categories:", err);
       }
     };
@@ -116,6 +133,73 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
   useEffect(() => {
     fetchCourses();
   }, [fetchCourses]);
+
+  const fetchMyEnrollments = async () => {
+    if (user !== null && user.role === "student") {
+      setIsFetching(true);
+      try {
+        const response = await enrollmentService.getMyEnrollmentsIds();
+        setMyEnrollments(response);
+        console.log("My Enrollments:", response);
+      } catch (err) {
+        setError("Failed to load courses. Please try again later.");
+        console.error("Failed to fetch my enrollments:", err);
+      } finally {
+        setIsFetching(false);
+      }
+    } else {
+      setMyEnrollments([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyEnrollments();
+  }, []);
+  const fetchCart = async () => {
+    const cartData = await cartService.getCart();
+    setCart(cartData);
+
+    const map: string[] = [];
+    cartData.courses.forEach((item) => {
+      map.push(item._id);
+    });
+
+    setCoursesInCart(map);
+    console.log("Cart data:", cartData);
+  };
+  useEffect(() => {
+    if (user !== null && user.role === "student") {
+      fetchCart();
+    } else {
+      setCart(null);
+    }
+  }, [user]);
+  const handleAddToCart = async (courseId: string) => {
+    if (!courseId) {
+      setCartError("Course ID is missing");
+      return;
+    }
+    setUpdatingCourseId(courseId);
+    setCartError("");
+    try {
+      if (coursesInCart.includes(courseId)) {
+        await axiosInstance.delete("/cart/remove", { data: { courseId } });
+      } else {
+        await axiosInstance.post("/cart/add", { courseId });
+      }
+      fetchCart();
+    } catch (err) {
+      console.error("Cart action error:", err);
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message
+        : `Failed to ${
+            coursesInCart.includes(courseId) ? "remove" : "add"
+          } course.`;
+      setCartError(message || "An unexpected error occurred.");
+    } finally {
+      setUpdatingCourseId(null);
+    }
+  };
 
   const handleCategoryChange = (category: string) => {
     if (categoryListRef.current) {
@@ -191,11 +275,11 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
   };
 
   const handleViewChange = (newViewType: "grid" | "list") => {
-  if (viewType !== newViewType) {
-    setViewType(newViewType);
-    setCurrentPage(1); 
-  }
-};
+    if (viewType !== newViewType) {
+      setViewType(newViewType);
+      setCurrentPage(1);
+    }
+  };
 
   const indexOfFirstCourse = (currentPage - 1) * coursesPerPage;
   const indexOfLastCourse = Math.min(
@@ -436,7 +520,6 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
             <div className="col-xl-9 col-lg-8">
               <div className="coureses-notices-wrapper">
                 <div className="courses-showing">
-                  
                   <div className="icon-items">
                     <Link
                       to="/courses-grid"
@@ -444,9 +527,7 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
                         e.preventDefault();
                         handleViewChange("grid");
                       }}
-                      className={`${
-                          viewType === "grid" ? "active" : ""
-                        }`}
+                      className={`${viewType === "grid" ? "active" : ""}`}
                     >
                       <i
                         className={`fas fa-th ${
@@ -461,9 +542,7 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
                         e.preventDefault();
                         handleViewChange("list");
                       }}
-                      className={`${
-                          viewType === "list" ? "active" : ""
-                        }`}
+                      className={`${viewType === "list" ? "active" : ""}`}
                     >
                       <i
                         className={`fas fa-bars ${
@@ -523,9 +602,23 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
                 )}
 
                 {viewType === "grid" ? (
-                  <CourseGrid courses={courses} />
+                  <CourseGrid
+                    courses={courses}
+                    handleAddToCart={handleAddToCart}
+                    myEnrollments={myEnrollments}
+                    updatingCourseId={updatingCourseId}
+                    coursesInCart={coursesInCart}
+                    cartError={cartError}
+                  />
                 ) : (
-                  <CourseList courses={courses} />
+                  <CourseList
+                    courses={courses}
+                    handleAddToCart={handleAddToCart}
+                    myEnrollments={myEnrollments}
+                    updatingCourseId={updatingCourseId}
+                    coursesInCart={coursesInCart}
+                    cartError={cartError}
+                  />
                 )}
 
                 <div className="page-nav-wrap pt-5 text-center">

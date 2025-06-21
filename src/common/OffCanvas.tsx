@@ -3,6 +3,7 @@ import MobileMenu from "../layouts/headers/MobileMenu";
 
  
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const OffCanvas = ({setOpenCanvas, openCanvas} : any) => {
   return (
     <>
@@ -17,18 +18,18 @@ const OffCanvas = ({setOpenCanvas, openCanvas} : any) => {
                                 </Link>
                             </div>
                             <div className="offcanvas__close" onClick={() => setOpenCanvas(false)}>
-                                <button>
+                                <button title="Close">
                                 <i className="fas fa-times"></i>
                                 </button>
                             </div>
                         </div>
                         <h3 className="offcanvas-title">Hello There!</h3>
-                        <p>Lorem ipsum dolor sit amet, consectetur <br /> adipiscing elit, </p>
+                        <p> Welcome to E-learning platform <br /> We are here to help you </p>
                         <div className="social-icon d-flex align-items-center">
-                            <a href="#"><i className="fab fa-facebook-f"></i></a>
-                            <a href="#"><i className="fab fa-twitter"></i></a>
-                            <a href="#"><i className="fab fa-youtube"></i></a>
-                            <a href="#"><i className="fab fa-linkedin-in"></i></a>
+                            <a href="https://www.facebook.com"><i className="fab fa-facebook-f"></i></a>
+                            <a href="https://www.twitter.com"><i className="fab fa-twitter"></i></a>
+                            <a href="https://www.youtube.com"><i className="fab fa-youtube"></i></a>
+                            <a href="https://www.linkedin.com"><i className="fab fa-linkedin-in"></i></a>
                         </div>
                         <div className="mobile-menu fix mb-3 mean-container">
                           <MobileMenu />
@@ -36,13 +37,6 @@ const OffCanvas = ({setOpenCanvas, openCanvas} : any) => {
                         <div className="offcanvas__contact">
                             <h3>Information</h3>
                             <ul className="contact-list">
-                                <li>
-                                    <span>
-                                        Address:
-                                    </span>
-                                    7300-7398 Colonial Rd,
-                                    Brooklyn, NY 11209
-                                </li>
                                 <li>
                                     <span>
                                         Call Us:
@@ -57,7 +51,7 @@ const OffCanvas = ({setOpenCanvas, openCanvas} : any) => {
                                 </li>
                             </ul>
                             <div className="offcanvas-button">
-                                <Link to="/sign-in" className="theme-btn style-2"><i className="far fa-user"></i> Admin</Link>
+                                <Link to="/sign-in" className="theme-btn style-2"><i className="far fa-sign-in"></i> SignIn</Link>
                                 <Link to="/register" className="theme-btn yellow-btn">Enroll Now</Link>
                             </div>
                         </div>

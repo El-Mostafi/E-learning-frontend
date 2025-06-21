@@ -121,7 +121,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         <div className="mt-auto">
           <div className="flex justify-between items-center mb-1">
             <span className="text-xs font-medium text-gray-700">
-              {course.progress}% Complete
+              {course.progress.toFixed(0)}% Complete
             </span>
             {course.completed && (
               <span className="flex items-center text-xs font-medium text-green-600">

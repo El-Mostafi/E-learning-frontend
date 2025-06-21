@@ -19,7 +19,8 @@ const decodeBase64Url = (str: string) => {
   return decodeURIComponent(atob(output));
 };
 
-const isTokenValid = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+export const isTokenValid = () => {
   const token = localStorage.getItem("token");
   if (!token) return false;
 
