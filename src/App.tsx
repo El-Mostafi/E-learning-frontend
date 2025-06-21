@@ -23,6 +23,7 @@ import ResetPassword from "./components/reset-password";
 import Profile from "./components/profile";
 import MyCourses from "./components/my-cours";
 import StudentsdRoutes from "./utils/StuendtsRouters";
+import StudentsdInstructorsRoutes from './utils/StuendtsInstructorsRouters';
 
 const router = createBrowserRouter([
   { path: "/", element: <HomeOne /> },
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
   { path: "/course-details", element: <CoursesDetails /> },
   { path: "/about", element: <About /> },
   { path: "/faq", element: <Faq /> },
+  { path: "/not-found", element: <NotFound /> },
   { path: "*", element: <NotFound /> },
 
   // Protected Routes
@@ -58,7 +60,7 @@ const router = createBrowserRouter([
   },
   //Students and Instructors Routes
   {
-    element: <ProtectedRoutes />, 
+    element: <StudentsdInstructorsRoutes />, 
     children: [
       { path: "/my-courses", element: <MyCourses /> },
     ],
