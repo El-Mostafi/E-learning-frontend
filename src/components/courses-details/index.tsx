@@ -9,8 +9,11 @@ import CoursesDetailsArea from "./CoursesDetailsArea";
 
 import RelatedCourses from "./RelatedCourses";
 import { courseData } from "../../services/coursService";
+import { useAuth } from "../../context/AuthContext";
+import FooterTwo from "../../layouts/footers/FooterTwo";
 
 const CoursesDetails = () => {
+  const {user} = useAuth();
   const [breadcrumbData, setBreadcrumbData] =
     useState<courseData | null>(null);
   return (
@@ -21,7 +24,7 @@ const CoursesDetails = () => {
       <CoursesDetailsArea setBreadcrumbData={setBreadcrumbData} />
       <RelatedCourses />
       <MarqueeOne style_2={true} />
-      <FooterOne />
+      {user ? <FooterOne user={user} /> : <FooterTwo />}
       <ScrollTop />
     </>
   );
