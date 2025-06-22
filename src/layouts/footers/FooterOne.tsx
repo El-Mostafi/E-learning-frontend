@@ -64,7 +64,7 @@ const FooterOne: React.FC<FooterOneProps> = ({ user }) => {
                         "Your Learning Journey"
                       )}
                     </h3>
-                    <p className="wow fadeInUp" data-wow-delay=".3s">Ready to jump back in? Continue where you left off and achieve your goals.</p>
+                    <p className="wow fadeInUp" data-wow-delay=".3s">Ready to dive back in? Pick up your journey, unlock new achievements, and make today your best learning day yet!</p>
                     <Link to="/profile" className="theme-btn wow fadeInUp" data-wow-delay=".5s">Go to Your Profile</Link>
                   </div>
                   <div className="thumb"><img src="/assets/img/boy-img-2.png" alt="Illustration of a person learning" className="wow fadeInUp" data-wow-delay="0.7s" /></div>
@@ -74,9 +74,15 @@ const FooterOne: React.FC<FooterOneProps> = ({ user }) => {
               <div className="col-lg-6">
                 <div className="footer-banner style-2">
                   <div className="content">
-                    <h3 className="wow fadeInUp">Discover Something New</h3>
-                    <p className="wow fadeInUp" data-wow-delay=".3s">Our catalog is always growing. Explore new topics and find your next passion.</p>
-                    <Link to="/courses" className="theme-btn wow fadeInUp" data-wow-delay=".5s">Browse All Courses</Link>
+                    <h3 className="wow fadeInUp">
+                      Ready for Your Next Adventure?
+                    </h3>
+                    <p className="wow fadeInUp" data-wow-delay=".3s">
+                      Discover trending courses, unlock new skills, and fuel your curiosity. Every day is a chance to learn something extraordinary!
+                    </p>
+                    <Link to="/courses" className="theme-btn wow fadeInUp" data-wow-delay=".5s">
+                      Explore All Courses
+                    </Link>
                   </div>
                   <div className="thumb"><img src="/assets/img/boy-img-3.png" alt="Illustration of a person exploring" className="wow img-custom-anim-left" data-wow-duration="1.5s" data-wow-delay="0.3s" /></div>
                 </div>

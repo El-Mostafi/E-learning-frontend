@@ -20,28 +20,36 @@ const FooterTwo = () => {
                     <div className="row g-4">
                         <div className="col-lg-6">
                             <div className="footer-banner">
-                                <div className="content">
-                                    <h3 className="wow fadeInUp">Become a Instructors?</h3>
-                                    <p className="wow fadeInUp" data-wow-delay=".3s">
-                                        Becoming an instructor requires the combination of expertise, passion.
+                                <div className="content" style={{ marginRight: "32px" }}>
+                                    <h3 className="wow fadeInUp">Become an Instructor</h3>
+                                    <p
+                                        className="wow fadeInUp d-flex align-items-center h-100"
+                                        data-wow-delay=".3s"
+                                        style={{ minHeight: "120px", textAlign: "justify" }}
+                                    >
+                                        Becoming an instructor is a rewarding journey that combines expertise, passion, and the drive to empower others. Share your knowledge, inspire learners, and unlock new opportunities for personal and professional growth.
                                     </p>
                                     <Link to="/register" className="theme-btn wow fadeInUp" data-wow-delay=".5s">Get Started</Link>
                                 </div>
-                                <div className="thumb">
+                                <div className="thumb" style={{ marginLeft: "32px" }}>
                                     <img src="assets/img/boy-img-2.png" alt="img" className="wow fadeInUp"  data-wow-delay="0.7s" />
                                 </div>
                             </div>
                         </div>
                         <div className="col-lg-6">
                             <div className="footer-banner style-2">
-                                <div className="content">
-                                    <h3 className="wow fadeInUp">Become a Students?</h3>
-                                    <p className="wow fadeInUp" data-wow-delay=".3s">
-                                        Becoming a student is a transformative that opens the door.
+                                <div className="content" style={{ marginRight: "32px" }}>
+                                    <h3 className="wow fadeInUp">Become a Student</h3>
+                                    <p
+                                        className="wow fadeInUp"
+                                        data-wow-delay=".3s"
+                                        style={{ textAlign: "justify" }}
+                                    >
+                                        Becoming a student is a transformative journey that opens the door to endless opportunities for learning, growth, and personal development. Embrace new knowledge and skills to shape your future.
                                     </p>
                                     <Link to="/register" className="theme-btn wow fadeInUp" data-wow-delay=".5s">Get Started</Link>
                                 </div>
-                                <div className="thumb">
+                                <div className="thumb" style={{ marginLeft: "32px" }}>
                                     <img src="assets/img/boy-img-3.png" alt="img" className="wow img-custom-anim-left" data-wow-duration="1.5s" data-wow-delay="0.3s" />
                                 </div>
                             </div>
