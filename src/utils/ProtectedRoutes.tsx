@@ -43,7 +43,7 @@ const isTokenValid = () => {
 };
 
 const ProtectedRoutes = () => {
-  return isTokenValid() ? <Outlet /> : <Navigate to="/" />;
+  return isTokenValid() ? <Outlet /> : <Navigate to="/sign-in" />;
 };
 
 export default ProtectedRoutes;
