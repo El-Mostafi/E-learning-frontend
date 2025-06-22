@@ -88,12 +88,12 @@ const CourseTable: React.FC = () => {
                         <div
                           className="h-full bg-blue-600 rounded-full transition-all duration-300"
                           style={{
-                            width: `${course.progress}%`,
+                            width: `${Math.round(course.progress)}%`,
                           }}
                         />
                       </div>
                       <span className="text-sm text-gray-500 min-w-[40px]">
-                        {course.progress}%
+                        {Math.round(course.progress)}%
                       </span>
                     </div>
                   </div>
