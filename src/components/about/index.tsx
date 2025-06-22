@@ -7,8 +7,6 @@ import FooterOne from "../../layouts/footers/FooterOne";
 import FooterTwo from "../../layouts/footers/FooterTwo";
 import HeaderOne from "../../layouts/headers/HeaderOne";
 import MapArea from "../contact/MapArea";
-import TeamHomeFive from "../homes/home-5/TeamHomeFive";
-import BrandsHomeOne from "../homes/home/BrandsHomeOne";
 import NewsletterHomeOne from "../homes/home/NewsletterHomeOne";
 import TeamHomeOne from "../homes/home/TeamHomeOne";
 import TestimonialHomeOne from "../homes/home/TestimonialHomeOne";
