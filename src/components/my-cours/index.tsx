@@ -7,8 +7,10 @@ import HeaderOne from "../../layouts/headers/HeaderOne";
 import MyCoursesAreaInstructor from "./InstructorCourses/InstructorCoursesArea";
 import { useAuth } from "../../context/AuthContext";
 import StudentCoursesAreaTow from "./StudentCourses/StudentCoursesAreaTow";
+import FooterTwo from "../../layouts/footers/FooterTwo";
 
 const MyCourses = () => {
+
   const { user } = useAuth();
 
   return (
@@ -22,7 +24,7 @@ const MyCourses = () => {
         <MyCoursesAreaInstructor />
       )}
       <MarqueeOne style_2={true} />
-      <FooterOne />
+      {user ? <FooterOne user={user} /> : <FooterTwo />}
       <ScrollTop />
     </>
   );

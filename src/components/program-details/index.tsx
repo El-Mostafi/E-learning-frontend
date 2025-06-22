@@ -2,7 +2,9 @@ import BreadcrumbEvent from "../../common/breadcrumb/BreadcrumbEvent";
 import MarqueeOne from "../../common/MarqueeOne";
 import Preloader from "../../common/Preloader";
 import ScrollTop from "../../common/ScrollTop";
+import { useAuth } from "../../context/AuthContext";
 import FooterOne from "../../layouts/footers/FooterOne";
+import FooterTwo from "../../layouts/footers/FooterTwo";
 import HeaderOne from "../../layouts/headers/HeaderOne";
 import ProgramDetailsArea from "./ProgramDetailsArea";
 import ProgramRelatedArea from "./ProgramRelatedArea";
@@ -10,6 +12,7 @@ import ProgramRelatedArea from "./ProgramRelatedArea";
  
 
 const ProgramDetails = () => {
+	const { user } = useAuth();
 	return (
 		<>
 		<Preloader />
@@ -18,7 +21,7 @@ const ProgramDetails = () => {
 			<ProgramDetailsArea />
 			<ProgramRelatedArea />
 			<MarqueeOne style_2={true} />
-			<FooterOne />
+			{user ? <FooterOne user={user} /> : <FooterTwo />}
 			<ScrollTop />
 		</>
 	);
