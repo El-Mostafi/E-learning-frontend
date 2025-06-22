@@ -1,5 +1,4 @@
 import axiosInstance from "./api";
-import { Review } from "./coursService";
 
 
 export interface TopReview {
