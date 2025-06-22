@@ -126,8 +126,7 @@ const instructorOptions: ApexOptions = {
 interface InstructorDashboardProps {
   profile: {
     profileImage: string;
-    firstName: string;
-    lastName: string;
+    UserName: string;
   };
   setQuickStat: React.Dispatch<React.SetStateAction<QuickStats | null>>;
 }
@@ -626,7 +625,7 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
                     <div className="col-xl-4 col-lg-6 col-md-6">
                       <div className="courses-card-main-items">
                         <div className="courses-card-items style-2">
-                          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-900 via-blue-900 to-blue-600 p-6 ">
+                          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-900 via-blue-900 to-blue-600 p-6 min-h-[386px]">
                             <div className="relative z-10">
                               <img
                                 src={
@@ -660,7 +659,7 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
                                 </span>
                               </li>
                             </ul>
-                            <h3>
+                            <h3 className="line-clamp-2">
                               <Link to="/my-courses">
                                 {`${course.title}`.substring(0, 80) + "..."}
                               </Link>
@@ -670,18 +669,18 @@ const InstructorDashboard: React.FC<InstructorDashboardProps> = ({
                                 <img
                                   src={
                                     profile.profileImage ||
-                                    "https://via.placeholder.com/40x40"
+                                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                                   }
-                                  alt={`${profile.firstName} ${profile.lastName}`}
+                                  alt={`${profile.UserName.replace("|", " ")} `}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).src =
-                                      "https://via.placeholder.com/40x40";
+                                      "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif";
                                   }}
                                 />
                               </div>
                               <p>
-                                {profile.firstName} {profile.lastName}
+                                {profile.UserName.replace("|", " ")}
                               </p>
                             </div>
                             <ul className="post-class">

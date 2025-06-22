@@ -530,19 +530,16 @@ const PopularCoursesHomeOne = () => {
                           </h5>
 
                           <div className="client-items">
-                            <div className="w-7 h-7 rounded-full overflow-hidden mr-2 bg-gray-100">
-                              <img
-                                src={
-                                  course.instructorImg ||
-                                  "https://via.placeholder.com/40x40"
-                                }
-                                alt={course.instructorName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    "https://via.placeholder.com/40x40";
-                                }}
-                              />
+                            <div className="icon-items">
+                              <i>
+                                <img
+                                  src={
+                                    course.instructorImg ||
+                                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
+                                  }
+                                  alt="instructor"
+                                />
+                              </i>
                             </div>
                             <p>
                               <Link
@@ -606,19 +603,16 @@ const PopularCoursesHomeOne = () => {
                             {truncateDescription(course.description)}
                           </div>
                           <div className="client-items">
-                            <div className="w-7 h-7 rounded-full overflow-hidden mr-2 bg-gray-100">
-                              <img
-                                src={
-                                  course.instructorImg ||
-                                  "https://via.placeholder.com/40x40"
-                                }
-                                alt={course.instructorName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    "https://via.placeholder.com/40x40";
-                                }}
-                              />
+                            <div className="client-img bg-cover">
+                              <i>
+                                <img
+                                  src={
+                                    course.instructorImg ||
+                                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
+                                  }
+                                  alt="instructor"
+                                />
+                              </i>
                             </div>
                             <Link
                               to={"/instructor-details/" + course.InstructorId}

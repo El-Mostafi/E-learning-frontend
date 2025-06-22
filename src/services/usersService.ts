@@ -16,16 +16,18 @@ export interface User {
 export interface UserToEdit {
   id: string;
   userName: string;
+  profileImg: string;
+  publicId: string,
   email: string;
   role: UserRole;
   status: "active" | "blocked";
   // Student fields
-  educationLevel: string;
-  fieldOfStudy: string;
+  educationLevel?: string;
+  fieldOfStudy?: string;
   // Instructor fields
-  expertise: string;
-  yearsOfExperience: number;
-  biography: string;
+  expertise?: string;
+  yearsOfExperience?: number;
+  biography?: string;
 }
 export type UserRole = "admin" | "instructor" | "student";
 interface options {

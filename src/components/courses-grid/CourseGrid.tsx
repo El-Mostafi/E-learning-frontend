@@ -46,7 +46,7 @@ function CourseGrid({ courses }: CourseGridProps) {
                   className="pb-3"
                   src={
                     course.thumbnailPreview ||
-                    "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
+                    "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                   }
                   alt="course thumbnail"
                 />
@@ -110,14 +110,10 @@ function CourseGrid({ courses }: CourseGridProps) {
                     <img
                       src={
                         course.instructorImg ||
-                        "https://via.placeholder.com/40x40"
+                        "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                       }
                       alt={course.instructorName}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://via.placeholder.com/40x40";
-                      }}
                     />
                   </div>
                   <p>
@@ -180,7 +176,7 @@ function CourseGrid({ courses }: CourseGridProps) {
                     <img
                       src={
                         course.instructorImg ||
-                        "https://via.placeholder.com/40x40"
+                        "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
                       }
                       alt={
                         course.instructorName!.replace("|", " ") === "Admin"
@@ -188,10 +184,6 @@ function CourseGrid({ courses }: CourseGridProps) {
                           : course.instructorName!.replace("|", " ")
                       }
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://via.placeholder.com/40x40";
-                      }}
                     />
                   </div>
                   <Link

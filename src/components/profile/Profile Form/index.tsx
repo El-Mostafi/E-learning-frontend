@@ -13,8 +13,7 @@ const DEFAULT_AVATAR =
   "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif";
 
 export interface ParentFormData {
-  firstName: string;
-  lastName: string;
+  UserName: string;
   email: string;
   role: "student" | "instructor" | "admin";
   profileImage: string;
@@ -77,8 +76,7 @@ function App() {
 
   // User profile state
   const [profile, setProfile] = useState<ParentFormData>({
-    firstName: user?.userName?.split("|")[0] || "",
-    lastName: user?.userName?.split("|")[1] || "",
+    UserName: user?.userName || "",
     email: user?.email || "",
     role: (user?.role ?? "student") as "student" | "instructor" | "admin",
     profileImage: user?.profileImg || DEFAULT_AVATAR,
@@ -158,8 +156,7 @@ function App() {
       ) : (
         <InstructorDashboard
           profile={{
-            firstName: profile.firstName,
-            lastName: profile.lastName,
+            UserName: profile.UserName,
             profileImage: profile.profileImage,
           }}
           setQuickStat={setQuickStat}

@@ -8,12 +8,14 @@ import {
   PieChart,
   Eye,
   Star,
+  Brain,
 } from "lucide-react";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import UserManagement from "./components/UserManagement";
 import CourseManagement from "./components/CourseManagement";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
+import MLModelManagement from "./components/MLModelManagement";
 
 import axios from "axios";
 import usersService, { UsersResponse } from "../../../services/usersService";
@@ -463,6 +465,7 @@ const AdminDashboard: React.FC = () => {
             { id: "users", label: "Users", icon: Users },
             { id: "courses", label: "Courses", icon: BookOpen },
             { id: "analytics", label: "Analytics", icon: PieChart },
+            { id: "ml-model", label: "AI Model", icon: Brain },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -641,7 +644,7 @@ const AdminDashboard: React.FC = () => {
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                               <img
-                                src={user.profileImg}
+                                src={user.profileImg || "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"}
                                 alt={user.userName.replace("|", " ")}
                                 className="w-10 h-10 rounded-full object-cover"
                               />
@@ -762,6 +765,7 @@ const AdminDashboard: React.FC = () => {
           <CourseManagement coursesData={courses as GetAllCoursesResponse} />
         )}
         {activeTab === "analytics" && <AnalyticsDashboard />}
+        {activeTab === "ml-model" && <MLModelManagement />}
       </div>
     </div>
   );

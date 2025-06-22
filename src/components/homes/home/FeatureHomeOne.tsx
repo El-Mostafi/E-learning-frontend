@@ -24,7 +24,7 @@ const FeatureHomeOne = () => {
                             <i className="flaticon-online-education"></i>
                         </div>
                         <div className="content">
-                            <h3>302+ Online Courses</h3>
+                            <h3>317+ Online Courses</h3>
                             <p>
                                 Expert instructors play a pivotal role in the learning process
                             </p>
