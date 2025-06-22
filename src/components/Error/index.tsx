@@ -5,9 +5,12 @@ import MarqueeOne from "../../common/MarqueeOne";
 import FooterOne from "../../layouts/footers/FooterOne";
 import ScrollTop from "../../common/ScrollTop";
 import Preloader from "../../common/Preloader";
+import { useAuth } from "../../context/AuthContext";
+import FooterTwo from "../../layouts/footers/FooterTwo";
 
  
 const NotFound = () => {
+    const {user} = useAuth();
   return (
     <>
     <Preloader />
@@ -32,7 +35,7 @@ const NotFound = () => {
         </div>
 
         <MarqueeOne style_2={true} />
-        <FooterOne />
+        {user ? <FooterOne user={user} /> : <FooterTwo />}
         <ScrollTop />
     </>
   );
