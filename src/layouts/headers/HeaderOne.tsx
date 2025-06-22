@@ -1,9 +1,7 @@
 import NavMenu from "./NavMenu";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Search from "../../common/Search";
 import UseSticky from "../../hooks/UseSticky";
-import NiceSelect from "../../ui/NiceSelect";
 import OffCanvas from "../../common/OffCanvas";
 import MarqueeOne from "../../common/MarqueeOne";
 import { useAuth } from "../../context/AuthContext";
@@ -11,10 +9,8 @@ import { useAuth } from "../../context/AuthContext";
 const HeaderOne = () => {
   const { user } = useAuth();
 
-  const selectHandler = () => {};
   const { sticky } = UseSticky();
 
-  const [open, setOpen] = useState(false);
   const [openCanvas, setOpenCanvas] = useState(false);
 
   return (
@@ -68,15 +64,6 @@ const HeaderOne = () => {
                     </nav>
                   </div>
                 </div>
-                <div className="header-search">
-                  <button
-                    onClick={() => setOpen(!open)}
-                    className="d-flex align-items-center search-toggle"
-                    aria-label="Search"
-                  >
-                    <i className="fas fa-search"></i>
-                  </button>
-                </div>
                   {user ? (
                     <div className="icon-items">
                     <i className="" ><img src={user.profileImg || "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"} alt="" /></i>
@@ -109,7 +96,6 @@ const HeaderOne = () => {
         </div>
       </header>
 
-      <Search open={open} setOpen={setOpen} />
       <OffCanvas openCanvas={openCanvas} setOpenCanvas={setOpenCanvas} />
     </>
   );

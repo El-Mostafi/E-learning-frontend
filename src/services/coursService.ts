@@ -1,7 +1,10 @@
 import axiosInstance from "./api";
 import { CourseState } from "../components/profile/Create Cours/types";
 import { Coupon } from "../components/profile/Create Cours/types/index";
-import { FindAllInstructorCoursesOptions, InstructorCoursesResponse } from "./interfaces/course.interface";
+import {
+  FindAllInstructorCoursesOptions,
+  InstructorCoursesResponse,
+} from "./interfaces/course.interface";
 
 // interface PaginatedResponse<T> {
 //   data: T[];
@@ -138,7 +141,7 @@ export interface courseData extends courseDataDetails {
   completedAt?: Date | null;
   startedAt?: Date;
   isUserEnrolled: boolean;
-  appliedCoupon?: { code: string; discountPercentage: number }
+  appliedCoupon?: { code: string; discountPercentage: number };
 }
 
 export interface Review {
@@ -165,7 +168,7 @@ export interface Course {
   numberOfStudents: number;
   averageRating: number;
   revenue: number;
-  status: 'Published' | 'Draft';
+  status: "Published" | "Draft";
   createdAt: string;
 }
 
@@ -280,7 +283,7 @@ export const coursService = {
     );
     return response;
   },
-  getInstructorCourses: async (options :FindAllInstructorCoursesOptions) => {
+  getInstructorCourses: async (options: FindAllInstructorCoursesOptions) => {
     const response = await axiosInstance.get<InstructorCoursesResponse>(
       "/courses/instructor/my-courses",
       {
@@ -309,11 +312,11 @@ export const coursService = {
   ) => {
     console.log("filterParams", filterParams);
     if (filterParams?.levels && filterParams.levels.length > 0) {
-      filterParams.levels.map(level => {
+      filterParams.levels.map((level) => {
         if (level === "All Levels") {
           delete filterParams.levels;
         }
-      })
+      });
     }
     const response = await axiosInstance.get<{
       courses: courseDataGenerale[];
@@ -334,9 +337,14 @@ export const coursService = {
     const response = await axiosInstance.delete(`/courses/delete/${courseId}`);
     return response;
   },
-  getCourseDetails: async (courseId: string) => {
+  getCourseDetails: async (courseId: string, userId?: string) => {
     const response = await axiosInstance.get<courseData>(
-      `/courses/${courseId}`
+      `/courses/${courseId}`,
+      {
+        params: {
+          userId: userId,
+        },
+      }
     );
     return response.data;
   },
@@ -411,21 +419,26 @@ export const coursService = {
     return response.data;
   },
   getAllCourses: async (options: options): Promise<GetAllCoursesResponse> => {
-    const response = await axiosInstance.get<GetAllCoursesResponse>("/courses/overview", {
-      params: {
-        page: options.page,
-        limit: options.limit,
-        status: options.status,
-        search: options.search,
-        category: options.category,
-        level: options.level,
-        language: options.language
-      },
-    });
+    const response = await axiosInstance.get<GetAllCoursesResponse>(
+      "/courses/overview",
+      {
+        params: {
+          page: options.page,
+          limit: options.limit,
+          status: options.status,
+          search: options.search,
+          category: options.category,
+          level: options.level,
+          language: options.language,
+        },
+      }
+    );
     return response.data;
   },
   togglePublishCourse: async (courseId: string) => {
-    const response = await axiosInstance.put(`/courses/${courseId}/toggle-publish`);
+    const response = await axiosInstance.put(
+      `/courses/${courseId}/toggle-publish`
+    );
     return response.data;
   },
   getAllLanguages: async () => {
@@ -433,7 +446,11 @@ export const coursService = {
     return response.data;
   },
   getCoursesFilteringData: async () => {
-    const response = await axiosInstance.get<{categories: string[], levels: string[], instructors: {userName: string, id: string}[]}>("/categories");
+    const response = await axiosInstance.get<{
+      categories: string[];
+      levels: string[];
+      instructors: { userName: string; id: string }[];
+    }>("/categories");
     return response.data;
   },
   getCoursesCount: async () => {
@@ -466,45 +483,53 @@ export const coursService = {
   }
 },
 
-fetchCertificatePdf : async (
-  courseId: string,
-  courseTitle: string
-): Promise<CertificateData> => {
-  try {
-    const response = await axiosInstance.get(`/generate-certificate/${courseId}`, {
-      responseType: 'blob',
-    });
+  fetchCertificatePdf: async (
+    courseId: string,
+    courseTitle: string
+  ): Promise<CertificateData> => {
+    try {
+      const response = await axiosInstance.get(
+        `/generate-certificate/${courseId}`,
+        {
+          responseType: "blob",
+        }
+      );
 
-    // Validate the response from the server
-    if (!(response.data instanceof Blob) || response.data.type !== 'application/pdf') {
-      throw new Error('Server did not return a valid PDF file.');
-    }
-
-    const blob = response.data;
-    
-    // Default filename in case the header is missing
-    let filename = `${courseTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_certificate.pdf`;
-
-    // Try to get filename from the 'content-disposition' header
-    const disposition = response.headers['content-disposition'];
-    if (disposition && disposition.includes('filename=')) {
-      const match = disposition.match(/filename="?([^"]+)"?/);
-      if (match && match[1]) {
-        filename = match[1];
+      // Validate the response from the server
+      if (
+        !(response.data instanceof Blob) ||
+        response.data.type !== "application/pdf"
+      ) {
+        throw new Error("Server did not return a valid PDF file.");
       }
+
+      const blob = response.data;
+
+      // Default filename in case the header is missing
+      let filename = `${courseTitle
+        .replace(/[^a-z0-9]/gi, "_")
+        .toLowerCase()}_certificate.pdf`;
+
+      // Try to get filename from the 'content-disposition' header
+      const disposition = response.headers["content-disposition"];
+      if (disposition && disposition.includes("filename=")) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+
+      return { blob, filename };
+    } catch (error) {
+      console.error(
+        `Failed to fetch certificate PDF for course ${courseId}:`,
+        error
+      );
+      // Re-throw the error so the component can handle it
+      throw error;
     }
-
-    return { blob, filename };
-    
-  } catch (error) {
-    console.error(`Failed to fetch certificate PDF for course ${courseId}:`, error);
-    // Re-throw the error so the component can handle it
-    throw error;
-  }
-},
-
+  },
 };
-
 
 export interface CertificateData {
   blob: Blob;

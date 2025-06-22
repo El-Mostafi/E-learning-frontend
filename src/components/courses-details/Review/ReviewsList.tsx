@@ -8,7 +8,7 @@ interface ReviewsListProps {
 }
 const ReviewsList: React.FC<ReviewsListProps> = ( {reviews} ) => {
   return (
-    <div className="modern-reviews-list">
+    <div className="modern-reviews-list max-h-[300px] overflow-y-auto">
       <h3>Student Feedback</h3>
       
       {reviews.length === 0 ? (

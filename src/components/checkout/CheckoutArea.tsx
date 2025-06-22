@@ -2,7 +2,7 @@ import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { FormEvent, useEffect, useState } from "react";
 import { stripeService } from "../../services/stripeService";
 import { cartService } from "../../services/cartService";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, CreditCard, Lock, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cartDetails } from "../../services/interfaces/cart.interface";
 
@@ -12,7 +12,7 @@ const CheckoutArea = () => {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [cart, setCart] = useState<cartDetails|null>(null);
+  const [cart, setCart] = useState<cartDetails | null>(null);
 
   const navigate = useNavigate();
 
@@ -21,9 +21,10 @@ const CheckoutArea = () => {
       const cartData = await cartService.getCart();
       if (!cartData || cartData.courses.length === 0) {
         navigate("/shop-cart");
-      } else{
-        setCart(cartData)
+      } else {
+        setCart(cartData);
       }
+      console.log("Cart data:", cartData);
     };
     fetchCart();
   }, [navigate]);
@@ -37,9 +38,6 @@ const CheckoutArea = () => {
     setProcessing(true);
 
     try {
-      // Get cart details first
-      // const cart = await cartService.getCart();
-
       // Create payment intent with cart amount
       const response = await stripeService.createPaymentIntent();
 
@@ -63,7 +61,7 @@ const CheckoutArea = () => {
         }
       );
 
-      console.log("client secretttt", response.data.clientSecret)
+      console.log("client secretttt", response.data.clientSecret);
 
       if (confirmError) {
         setProcessing(false);
@@ -72,25 +70,27 @@ const CheckoutArea = () => {
 
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 5000);
-      navigate("/courses");
+      navigate("/my-courses");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
     }
     setProcessing(false);
   };
 
-  // Rest of the component remains the same...
   const cardElementOptions = {
     style: {
       base: {
         fontSize: "16px",
-        color: "#424770",
+        color: "#1f2937",
+        fontFamily:
+          "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        lineHeight: "1.5",
         "::placeholder": {
-          color: "#aab7c4",
+          color: "#9ca3af",
         },
       },
       invalid: {
-        color: "#9e2146",
+        color: "#ef4444",
       },
     },
   };
@@ -100,19 +100,21 @@ const CheckoutArea = () => {
       <style>
         {`
           .stripe-card-element {
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            background-color: white;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background-color: #ffffff;
+            transition: all 0.2s ease;
           }
           
           .stripe-card-element.StripeElement--focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
           }
           
           .stripe-card-element.StripeElement--invalid {
             border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
           }
 
           @keyframes slideIn {
@@ -126,29 +128,123 @@ const CheckoutArea = () => {
             }
           }
 
-          @keyframes slideOut {
-            from {
-              transform: translateY(0);
-              opacity: 1;
-            }
-            to {
-              transform: translateY(-100%);
-              opacity: 0;
-            }
-          }
-
           .toast-enter {
             animation: slideIn 0.5s ease forwards;
           }
 
-          .toast-exit {
-            animation: slideOut 0.5s ease forwards;
-          }
-        .toast-container {
+          .toast-container {
             position: fixed;
             top: 1rem;
             right: 1rem;
             z-index: 99999;
+          }
+
+          .payment-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            color: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+          }
+
+          .security-badge {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+          }
+
+          .checkout-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+          }
+
+          .payment-form {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+          }
+
+          .amount-display {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+          }
+
+          .pay-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            padding: 16px 32px;
+            width: 100%;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+          }
+
+          .pay-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+          }
+
+          .pay-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+          }
+
+          .card-input-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+          }
+
+          .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            color: #dc2626;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+
+          .security-features {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+            color: #6b7280;
+          }
+
+          .security-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
           }
         `}
       </style>
@@ -162,199 +258,86 @@ const CheckoutArea = () => {
           </div>
         </div>
       )}
-      <section className="checkout-section fix section-padding">
-        <div className="container">
-          <div className="row">
-            <div className="col-12">
-              <form onSubmit={handleSubmit}>
-              {cart && (
-                          <div className="total-amount mb-4 text-lg font-semibold">
-                            Total to Pay: ${cart.total.toFixed(2)}
-                          </div>
-                        )}
-                <div className="row g-4">
-                  <div className="col-md-5 col-lg-4 col-xl-3">
-                    <div className="checkout-radio">
-                      <p className="primary-text">Select any one</p>
-                      <div className="checkout-radio-wrapper">
-                        <div className="checkout-radio-single">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="cCard"
-                            name="pay-method"
-                            value="Credit/Debit Cards"
-                          />
-                          <label htmlFor="cCard">Credit/Debit Cards</label>
-                        </div>
-                        <div className="checkout-radio-single">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="paypal"
-                            name="pay-method"
-                            value="PayPal"
-                          />
-                          <label htmlFor="paypal">PayPal</label>
-                        </div>
-                        <div className="checkout-radio-single">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="payoneer"
-                            name="pay-method"
-                            value="Payoneer"
-                          />
-                          <label htmlFor="payoneer">Payoneer</label>
-                        </div>
-                        <div className="checkout-radio-single">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="visa"
-                            name="pay-method"
-                            value="Visa"
-                          />
-                          <label htmlFor="visa">Visa</label>
-                        </div>
-                        <div className="checkout-radio-single">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="mastercard"
-                            name="pay-method"
-                            value="Mastercard"
-                          />
-                          <label htmlFor="mastercard">Mastercard</label>
-                        </div>
-                        <div className="checkout-radio-single">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="fastPay"
-                            name="pay-method"
-                            value="Fastpay"
-                          />
-                          <label htmlFor="fastPay">Fastpay</label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-7 col-lg-8 col-xl-9">
-                    <div className="checkout-single-wrapper">
-                      <div className="checkout-single boxshado-single">
-                        <h4>Billing address</h4>
-                        <div className="checkout-single-form">
-                          <div className="row g-4">
-                            <div className="col-lg-6">
-                              <div className="input-single">
-                                <input
-                                  type="text"
-                                  name="user-first-name"
-                                  id="userFirstName"
-                                  tabIndex={0}
-                                  placeholder="First Name"
-                                />
-                              </div>
-                            </div>
-                            <div className="col-lg-6">
-                              <div className="input-single">
-                                <input
-                                  type="text"
-                                  name="user-last-name"
-                                  id="userLastName"
-                                  tabIndex={0}
-                                  placeholder="Last Name"
-                                />
-                              </div>
-                            </div>
-                            <div className="col-lg-6">
-                              <div className="input-single">
-                                {/* <input
-                                  type="email"
-                                  name="user-check-email"
-                                  id="userCheckEmail"
-                                  required
-                                  placeholder="Your Email"
-                                /> */}
-                              </div>
-                            </div>
-                            <div className="col-lg-6">
-                              <div className="input-single">
-                                <select
-                                  className="form-select"
-                                  name="country"
-                                  defaultValue="01"
-                                  title="Country"
-                                >
-                                  <option value="01">USA</option>
-                                  <option value="02">Aus</option>
-                                  <option value="03">UK</option>
-                                  <option value="04">NED</option>
-                                </select>
-                              </div>
-                            </div>
-                            <div className="col-lg-12">
-                              <div className="input-single">
-                                <textarea
-                                  name="user-address"
-                                  id="userAddress"
-                                  placeholder="Address"
-                                ></textarea>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="checkout-single checkout-single-bg">
-                        <h4>Payment Methods</h4>
-                        <div className="checkout-single-form">
-                          <p className="payment"></p>
-                          <div className="row g-3">
-                            <div className="col-lg-12">
-                              <div className="input-single">
-                                <label>Card Details</label>
-                                <div className="stripe-card-element">
-                                  <CardElement options={cardElementOptions} />
-                                </div>
-                                {error && (
-                                  <div className="text-red-500 mt-2">
-                                    {error}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="input-single input-check payment-save">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            name="save-for-next"
-                            id="saveForNext"
-                          />
-                          <label htmlFor="saveForNext">
-                            Save for my next payment
-                          </label>
-                        </div>
-                        <div className="mt-4">
-                          <button
-                            type="submit"
-                            className="theme-btn"
-                            disabled={!stripe || processing}
-                          >
-                            {processing ? "Processing..." : cart && `Pay ${cart.total.toFixed(2)}$`}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
+
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12">
+        <div className="checkout-container">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Complete Your Purchase
+            </h1>
+            <p className="text-gray-600">Secure payment </p>
           </div>
+
+          {cart && (
+            <div className="payment-card">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Order Summary</h2>
+                <div className="security-badge">
+                  <Lock className="w-4 h-4" />
+                  Secure Payment
+                </div>
+              </div>
+              <div className="text-3xl font-bold mb-2">
+                ${cart.total.toFixed(2)}
+              </div>
+              <p className="opacity-90">
+                {cart.courses.length} course{cart.courses.length > 1 ? "s" : ""}{" "}
+                selected
+              </p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="payment-form">
+            <div className="card-input-label">
+              <CreditCard className="w-5 h-5 text-blue-600" />
+              Payment Details
+            </div>
+
+            <div className="stripe-card-element">
+              <CardElement options={cardElementOptions} />
+            </div>
+
+            {error && (
+              <div className="error-message">
+                <span>⚠️</span>
+                {error}
+              </div>
+            )}
+
+            <div className="mt-6">
+              <button
+                type="submit"
+                className="pay-button"
+                disabled={!stripe || processing}
+              >
+                {processing ? (
+                  <>
+                    <span className="inline-block animate-spin mr-2">⏳</span>
+                    Processing...
+                  </>
+                ) : (
+                  cart && `Pay $${cart.total.toFixed(2)}`
+                )}
+              </button>
+            </div>
+
+            <div className="security-features">
+              <div className="security-feature">
+                <ShieldCheck className="w-4 h-4 text-green-600" />
+                <span>SSL Encrypted</span>
+              </div>
+              <div className="security-feature">
+                <Lock className="w-4 h-4 text-green-600" />
+                <span>PCI Compliant</span>
+              </div>
+              <div className="security-feature">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span>Stripe Secured</span>
+              </div>
+            </div>
+          </form>
         </div>
-      </section>
+      </div>
     </>
   );
 };

@@ -4,6 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { courseDataGenerale } from "../../../services/coursService";
 import ModelService from "../../../services/modelService";
 import { useAuth } from "../../../context/AuthContext";
+import { enrollmentService } from "../../../services/enrollmentService";
+import { cartDetails } from "../../../services/interfaces/cart.interface";
+import { cartService } from "../../../services/cartService";
+import axiosInstance from "../../../services/api";
+import axios from "axios";
+import { isTokenValid } from "../../../utils/ProtectedRoutes";
 
 const styles = `
   
@@ -51,6 +57,15 @@ const styles = `
           .post-cat{
             height: 44px;
           }
+            .cart-icon-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
 `;
 
 const formatDuration = (totalSeconds: number) => {
@@ -85,6 +100,14 @@ const RecommendedCourses = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [cartError, setCartError] = useState("");
+  const [coursesInCart, setCoursesInCart] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [cart, setCart] = useState<cartDetails | null>(null);
+  const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
+  const [myEnrollments, setMyEnrollments] = useState<string[]>([]);
+
   const navigate = useNavigate();
 
   const categories = Array.from(
@@ -92,7 +115,7 @@ const RecommendedCourses = () => {
   );
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !isTokenValid()) {
       return;
     }
     const fetchCourses = async () => {
@@ -109,7 +132,79 @@ const RecommendedCourses = () => {
 
     fetchCourses();
   }, []);
-  if (!user) {
+
+  const fetchMyEnrollments = async () => {
+    if (user !== null && user.role === "student") {
+      setLoading(true);
+      try {
+        const response = await enrollmentService.getMyEnrollmentsIds();
+        setMyEnrollments(response);
+        console.log("My Enrollments:", response);
+      } catch (err) {
+        setError("Failed to load courses. Please try again later.");
+        console.error("Failed to fetch my enrollments:", err);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setMyEnrollments([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyEnrollments();
+  }, []);
+  const fetchCart = async () => {
+    const cartData = await cartService.getCart();
+    setCart(cartData);
+
+    const map: string[] = [];
+    cartData.courses.forEach((item) => {
+      map.push(item._id);
+    });
+
+    setCoursesInCart(map);
+    console.log("Cart data:", cartData);
+  };
+  useEffect(() => {
+    if (user !== null && user.role === "student") {
+      fetchCart();
+    } else {
+      setCart(null);
+    }
+  }, [user]);
+  const handleAddToCart = async (courseId: string) => {
+    if (!courseId) {
+      setCartError("Course ID is missing");
+      return;
+    }
+    setUpdatingCourseId(courseId);
+    setCartError("");
+    try {
+      if (coursesInCart.includes(courseId)) {
+        await axiosInstance.delete("/cart/remove", { data: { courseId } });
+      } else {
+        await axiosInstance.post("/cart/add", { courseId });
+      }
+      fetchCart();
+      // setIsInCart((prevIsInCart) => {
+      //   const newIsInCart = new Map(prevIsInCart);
+      //   newIsInCart.set(courseId, !newIsInCart.get(courseId));
+      //   return newIsInCart;
+      // });
+    } catch (err) {
+      console.error("Cart action error:", err);
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message
+        : `Failed to ${
+            coursesInCart.includes(courseId) ? "remove" : "add"
+          } course.`;
+      setCartError(message || "An unexpected error occurred.");
+    } finally {
+      setUpdatingCourseId(null);
+    }
+  };
+  if (!user || !isTokenValid()) {
     return null;
   }
 
@@ -154,36 +249,36 @@ const RecommendedCourses = () => {
               style={{ paddingLeft: "2rem", paddingRight: "2rem" }}
             >
               {["All", ...categories].map((category, index) => (
-              <li
-                key={index}
-                className="nav-item wow fadeInUp"
-                data-wow-delay={`${0.2 * (index + 1)}s`}
-              >
-                <button
-                type="button"
-                className={`category-tab-btn px-5 py-2 rounded-lg font-semibold border transition-colors duration-200
+                <li
+                  key={index}
+                  className="nav-item wow fadeInUp"
+                  data-wow-delay={`${0.2 * (index + 1)}s`}
+                >
+                  <button
+                    type="button"
+                    className={`category-tab-btn px-5 py-2 rounded-lg font-semibold border transition-colors duration-200
                 ${
-                selectedCategory === category
-                  ? "bg-blue-500 border-blue-600 text-white shadow-md"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-blue-100"
+                  selectedCategory === category
+                    ? "bg-blue-500 border-blue-600 text-white shadow-md"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-blue-100"
                 }
               `}
-                style={{
-                  outline:
-                  selectedCategory === category
-                    ? "2px solid #3b82f6"
-                    : "none",
-                  outlineOffset: "2px",
-                  zIndex: selectedCategory === category ? 1 : undefined,
-                  position: "relative",
-                }}
-                onClick={() => {
-                  setSelectedCategory(category);
-                }}
-                >
-                {category}
-                </button>
-              </li>
+                    style={{
+                      outline:
+                        selectedCategory === category
+                          ? "2px solid #3b82f6"
+                          : "none",
+                      outlineOffset: "2px",
+                      zIndex: selectedCategory === category ? 1 : undefined,
+                      position: "relative",
+                    }}
+                    onClick={() => {
+                      setSelectedCategory(category);
+                    }}
+                  >
+                    {category}
+                  </button>
+                </li>
               ))}
             </ul>
           </div>
@@ -246,24 +341,19 @@ const RecommendedCourses = () => {
                           </ul>
                           <h5>
                             <Link
-                              to="/courses-details"
+                              to="/course-details"
                               className="line-clamp-2 min-h-[51px]"
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate("/courses-details", {
+                                navigate("/course-details", {
                                   state: { courseId: course.id },
                                 });
                               }}
                             >
-                              <div className="course-title">
-                                {course.title} 
-                              </div>
+                              <div className="course-title">{course.title}</div>
                             </Link>
                           </h5>
-                          <span
-                            className="mb-3 line-clamp-2 min-h-[60px]"
-                            
-                          >
+                          <span className="mb-3 line-clamp-2 min-h-[60px]">
                             {course.description.replace(/<\/?[^>]+(>|$)/g, "")}
                           </span>
                           <div className="client-items">
@@ -296,6 +386,11 @@ const RecommendedCourses = () => {
                               {course.students} Students
                             </li>
                           </ul>
+                          {cartError && (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                              {cartError}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="courses-card-items-hover">
@@ -319,10 +414,10 @@ const RecommendedCourses = () => {
                           </ul>
                           <h5>
                             <Link
-                              to="/courses-details"
+                              to="/course-details"
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate("/courses-details", {
+                                navigate("/course-details", {
                                   state: { courseId: course.id },
                                 });
                               }}
@@ -333,7 +428,7 @@ const RecommendedCourses = () => {
                             </Link>
                           </h5>
                           <h4>${course.price}</h4>
-                          <span  className="line-clamp-3">
+                          <span className="line-clamp-3">
                             {course.description.replace(/<\/?[^>]+(>|$)/g, "")}
                           </span>
                           <div className="client-items">
@@ -365,18 +460,62 @@ const RecommendedCourses = () => {
                               {course.students} Students
                             </li>
                           </ul>
-                          <Link
-                            to="/courses-details"
-                            className="theme-btn yellow-btn"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              navigate("/courses-details", {
-                                state: { courseId: course.id },
-                              });
-                            }}
-                          >
-                            Enroll Now
-                          </Link>
+                          <ul className="post-class">
+                            <li>
+                              <Link
+                                to="/course-details"
+                                className="theme-btn yellow-btn"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  navigate("/course-details", {
+                                    state: { courseId: course.id },
+                                  });
+                                }}
+                              >
+                                {user && user.role === "student"
+                                  ? myEnrollments.includes(course.id)
+                                    ? "Continue Learning"
+                                    : "Enroll Now"
+                                  : user === null
+                                  ? "Enroll Now"
+                                  : "See Details"}
+                              </Link>
+                            </li>
+                            <li>
+                              {user &&
+                                user.role === "student" &&
+                                !myEnrollments.includes(course.id) && (
+                                  <button
+                                    onClick={() => handleAddToCart(course.id)}
+                                    className={`theme-btn cart-icon-btn ${
+                                      coursesInCart.includes(course.id)
+                                        ? "red-btn"
+                                        : ""
+                                    }`}
+                                    disabled={updatingCourseId === course.id}
+                                    title={
+                                      updatingCourseId === course.id
+                                        ? coursesInCart.includes(course.id)
+                                          ? "Removing from cart..."
+                                          : "Adding to cart..."
+                                        : coursesInCart.includes(course.id)
+                                        ? "Remove from cart"
+                                        : "Add to cart"
+                                    }
+                                  >
+                                    <i
+                                      className={`far ${
+                                        updatingCourseId === course.id
+                                          ? "fa-spinner fa-spin"
+                                          : coursesInCart.includes(course.id)
+                                          ? "fa-times"
+                                          : "fa-shopping-basket"
+                                      }`}
+                                    ></i>
+                                  </button>
+                                )}
+                            </li>
+                          </ul>
                         </div>
                       </div>
                     </div>

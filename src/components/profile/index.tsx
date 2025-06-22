@@ -8,16 +8,17 @@ import FooterTwo from "../../layouts/footers/FooterTwo";
 import HeaderOne from "../../layouts/headers/HeaderOne";
 import ProfileForm from "./Profile Form/index";
 // import ProfileForm from "./ProfileForm";
+import { isTokenValid } from '../../utils/ProtectedRoutes';
 
  
 
 const Profile = () => {
-	const { user } = useAuth();
+	const {user} = useAuth();
 	return (
 		<>
 		<Preloader />
 			<HeaderOne /> 
-			<BreadcrumbCourses title="Profile" subtitle="Profile" />
+			<BreadcrumbCourses title={user && isTokenValid() && user.role === "admin" ? "Dashboard" : "Profile"} subtitle={user && isTokenValid() && user.role === "admin" ? "Dashboard" : "Profile"} />
 			<ProfileForm />       
 			<MarqueeOne style_2={true} />
 			{user ? <FooterOne user={user} /> : <FooterTwo />}
