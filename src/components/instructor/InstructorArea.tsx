@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import InstructorService from "../../services/instructorsService";
 import { Instructor } from "../../services/interfaces/user.interface";
 
 const InstructorArea = () => {
+  const navigate = useNavigate();
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -15,7 +16,7 @@ const InstructorArea = () => {
         setInstructors(data);
         console.log(data);
       } catch (err) {
-        setError("Failed to load instructors. Please try again later."+err);
+        setError("Failed to load instructors. Please try again later." + err);
       } finally {
         setLoading(false);
       }
@@ -61,24 +62,43 @@ const InstructorArea = () => {
               <div className="team-card-items style-2">
                 <div className="thumb">
                   <img
-                    src={instructor.profileImg || "/assets/img/team/default.jpg"}
+                    src={
+                      instructor.profileImg || "/assets/img/team/default.jpg"
+                    }
                     alt={instructor.userName.replace("|", " ")}
                     className="img-fluid"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/assets/img/team/default.jpg";
+                      (e.target as HTMLImageElement).src =
+                        "/assets/img/team/default.jpg";
                     }}
                   />
                   <div className="social-icon">
-                    <a href="#"><i className="fab fa-facebook-f"></i></a>
-                    <a href="#"><i className="fab fa-instagram"></i></a>
-                    <a href="#"><i className="fab fa-linkedin-in"></i></a>
+                    <a href="#">
+                      <i className="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#">
+                      <i className="fab fa-instagram"></i>
+                    </a>
+                    <a href="#">
+                      <i className="fab fa-linkedin-in"></i>
+                    </a>
                   </div>
                 </div>
                 <div className="content">
                   <h4>
-                    <Link to={`/instructor-details/${instructor._id}`}>
+                    <Link
+                      to="/instructor-details"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/instructor-details", {
+                          state: { InstructorId: instructor._id },
+                        });
+                      }}
+                    >
                       {instructor.userName.replace("|", " ")}
                     </Link>
+
+                    
                   </h4>
                   <p>{instructor.expertise}</p>
                 </div>

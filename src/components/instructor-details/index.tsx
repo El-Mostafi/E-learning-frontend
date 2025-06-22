@@ -1,6 +1,6 @@
 // pages/instructor-details/InstructorDetails.tsx
 
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom"; 
 import { useEffect, useState } from "react";
 import InstructorService from "../../services/instructorsService";
 import { Instructor } from "../../services/interfaces/user.interface";

@@ -1,5 +1,5 @@
 import axiosInstance from './api';
-import { DashboardStats } from './interfaces/instructor.interface';
+import { DashboardStats, InstructorSummary } from './interfaces/instructor.interface';
 import { Instructor } from './interfaces/user.interface';
 
 
@@ -17,6 +17,13 @@ const InstructorService = {
   },
   getDashboardStats: async (): Promise<DashboardStats> => {
       const response = await axiosInstance.get<DashboardStats>('/instructors/dashboard');
+      return response.data; 
+  },
+
+  getInstructorStats: async (instructorId: string): Promise<InstructorSummary> => {
+      const response = await axiosInstance.get<InstructorSummary>(`/instructors/stats`, {
+          params: { instructorId }
+      });
       return response.data; 
   },
 
