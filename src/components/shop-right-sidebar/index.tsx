@@ -2,13 +2,16 @@ import BreadcrumbShop from "../../common/breadcrumb/BreadcrumbShop";
 import MarqueeOne from "../../common/MarqueeOne";
 import Preloader from "../../common/Preloader";
 import ScrollTop from "../../common/ScrollTop";
+import { useAuth } from "../../context/AuthContext";
 import FooterOne from "../../layouts/footers/FooterOne";
+import FooterTwo from "../../layouts/footers/FooterTwo";
 import HeaderOne from "../../layouts/headers/HeaderOne";
 import ShopRightSidebarArea from "./ShopRightSidebarArea";
 
  
 
 const ShopRightSidebar = () => {
+  const { user } = useAuth();
   return (
     <>
     <Preloader />
@@ -16,7 +19,7 @@ const ShopRightSidebar = () => {
       <BreadcrumbShop title="Shop Right Sidebar" subtitle="Shop Right Sidebar" />
       <ShopRightSidebarArea />
       <MarqueeOne style_2={true} />
-      <FooterOne />
+      {user ? <FooterOne user={user} /> : <FooterTwo />}
       <ScrollTop />
     </>
   );
