@@ -15,6 +15,7 @@ import { useAuth } from "../../../context/AuthContext";
 import FooterOne from "../../../layouts/footers/FooterOne";
 import TrendingCourses from "./TrendingCourses";
 import RecommendedCourses from "./RecommendedCourses";
+import AboutHomeOne from "./AboutHomeOne";
 
 
 const HomeOne = () => {
@@ -27,7 +28,7 @@ const HomeOne = () => {
       <HeroHomeOne />
       <FeatureHomeOne />
       <TopCategoryHomeOne />
-      {/* <AboutHomeOne /> */}
+      <AboutHomeOne />
       {user!==null ? (user.role === "student" ? <RecommendedCourses /> : null) : null}
       <PopularCoursesHomeOne />
       <TrendingCourses />

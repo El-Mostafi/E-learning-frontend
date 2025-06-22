@@ -86,12 +86,12 @@ const TeamHomeOne = () => {
                   {/* No className is needed on the img tag now */}
                   <img
                     src={instructor.profileImg}
-                    alt={instructor.userName}
+                    alt={instructor.userName.replace("|", " ")}
                   />
                   <div className="team-content">
                     <h3>
                       <Link to="/instructor-details" state={{ instructorId: instructor._id }}>
-                        {instructor.userName}
+                        {instructor.userName.replace("|", " ")}
                       </Link>
                     </h3>
                     <p>{instructor.expertise || 'Expert Instructor'}</p>

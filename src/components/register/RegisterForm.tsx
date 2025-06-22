@@ -260,7 +260,7 @@ const RegisterForm: React.FC = () => {
         const response = await authService.signup({
           email: formData.email,
           password: formData.password,
-          userName: `${formData.firstName}|${formData.lastName}`,
+          userName: `${formData.firstName} ${formData.lastName}`,
           role: formData.role,
           educationLevel: formData.educationLevel,
           fieldOfStudy: formData.fieldOfStudy,

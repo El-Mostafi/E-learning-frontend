@@ -50,7 +50,7 @@ const CourseCard = ({ course, user, myEnrollments, coursesInCart, updatingCourse
   const defaultThumbnail = "/assets/img/courses/default-course.jpg";
 
   const handleNavigate = (courseId: string) => {
-    navigate("/courses-details", {
+    navigate("/course-details", {
       state: { courseId: courseId },
     });
     window.scrollTo(0, 0);
