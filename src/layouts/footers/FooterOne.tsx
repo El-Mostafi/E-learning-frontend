@@ -2,12 +2,6 @@ import { Link } from "react-router-dom";
 import React from 'react';
 
 // --- Data Configuration ---
-const socialLinks = [
-  { icon: 'fab fa-facebook-f', href: '#' },
-  { icon: 'fab fa-instagram', href: '#' },
-  { icon: 'fab fa-linkedin-in', href: '#' },
-  { icon: 'fab fa-twitter', href: '#' },
-];
 
 const exploreLinks = [
   { text: 'All Courses', to: '/courses' },

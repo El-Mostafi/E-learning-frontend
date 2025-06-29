@@ -20,7 +20,7 @@ const RelatedCourses = () => {
   const [cartError, setCartError] = useState("");
   const [coursesInCart, setCoursesInCart] = useState<string[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [cart, setCart] = useState<cartDetails | null>(null);
+  const [_cart, setCart] = useState<cartDetails | null>(null);
   const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
   const [myEnrollments, setMyEnrollments] = useState<string[]>([]);
   const { user } = useAuth();
