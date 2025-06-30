@@ -459,7 +459,7 @@ function CoursesContainer({ initialViewType = "grid" }: CoursesContainerProps) {
                             </span>
                             <span className="text-color">
                               {instructor!.userName === "Admin"
-                                ? "Eduspace "
+                                ? "LUMINARA "
                                 : instructor!.userName.replace("|", " ")}
                             </span>
                           </span>

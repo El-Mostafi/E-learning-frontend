@@ -53,7 +53,7 @@ const BreadcrumbCoursesDetails = ({ data }: { data: courseData }) => {
                   <img src={data.instructorImg} alt="img" />
                   <div className="client-content">
                     <span>Instructor</span>
-                    <h5>{data.instructorName!.replace("|", " ")==="Admin"?"Eduspace ":data.instructorName!.replace("|", " ")}</h5>
+                    <h5>{data.instructorName!.replace("|", " ")==="Admin"?"LUMINARA ":data.instructorName!.replace("|", " ")}</h5>
                   </div>
                 </div>
                 <div className="client-image-items">

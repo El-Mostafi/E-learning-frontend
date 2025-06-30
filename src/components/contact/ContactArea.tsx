@@ -42,8 +42,8 @@ const ContactArea = () => {
                   <img src="assets/img/small-line.png" alt="img" />
                 </div>
                 <h4>
-                  <a href="mailto:help.eduspace@gmail.com">
-                    help.eduspace@gmail.com
+                  <a href="mailto:help.luminara@gmail.com">
+                    help.luminara@gmail.com
                   </a>
                 </h4>
               </div>

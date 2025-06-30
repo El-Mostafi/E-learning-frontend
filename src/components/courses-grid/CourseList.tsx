@@ -142,7 +142,7 @@ function CourseList({
                           }
                           alt={
                             course.instructorName!.replace("|", " ") === "Admin"
-                              ? "Eduspace"
+                              ? "LUMINARA"
                               : course.instructorName!.replace("|", " ")
                           }
                           className="w-full h-full object-cover"
@@ -154,7 +154,7 @@ function CourseList({
                       </div>
                       <Link to={"/instructor-details/" + course.InstructorId}>
                         {course.instructorName!.replace("|", " ") === "Admin"
-                          ? "Eduspace"
+                          ? "LUMINARA"
                           : course.instructorName!.replace("|", " ")}
                       </Link>
                     </div>

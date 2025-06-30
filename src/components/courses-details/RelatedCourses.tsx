@@ -270,7 +270,7 @@ const RelatedCourses = () => {
                             >
                               {course.instructorName!.replace("|", " ") ===
                               "Admin"
-                                ? "Eduspace "
+                                ? "LUMINARA "
                                 : course.instructorName!.replace("|", " ")}
                             </Link>
                           </p>

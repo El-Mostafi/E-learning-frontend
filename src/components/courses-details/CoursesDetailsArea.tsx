@@ -954,7 +954,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                                 alt={
                                   course.instructorName?.replace("|", " ") ===
                                   "Admin"
-                                    ? "Eduspace"
+                                    ? "LUMINARA"
                                     : course.instructorName?.replace(
                                         "|",
                                         " "
@@ -966,7 +966,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                               <h4>
                                 {course.instructorName?.replace("|", " ") ===
                                 "Admin"
-                                  ? "Eduspace"
+                                  ? "LUMINARA"
                                   : course.instructorName?.replace("|", " ") ||
                                     "N/A"}
                               </h4>
@@ -1351,7 +1351,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                         </div>
                         <span className="text-gray-900 font-medium">
                           {course.instructorName!.replace("|", " ") === "Admin"
-                            ? "Eduspace"
+                            ? "LUMINARA"
                             : course.instructorName!.replace("|", " ")}
                         </span>
                       </li>

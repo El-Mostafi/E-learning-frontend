@@ -10,11 +10,14 @@ const MarqueeOne = ({style_2} : any) => {
                         <div></div>
                         <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Education & University</div>
                         <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Online Education</div>
-                        <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> 230+ Quality Courses</div>
+                        <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> 317+ Quality Courses</div>
                         <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Experience Instructors</div>
-                        <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Kindergarten Study</div>
-                        <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> 25% Coupon Bonus</div>
-                        <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> 25% Extra Coupon Bonus</div>
+                        <div className={`cmn-textslide ${style_2? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Coupon Bonus</div>
+                        <div className={`cmn-textslide ${style_2 ? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Flexible Learning</div>
+                        <div className={`cmn-textslide ${style_2 ? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Certified Programs</div>
+                        <div className={`cmn-textslide ${style_2 ? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Interactive Lessons</div>
+                        <div className={`cmn-textslide ${style_2 ? "text-color-2" : ""}`}><i className="flaticon-mortarboard"></i> Join Our Community</div>     
+            
                     </div>
                     <div className="comm">
                         <div></div>

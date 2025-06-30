@@ -58,7 +58,7 @@ const CoursesArea = () => {
   }, [currentPage, sortBy]);
 
   const fetchMyEnrollments = async () => {
-    if (user !== null && user.role === "student" && isTokenValid() ) {
+    if (user !== null && user.role === "student" && isTokenValid()) {
       setLoading(true);
       try {
         const response = await enrollmentService.getMyEnrollmentsIds();
@@ -101,7 +101,7 @@ const CoursesArea = () => {
     console.log("Cart data:", cartData);
   };
   useEffect(() => {
-    if (user !== null && user.role === "student" && isTokenValid() ) {
+    if (user !== null && user.role === "student" && isTokenValid()) {
       fetchCart();
     } else {
       setCart(null);
@@ -370,7 +370,7 @@ const CoursesArea = () => {
                           >
                             {course.instructorName!.replace("|", " ") ===
                             "Admin"
-                              ? "Eduspace "
+                              ? " "
                               : course.instructorName!.replace("|", " ")}
                           </Link>
                         </p>
@@ -381,7 +381,8 @@ const CoursesArea = () => {
                           {course.students} Students
                         </li>
                         <li>
-                          {user && isTokenValid() &&
+                          {user &&
+                          isTokenValid() &&
                           user.role === "student" &&
                           !myEnrollments.includes(course.id) ? (
                             <button
@@ -416,7 +417,7 @@ const CoursesArea = () => {
                               });
                             }}
                           >
-                            {user && user.role === "student" && isTokenValid() 
+                            {user && user.role === "student" && isTokenValid()
                               ? myEnrollments.includes(course.id)
                                 ? "Continue Learning"
                                 : "Enroll"

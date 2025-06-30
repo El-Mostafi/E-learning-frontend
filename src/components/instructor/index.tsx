@@ -16,7 +16,7 @@ const Instructor = () => {
     <>
     <Preloader />
       <HeaderOne />
-			<BreadcrumbEvent title="Instructor" subtitle="Instructor" />
+			<BreadcrumbEvent title="Our Expert Instructors" subtitle="Our Expert Instructors" />
       <InstructorArea />       
 			<MarqueeOne style_2={true} />
 			{user ? <FooterOne user={user} /> : <FooterTwo />}

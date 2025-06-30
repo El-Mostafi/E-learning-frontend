@@ -147,7 +147,7 @@ function CourseGrid({
                     <p>
                       <Link to={`/instructor-details/${course.InstructorId}`}>
                         {course.instructorName!.replace("|", " ") === "Admin"
-                          ? "Eduspace"
+                          ? "LUMINARA"
                           : course.instructorName!.replace("|", " ")}
                       </Link>
                     </p>
@@ -215,7 +215,7 @@ function CourseGrid({
                         }
                         alt={
                           course.instructorName!.replace("|", " ") === "Admin"
-                            ? "Eduspace"
+                            ? "LUMINARA"
                             : course.instructorName!.replace("|", " ")
                         }
                         className="w-full h-full object-cover"
@@ -226,7 +226,7 @@ function CourseGrid({
                       className={"text-white"}
                     >
                       {course.instructorName!.replace("|", " ") === "Admin"
-                        ? "Eduspace"
+                        ? "LUMINARA"
                         : course.instructorName!.replace("|", " ")}
                     </Link>
                   </div>
