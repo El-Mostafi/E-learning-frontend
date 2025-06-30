@@ -12,13 +12,21 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
+    rollupOptions: {
+      external: (id) => {
+        // Externalize problematic packages during build
+        if (id.includes('xdg-open')) return true;
+        return false;
+      }
+    },
     outDir: 'dist',
   },
   server: {
-    open: true,
+    open: false,
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  
 });
 
