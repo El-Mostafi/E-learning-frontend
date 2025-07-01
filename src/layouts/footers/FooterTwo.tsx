@@ -92,7 +92,7 @@ const FooterTwo = () => {
                 <div className="single-footer-widget">
                   <div className="widget-head">
                     <Link to="/">
-                      <img src="assets/img/logo/white-logo.svg" alt="img" />
+                      <img src="assets/img/logo/black-logo.svg" alt="img" />
                     </Link>
                   </div>
                   <div className="footer-content">
