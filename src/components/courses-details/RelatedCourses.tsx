@@ -185,13 +185,13 @@ const RelatedCourses = () => {
                 <SwiperSlide key={course.id} className="swiper-slide">
                   <div className="courses-card-main-items">
                     <div className="courses-card-items style-2">
-                      <div className="courses-image ">
+                      <div className="courses-image h-[250px] overflow-hidden ">
                         <img
+                          className="object-cover"
                           src={
                             course.thumbnailPreview ||
                             "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
                           }
-                          className="img-fluid min-h-[268px]"
                           alt="img"
                         />
                         <h3 className="courses-title px-2">{course.title}</h3>

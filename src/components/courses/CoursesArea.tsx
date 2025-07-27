@@ -288,8 +288,9 @@ const CoursesArea = () => {
               >
                 <div className="courses-card-main-items">
                   <div className="courses-card-items style-2">
-                    <div className="courses-image min-h-[268px]">
+                    <div className="courses-image h-[250px] overflow-hidden">
                       <img
+                        className="object-cover "
                         src={
                           course.thumbnailPreview ||
                           "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"

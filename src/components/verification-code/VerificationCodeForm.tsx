@@ -63,7 +63,7 @@ const VerificationCodeForm = () => {
       console.log(response.data);
       setIsVerified(true);
       await setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/sign-in";
       }, 2000);
     } catch (error) {
       console.error("Verification failed:", error);

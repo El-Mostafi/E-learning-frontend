@@ -353,9 +353,6 @@ const RecommendedCourses = () => {
                               <div className="course-title">{course.title}</div>
                             </Link>
                           </h5>
-                          <span className="mb-3 line-clamp-2 min-h-[60px]">
-                            {course.description.replace(/<\/?[^>]+(>|$)/g, "")}
-                          </span>
                           <div className="client-items">
                             <div className="icon-items">
                               <i>

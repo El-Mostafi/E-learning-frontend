@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import NiceSelect, { Option } from "../../../ui/NiceSelect";
 import { coursService, courseInstructor } from "../../../services/coursService";
-import { X, Star, AlertCircle, Search } from "lucide-react";
+import { X, Star, AlertCircle, Search, BookOpen } from "lucide-react";
 import CreateCours from "../../profile/Create Cours/index";
 import {
   FindAllInstructorCoursesOptions,
@@ -12,6 +12,8 @@ import {
 import LoadingState from "../StudentCourses/LoadingState";
 import ErrorState from "../StudentCourses/ErrorState";
 function InstructorCoursesArea() {
+    const navigate = useNavigate();
+  
   const [coursesData, setCoursesData] = useState<InstructorCoursesResponse>({
     courses: [],
     totalPages: 0,
@@ -128,6 +130,7 @@ function InstructorCoursesArea() {
       <ErrorState message={error} onRetry={() => window.location.reload()} />
     );
   }
+
   return (
     <>
       <style>
@@ -242,6 +245,23 @@ function InstructorCoursesArea() {
           {loading && coursesData.courses.length > 0 && (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          )}
+          {!loading && coursesData.courses.length === 0 && (
+            <div className="flex flex-col items-center justify-center  p-10 text-center mt-[50px]">
+              <div className="w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-blue-50">
+                <BookOpen className="w-8 h-8 text-blue-500" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Courses Found
+              </h3>
+              <p className="text-sm text-gray-500 max-w-sm mb-6">You haven't create any courses yet</p>
+              <button
+                onClick={() => navigate("/profile")}
+                className="theme-btn"
+              >
+                Create your first course
+              </button>
             </div>
           )}
           <div className="row">

@@ -326,7 +326,7 @@ export const coursService = {
         currentPage,
         limit,
         sortOption: sortOption,
-        filterParams: filterParams,
+        filterParams: filterParams ? JSON.stringify(filterParams) : undefined,
       },
     });
 

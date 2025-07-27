@@ -38,6 +38,7 @@ const StarRating = ({ rating = 0 }: { rating: number }) => {
 // This card now matches the layout and functionality of the "RelatedCourses" card.
 interface CourseCardProps {
   course: PopularCourse;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user: any; // Type from useAuth context
   myEnrollments: string[];
   coursesInCart: string[];
@@ -59,11 +60,11 @@ const CourseCard = ({ course, user, myEnrollments, coursesInCart, updatingCourse
   return (
     <div className="courses-card-main-items">
       <div className="courses-card-items style-2">
-        <div className="courses-image">
+        <div className="courses-image h-[250px] overflow-hidden">
           <img
             src={course.thumbnail || defaultThumbnail}
             alt={course.title}
-            className="img-fluid min-h-[268px]" // Added class for consistent height
+            className="object-cover" // Added class for consistent height
             onError={(e) => { (e.target as HTMLImageElement).src = defaultThumbnail; }}
           />
           <h3 className="courses-title px-2">{course.title}</h3>

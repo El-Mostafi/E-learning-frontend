@@ -202,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-sm">Completed</span>
                 </div>
                 <span className="font-semibold">
-                  {QuickStats!.coursesCompleted || "N/A"}
+                  {QuickStats!.coursesCompleted || "0"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -211,7 +211,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-sm">Active Courses</span>
                 </div>
                 <span className="font-semibold">
-                  {QuickStats!.activeCourses || "N/A"}
+                  {QuickStats!.activeCourses || "0"}
                 </span>
               </div>
             </>
@@ -223,7 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-sm">Total Students</span>
                 </div>
                 <span className="font-semibold">
-                  {QuickStats!.totalStudents || "N/A"}
+                  {QuickStats!.totalStudents || "0"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -232,7 +232,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-sm">Courses Created</span>
                 </div>
                 <span className="font-semibold">
-                  {QuickStats!.coursesCreated || "N/A"}
+                  {QuickStats!.coursesCreated || "0"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -241,7 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-sm">Average Rating</span>
                 </div>
                 <span className="font-semibold">
-                  {QuickStats!.averageRating || "N/A"}
+                  {QuickStats!.averageRating || "0.0"}
                 </span>
               </div>
             </>

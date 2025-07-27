@@ -14,7 +14,7 @@ const FooterTwo = () => {
           <img src="assets/img/footer/Vector-2.png" alt="img" />
         </div>
         <div className="container">
-          <div className="footer-banner-items">
+          <div className="footer-banner-items ">
             <div className="row g-4">
               <div className="col-lg-6">
                 <div className="footer-banner">
@@ -23,7 +23,7 @@ const FooterTwo = () => {
                     <p
                       className="wow fadeInUp d-flex align-items-center h-100"
                       data-wow-delay=".3s"
-                      style={{ minHeight: "120px", textAlign: "justify" }}
+                      style={{ minHeight: "120px"}}
                     >
                       Becoming an instructor is a rewarding journey that
                       combines expertise, passion, and the drive to empower
@@ -55,7 +55,6 @@ const FooterTwo = () => {
                     <p
                       className="wow fadeInUp"
                       data-wow-delay=".3s"
-                      style={{ textAlign: "justify" }}
                     >
                       Becoming a student is a transformative journey that opens
                       the door to endless opportunities for learning, growth,
@@ -166,7 +165,7 @@ const FooterTwo = () => {
                       <Link to="/courses">Best Courses</Link>
                     </li>
                     <li>
-                      <Link to="/contact">Student Reviews</Link>
+                      <Link to="/contact">Contact</Link>
                     </li>
                     <li>
                       <Link to="/faq">FAQs</Link>

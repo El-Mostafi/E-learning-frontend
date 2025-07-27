@@ -502,7 +502,7 @@ const PopularCoursesHomeOne = () => {
       <section className="popular-courses-section fix section-padding section-bg">
         <div className="container">
           <div className="section-title-area mb-5 d-flex justify-content-between align-items-center flex-wrap">
-            <div className="section-title">
+            <div className="section-title w-full">
               <h6 className="wow fadeInUp">Popular Courses</h6>
               <h2 className="wow fadeInUp" data-wow-delay=".3S">
                 Explore Trending Courses

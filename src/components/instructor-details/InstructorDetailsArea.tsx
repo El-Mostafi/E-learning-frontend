@@ -42,9 +42,9 @@ const InstructorDetailsArea: React.FC<InstructorDetailsProps> = ({ instructor, i
       <div className="container">
         <div className="team-details-wrapper">
           <div className="team-details-items">
-            <div className="details-image">
+            <div className="details-image h-[300px] w-[300px] overflow-hidden">
               <img 
-                width={"1500px"}
+                className="object-cover"
                 src={instructor.profileImg || "/assets/img/team/details-1.jpg"}
                 alt={instructor.userName.replace("|", " ")} 
               />

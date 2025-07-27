@@ -1197,7 +1197,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ usersData }) => {
                           ? `${user.coursesEnrolled || 0} courses enrolled`
                           : user.role === "instructor"
                           ? `${user.coursesCreated || 0} courses created`
-                          : "N/A"}
+                          : "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {user.role !== "admin" && (

@@ -62,8 +62,9 @@ function CourseList({
         <div className="col-lg-12">
           {courses.map((course) => (
             <div key={course.id} className="courses-list-items p-3">
-              <div className="thumb">
+              <div className="thumb h-[200px] overflow-hidden">
                 <img
+                  className="w-full h-full object-cover"
                   src={
                     course.thumbnailPreview ||
                     "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"

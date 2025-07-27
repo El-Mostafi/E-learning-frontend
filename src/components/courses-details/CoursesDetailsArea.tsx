@@ -968,7 +968,7 @@ const CoursesDetailsArea: React.FC<CoursesDetailsAreaProps> = ({
                                 "Admin"
                                   ? "LUMINARA"
                                   : course.instructorName?.replace("|", " ") ||
-                                    "N/A"}
+                                    "Instructor"}
                               </h4>
                               <span>
                                 {course.instructorExpertise ||
