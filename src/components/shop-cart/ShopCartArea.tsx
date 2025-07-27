@@ -83,14 +83,14 @@ const ShopCartArea = () => {
       <div className="container min-vh-100 d-flex align-items-center">
         <div className="row justify-content-center w-100">
           <div className="col-12 col-md-8 col-lg-6 text-center">
-            <div className="card shadow-sm p-4 p-md-5 mb-4">
+            <div className="p-4 p-md-5 mb-4">
               <div className="card-body">
                 <i className="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
                 <h3 className="display-5 mb-3">Your cart is empty</h3>
                 <p className="lead text-muted mb-4">
                   Looks like you haven't added any courses to your cart yet.
                 </p>
-                <Link to="/courses" className="btn btn-primary btn-lg px-5">
+                <Link to="/courses" className="theme-btn">
                   Browse Courses
                 </Link>
               </div>
