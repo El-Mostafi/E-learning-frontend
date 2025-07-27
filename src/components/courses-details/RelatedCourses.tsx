@@ -190,7 +190,7 @@ const RelatedCourses = () => {
                           className="object-cover"
                           src={
                             course.thumbnailPreview ||
-                            "https://res.cloudinary.com/dtcdlthml/image/upload/v1746612580/lbmdku4h7bgmbb5gp2wl.png"
+                            "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1749755600/y6cvmgqd7kcpoogmravr.png"
                           }
                           alt="img"
                         />

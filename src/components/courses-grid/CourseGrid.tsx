@@ -74,7 +74,7 @@ function CourseGrid({
                     className="pb-3"
                     src={
                       course.thumbnailPreview ||
-                      "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1740161005/defaultAvatar_iotzd9.avif"
+                      "https://res.cloudinary.com/dkqkxtwuf/image/upload/v1749755600/y6cvmgqd7kcpoogmravr.png"
                     }
                     alt="course thumbnail"
                   />
