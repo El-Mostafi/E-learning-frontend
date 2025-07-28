@@ -210,11 +210,6 @@ const FooterTwo = () => {
               </div>
             </div>
           </div>
-          <div className="footer-bottom style-2">
-            <p>
-              Copyright © <Link to="/">LUMINARA</Link>, all rights reserved.
-            </p>
-          </div>
         </div>
       </footer>
     </>

@@ -255,12 +255,7 @@ const FooterOne: React.FC<FooterOneProps> = ({ user }) => {
             </div>
           </div>
 
-          <div className="footer-bottom style-2">
-            <p>
-              Copyright © {new Date().getFullYear()}{" "}
-              <Link to="/">LUMINARA</Link>. All Rights Reserved.
-            </p>
-          </div>
+          
         </div>
       </footer>
     </>
