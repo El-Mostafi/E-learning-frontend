@@ -9,7 +9,7 @@ const contactInfo = {
     "National School of Applied Sciences, Avenue My Abdallah Km 5" +
     "\n" +
     "Imouzzer Road, Fez BP 72.",
-  email: "help.luminara@gmail.com",
+  email: "helpdesk.elearningapp@gmail.com",
   phone: "+212 626-95-22-47, +212 695-72-25-47",
 };
 

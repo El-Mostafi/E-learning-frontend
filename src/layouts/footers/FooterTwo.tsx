@@ -195,10 +195,10 @@ const FooterTwo = () => {
                       </li>
                       <li>
                         <a
-                          href="mailto:help.LUMINARA@gmail.com"
+                          href="mailto:helpdesk.elearningapp@gmail.com"
                           className="link"
                         >
-                          help.LUMINARA@gmail.com
+                          help.luminara@gmail.com
                         </a>
                       </li>
                       <li>

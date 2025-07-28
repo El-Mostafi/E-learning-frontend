@@ -54,12 +54,12 @@ const OffCanvas = ({ setOpenCanvas, openCanvas }: any) => {
                 <ul className="contact-list">
                   <li>
                     <span>Call Us:</span>
-                    <a href="tel:+00012345688">+000 123 456 88</a>
+                    <a href="tel:+212695722547">+212 695-72-25-47</a>
                   </li>
                   <li>
                     <span>Email:</span>
-                    <a href="mailto:supportedus@gmail.com">
-                      supportedus@gmail.com
+                    <a href="mailto:helpdesk.elearningapp@gmail.com">
+                      help.luminara@gmail.com
                     </a>
                   </li>
                 </ul>
